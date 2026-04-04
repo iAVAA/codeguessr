@@ -3,20 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Registrazione - CodeGuessr</title>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+
+    <style>
+        /* ==========================================
+           CSS DEL BACKGROUND ANIMATO
+           ========================================== */
+        .sfondo-animato-container {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.15; /* Colori ben visibili senza dar fastidio */
+            pointer-events: none;
+            user-select: none;
+            overflow: hidden;
+
+            /* Fade morbido per far apparire e scomparire il testo dolcemente */
+            mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+        }
+
+        .codice-scorrevole {
+            display: flex;
+            flex-direction: column;
+            animation: scrollDown 60s linear infinite; /* VELOCITÀ UNICA E PERFETTA */
+            width: 100%;
+        }
+
+        .code-block {
+            padding: 2rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            /* LA MAGIA È QUI: previene gli 'a capo' selvaggi su mobile */
+            white-space: pre; 
+        }
+
+        @keyframes scrollDown {
+            0%   { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+
+        /* Colori Sintassi Forzati (immune a Bootstrap) */
+        .com { color: #008000 !important; font-style: italic; }
+        .kw  { color: #0000ff !important; font-weight: bold; }
+        .fn  { color: #795e26 !important; }
+        .str { color: #a31515 !important; }
+        .num { color: #098658 !important; }
+    </style>
 </head>
 
-<body>
-    <div class="container mt-5">
-        <h1>Test Bootstrap</h1>
-        <button class="btn btn-primary">Pulsante Bootstrap</button>
-        <div class="alert alert-success mt-3" role="alert">
-            Bootstrap è importato correttamente!
-        </div>
+<body class="bg-light d-flex flex-column min-vh-100">
+
+    
+    
+    <header class="bg-white border-bottom shadow-sm">
+        <nav class="container py-3 d-flex justify-content-between align-items-center">
+            <span class="fw-bold fs-5">CodeGuessr</span>
+            <a href="src/pages/login_page.html" class="btn btn-outline-primary me-2 rounded-pill">Accedi</a>
+        </nav>
+    </header>
+
+    <div class="sfondo-animato-container" aria-hidden="true">
+        <div class="codice-scorrevole" id="codeTrack"></div>
     </div>
+
+    <main class="flex-grow-1">
+        <section class="container text-center my-5">
+            <h1 class="display-4">Benvenuto su CodeGuessr!</h1>
+            <p class="lead">Indovina il linguaggio di programmazione dal codice!</p>
+        </section>
+
+        <section class="container d-flex align-items-center justify-content-center py-4">
+            <div class="card shadow-sm p-4" style="max-width: 440px; width: 100%;">
+                <h1 class="h3 text-center mb-3">Registrazione</h1>
+                <button class="btn btn-light w-100 mb-3 rounded-pill">Accedi con Google</button>
+                <button class="btn btn-primary w-100 mb-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#RegistrationModal">Registrati con l'email</button>
+            </div>
+        </section>
+
+        <div style="height: 40vh;"></div>
+
+        <section class="container text-center my-5">
+             <h2 class="h4">Perché scegliere CodeGuessr?</h2>
+            <div class="row py-5 text-center ">
+               
+                <div class="col-md-8 px-3 mx-auto text-center">
+                    
+                    <p class="mb-0">Sfida te stesso e migliora le tue competenze di programmazione in modo divertente e interattivo.</p>
+                </div>
+                <div class="col-md-4 px-3">
+                    <p class="mb-0">Condividi i tuoi risultati con amici e colleghi per mostrare le tue abilità.</p>
+                </div>
+            </div>
+
+            <div class="border-bottom"></div>
+
+            <h2 class="h4 mt-4">Chi siamo?</h2>
+            <div class="row py-5 text-center">
+                <div class="col-md-8 px-3">
+                    <p class="mb-0">Siamo un team di appassionati di programmazione che ha creato CodeGuessr per rendere l'apprendimento del codice più divertente e accessibile a tutti.</p>
+                </div>
+                <div class="col-md-4 px-3">
+                    <p class="mb-0">Il nostro obiettivo è aiutare le persone a migliorare le loro competenze di programmazione attraverso il gioco e la sfida.</p>
+                </div>
+            </div>
+            
+            <div class="border-bottom"></div>
+            
+            <h2 class="h4 mt-4">Unisciti a noi!</h2>
+            <div class="row py-5 text-center">
+                <div class="col-md-8 px-3">
+                    <p class="mb-0">Unisciti alla nostra community e inizia a giocare oggi stesso!</p>
+                </div>
+                <div class="col-md-4 px-3">
+                    <p class="mb-0">Siamo sempre alla ricerca di feedback e suggerimenti per migliorare CodeGuessr!</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-top mt-auto py-3">
+        <div class="container text-center text-muted small">
+            © 2026 CodeGuessr. Tutti i diritti riservati.
+            <div class="mt-2 d-flex justify-content-center gap-3">
+                <a href="#" class="link-secondary text-decoration-none">Privacy</a>
+                <a href="#" class="link-secondary text-decoration-none">Contatti</a>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="link-secondary text-decoration-none">GitHub</a>
+            </div>
+        </div>
+    </footer>
 
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="src/js/index.js"></script>
+
+    <script>
+        const snippet2 = `
+<span class="com">/**
+ * =========================================================================================================================
+ * NEURAL-QUANTUM HYBRID TESSELLATION ENGINE v7.4.1-alpha (Codename: "Oppenheimer") - CONFIDENTIAL & PROPRIETARY
+ * =========================================================================================================================
+ * This module is responsible for computing real-time wave-function collapse probabilities across a hyper-threaded GPU pipeline.
+ * Warning: Do not modify synchronization constants unless bypassing the asynchronous event loop of the V8 JavaScript engine.
+ * =========================================================================================================================
+ */</span>
+
+<span class="kw">import</span> { QuantumStateVector, EntanglementMatrix, WaveFunctionCollapseHandler } <span class="kw">from</span> <span class="str">'@core/quantum-simulation/tensor-processing'</span>;
+<span class="kw">import</span> { HardwareAccelerationInterface, MemoryAllocationHeuristics } <span class="kw">from</span> <span class="str">'@systems/hardware-layer/gpu-compute-architecture'</span>;
+
+<span class="kw">const</span> UNIVERSAL_GRAVITATIONAL_CONSTANT_MODIFIER: <span class="kw">number</span> = (<span class="num">6.67430e-11</span> * Math.PI) / Math.<span class="fn">sqrt</span>(<span class="num">2.99792458e8</span> * <span class="num">1000000000</span>);
+
+<span class="kw">export class</span> <span class="fn">DimensionalRiftRenderer</span>&lt;T <span class="kw">extends</span> QuantumStateVector, K <span class="kw">extends</span> EntanglementMatrix&gt; <span class="kw">implements</span> HardwareAccelerationInterface.IRenderPipeline&lt;T, K&gt; {
+    <span class="kw">private readonly</span> preCalculatedEntropyMap: Float64Array;
+    <span class="kw">private</span> volatileStateSynchronizationLock: <span class="kw">boolean</span> = <span class="kw">false</span>;
+
+    <span class="kw">constructor</span>(<span class="kw">private readonly</span> primaryTessellationEngine: WebGL2RenderingContext, <span class="kw">private readonly</span> secondaryQuantumBuffer: Float32Array) {
+        <span class="kw">this</span>.preCalculatedEntropyMap = <span class="kw">new</span> Float64Array(<span class="num">8192</span> * <span class="num">8</span>);
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"[SYSTEM INIT] DimensionalRiftRenderer instantiated across logical cores."</span>);
+    }
+
+    <span class="kw">public async</span> <span class="fn">executeAsynchronousHyperStructureInitialization</span>(particleCount: <span class="kw">number</span>, dispersionRate: <span class="kw">number</span>, chaosThreshold: <span class="kw">number</span>): Promise&lt;T[]&gt; {
+        <span class="kw">if</span> (<span class="kw">this</span>.volatileStateSynchronizationLock) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">"CRITICAL EXCEPTION: Buffer locked."</span>);
+        <span class="kw">this</span>.volatileStateSynchronizationLock = <span class="kw">true</span>;
+
+        <span class="kw">const</span> localizedEntropyMap = <span class="kw">this</span>.preCalculatedEntropyMap.<span class="fn">map</span>((_, index) =&gt; 
+            (Math.<span class="fn">sin</span>(index * dispersionRate) * Math.<span class="fn">cos</span>(index / chaosThreshold)) &gt; <span class="num">0.5</span> 
+                ? (Math.<span class="fn">random</span>() * UNIVERSAL_GRAVITATIONAL_CONSTANT_MODIFIER) ^ (index &lt;&lt; <span class="num">2</span>) 
+                : Math.<span class="fn">exp</span>(-index) / Math.LOG10E
+        );
+
+        <span class="kw">this</span>.primaryTessellationEngine.<span class="fn">bufferData</span>(<span class="kw">this</span>.primaryTessellationEngine.ARRAY_BUFFER, <span class="kw">new</span> Float32Array(localizedEntropyMap.buffer), <span class="kw">this</span>.primaryTessellationEngine.DYNAMIC_DRAW); 
+
+        <span class="kw">const</span> survivingEigenstates = Array.<span class="fn">from</span>({ length: particleCount }).<span class="fn">reduce</span>((accumulator: T[], _, currentIndex) =&gt; { 
+            <span class="kw">const</span> prob = WaveFunctionCollapseHandler.<span class="fn">calculateEigenstateProbability</span>(currentIndex, localizedEntropyMap, <span class="kw">this</span>.secondaryQuantumBuffer); 
+            <span class="kw">return</span> prob &gt; <span class="num">0.85</span> ? [...accumulator, QuantumStateVector.<span class="fn">instantiateFromProbability</span>(prob, currentIndex) <span class="kw">as</span> T] : accumulator; 
+        }, [] <span class="kw">as</span> T[]);
+
+        <span class="kw">this</span>.volatileStateSynchronizationLock = <span class="kw">false</span>;
+        <span class="kw">return</span> survivingEigenstates;
+    }
+}
+`;
+
+        const snippet1 = `
+<span class="com">/**
+ * CodeGuessr - Core Engine
+ * Indovina il linguaggio!
+ */</span>
+<span class="kw">function</span> <span class="fn">analyzeSnippet</span>(code) {
+    <span class="kw">const</span> patterns = {
+        <span class="str">python</span>:     <span class="str">/def\\s+\\w+\\(|import\\s+\\w+|print\\(/</span>,
+        <span class="str">javascript</span>: <span class="str">/const\\s+\\w+\\s*=|=>|console\\.log\\(/</span>,
+        <span class="str">java</span>:       <span class="str">/public\\s+class\\s+|System\\.out\\.println\\(/</span>,
+        <span class="str">cpp</span>:        <span class="str">/#include\\s*&lt;|std::cout/</span>,
+        <span class="str">rust</span>:       <span class="str">/fn\\s+main\\(\\)|println!\\(/</span>,
+    };
+
+    <span class="kw">let</span> scores = {};
+    <span class="kw">for</span> (<span class="kw">let</span> [lang, regex] <span class="kw">of</span> Object.<span class="fn">entries</span>(patterns)) {
+        scores[lang] = regex.<span class="fn">test</span>(code) ? <span class="num">1</span> : <span class="num">0</span>;
+    }
+    <span class="kw">return</span> <span class="fn">calculateHighestProbability</span>(scores);
+}
+
+<span class="kw">class</span> <span class="fn">Player</span> {
+    <span class="fn">constructor</span>(username) {
+        <span class="kw">this</span>.username = username;
+        <span class="kw">this</span>.score    = <span class="num">0</span>;
+        <span class="kw">this</span>.streak   = <span class="num">0</span>;
+    }
+
+    <span class="fn">submitGuess</span>(guess, actual) {
+        <span class="kw">if</span> (guess === actual) {
+            <span class="kw">this</span>.score += (<span class="num">10</span> * (<span class="kw">this</span>.streak + <span class="num">1</span>));
+            <span class="kw">this</span>.streak++;
+            <span class="kw">return true</span>;
+        }
+        <span class="kw">this</span>.streak = <span class="num">0</span>;
+        <span class="kw">return false</span>;
+    }
+}
+
+<span class="kw">const</span> session = <span class="kw">new</span> <span class="fn">GameSession</span>();
+session.<span class="fn">start</span>();
+`;
+
+        function aggiornaSfondo() {
+            const track = document.getElementById('codeTrack');
+            
+            // Svuotiamo il contenitore
+            track.innerHTML = ''; 
+
+            // Scegliamo lo snippet
+            const snippetScelto = window.innerWidth <= 768 ? snippet1 : snippet2;
+
+            // Inseriamo i blocchi
+            for (let i = 0; i < 4; i++) {
+                const block = document.createElement('div');
+                block.className = 'code-block';
+                block.innerHTML = snippetScelto; 
+                track.appendChild(block);
+            }
+        }
+
+        aggiornaSfondo();
+        window.addEventListener('resize', aggiornaSfondo);
+    </script>
 </body>
 </html>

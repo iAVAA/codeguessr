@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <title>Login - CodeGuessr</title>
+    <style>
+        .login-card {
+            max-width: 420px;
+            width: 100%;
+        }
+
+        @media (max-width: 576px) {
+            .login-card {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <main class="container min-vh-100 d-flex align-items-start justify-content-center pt-5">
+        <section class="card shadow-sm border-0 login-card">
+            <h1 class="h3 text-center mb-4">Accedi</h1>
+
+            <form>
+                <div class="mb-3">
+                    <label for="loginEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="loginEmail" placeholder="Inserisci la tua email" required>
+                </div>
+
+                <div class="mb-2">
+                    <label for="loginPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="Inserisci la tua password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mt-2">Accedi</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <a href="#" class="link-secondary text-decoration-none">Hai dimenticato la password?</a>
+            </div>
+
+            <button type="button" class="btn btn-outline-dark w-100 mt-4">Continua con Google</button>
+
+            <div class="text-center mt-3">
+                <a href="../../index.html" class="link-primary text-decoration-none">Crea un account</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
