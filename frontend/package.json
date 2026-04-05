@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.11.3",
     "uuid": "^13.0.0"
   }
 }

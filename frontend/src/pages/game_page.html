@@ -1,11 +1,191 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoGuessr - Game Page</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="CodeGuessr – Guess the programming language from random code snippets. Single player or multiplayer. Train your developer intuition." />
+    <meta name="theme-color" content="#313335" />
+    <title>CodeGuessr – Lobby</title>
+    <link rel="icon" type="image/webp" href="../assets/img/logo.webp" />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="../../node_modules/bootstrap-icons/font/bootstrap-icons.css" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/style.css" />
 </head>
+
 <body>
-    
+
+    <!-- =====================
+       NAVBAR / HEADER
+       ===================== -->
+    <nav class="navbar-codeguessr d-flex align-items-center justify-content-between" style="position:relative">
+
+        <!-- Brand Logo (left) -->
+        <a href="#" class="navbar-brand-logo" id="nav-brand">
+            <img src="../assets/img/logo.webp" alt="CodeGuessr Logo" class="logo-img" />
+        </a>
+
+        <!-- Right Side: Theme Toggle + Profile -->
+        <div class="d-flex align-items-center gap-3">
+
+            <!-- Theme Toggle -->
+            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode">
+                <div class="theme-toggle-thumb">
+                    <i class="bi bi-moon-stars-fill moon-icon"></i>
+                    <i class="bi bi-sun-fill sun-icon"></i>
+                </div>
+            </button>
+
+            <!-- Profile Widget -->
+            <div class="profile-widget" id="profile-widget" tabindex="0">
+
+                <!-- Name + Stats -->
+                <div class="profile-info">
+                    <span class="profile-name" id="player-name">GuesserPro</span>
+                    <div class="profile-stats">
+                        <span class="stat-tier">LVL <span id="player-level">12</span></span>
+                        <span class="stat-divider">&bull;</span>
+                        <span class="profile-cups">
+                            <i class="bi bi-trophy-fill"></i> <span id="player-cups">1 240</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Avatar with thin XP ring -->
+                <div class="profile-avatar-wrapper">
+                    <svg class="xp-ring" viewBox="0 0 36 36">
+                        <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
+                        <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"></circle>
+                    </svg>
+                    <img src="https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21"
+                        alt="Player avatar" class="profile-avatar" id="player-avatar"
+                        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Ccircle cx=\'24\' cy=\'24\' r=\'24\' fill=\'%23464a4a\'/%3E%3Ctext x=\'50%25\' y=\'55%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Inter\' font-weight=\'700\' font-size=\'18\' fill=\'%23a9b7c6\'%3EG%3C/text%3E%3C/svg%3E'" />
+                </div>
+
+                <i class="bi bi-chevron-down profile-chevron"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- =====================
+       HERO / MAIN CONTENT
+       ===================== -->
+    <main class="game-hero" id="main-lobby">
+
+
+
+        <!-- Content -->
+        <div class="hero-content">
+
+
+
+            <!-- Title -->
+            <h1 class="hero-title mb-2">
+                Riconosci il<br />
+                <span class="hero-title-accent">&lt;codice/&gt;</span>
+            </h1>
+
+
+
+            <!-- Code snippet decoration -->
+            <div class="code-decoration">
+                <span class="cm">// Quale linguaggio è questo?</span><br />
+                <span class="kw">def</span> <span class="fn">solve</span>(n: <span class="fn">Int</span>): <span
+                    class="fn">List</span>[<span class="fn">Int</span>] =<br />
+                &nbsp;&nbsp;(1 to n).<span class="fn">filter</span>(x => x % 3 == 0 || x % 5 == 0).<span
+                    class="fn">toList</span>
+            </div>
+
+            <!-- Play Buttons -->
+            <div class="play-buttons">
+
+                <!-- Single Player -->
+                <button class="btn-play btn-singleplayer" id="btn-singleplayer" aria-label="Gioca in single player">
+                    <div class="btn-play-icon">
+                        <i class="bi bi-controller"></i>
+                    </div>
+                    <div class="btn-play-text">
+                        <span class="btn-play-label">Gioca da solo</span>
+                        <span class="btn-play-title">Single Player</span>
+                    </div>
+                </button>
+
+                <!-- Multiplayer -->
+                <button class="btn-play btn-multiplayer" id="btn-multiplayer" aria-label="Gioca in multiplayer">
+                    <div class="btn-play-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="btn-play-text">
+                        <span class="btn-play-label">Sfida amici</span>
+                        <span class="btn-play-title">Multiplayer</span>
+                    </div>
+                </button>
+
+            </div>
+
+
+
+        </div>
+    </main>
+
+
+
+    <!-- =====================
+       FOOTER
+       ===================== -->
+    <footer class="site-footer" id="site-footer">
+        <div class="container">
+
+            <div class="footer-bottom">
+
+                <!-- Left: copyright + authors + license -->
+                <div class="footer-copy">
+                    <i class="bi bi-c-circle"></i>
+                    2025 CodeGuessr &mdash; Salvatore Iavarone &amp; Michele Pio Forlani
+                    &nbsp;&bull;&nbsp;
+                    <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
+                        style="color:rgb(var(--darcula-blue));text-decoration:none;">Licenza MIT</a>
+                    &nbsp;&bull;&nbsp;
+                    <span class="footer-version">v1.0.0-alpha</span>
+                </div>
+
+                <!-- Right: social + site links -->
+                <div class="footer-links-inline">
+                    <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
+                        title="GitHub">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a href="#" class="social-btn" aria-label="Discord" title="Discord">
+                        <i class="bi bi-discord"></i>
+                    </a>
+                    <a href="#" class="social-btn" aria-label="Twitter / X" title="Twitter / X">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    <a href="#" class="social-btn" aria-label="Contattaci" title="Contattaci">
+                        <i class="bi bi-envelope-fill"></i>
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Game Page JS -->
+    <script src="../js/game_page.js"></script>
 </body>
+
 </html>
