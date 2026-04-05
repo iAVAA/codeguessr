@@ -10,6 +10,17 @@
     <title>CodeGuessr – Lobby</title>
     <link rel="icon" type="image/webp" href="../assets/img/logo.webp" />
 
+    <!-- Anti-FOUC: applica il tema dal localStorage PRIMA che il CSS venga parsato -->
+    <script id="fouc-prevention">
+        (function () {
+            var t = localStorage.getItem('codeguessr-theme');
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (t === 'light' || (!t && !prefersDark)) {
+                document.documentElement.classList.add('light-mode');
+            }
+        })();
+    </script>
+
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.min.css" />
     <!-- Bootstrap Icons -->
@@ -151,14 +162,25 @@
 
                 <!-- Left: copyright + authors + license -->
                 <div class="footer-copy">
-                    <i class="bi bi-c-circle"></i>
-                    2025 CodeGuessr &mdash; Salvatore Iavarone &amp; Michele Pio Forlani
-                    &nbsp;&bull;&nbsp;
+                    <!-- Riga 1: brand -->
+                    <span class="footer-brand">
+                        <i class="bi bi-c-circle"></i> 2025 <strong>CodeGuessr</strong>
+                    </span>
+                    <!-- Separatore desktop -->
+                    <span class="footer-sep" aria-hidden="true">&mdash;</span>
+                    <!-- Riga 2: autori -->
+                    <span class="footer-authors">
+                        Salvatore Iavarone &amp; Michele Pio Forlani
+                    </span>
+                    <!-- Separatore desktop -->
+                    <span class="footer-sep" aria-hidden="true">&bull;</span>
+                    <!-- Licenza + versione -->
                     <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
-                        style="color:rgb(var(--darcula-blue));text-decoration:none;">Licenza MIT</a>
-                    &nbsp;&bull;&nbsp;
+                        class="footer-license">Licenza MIT</a>
+                    <span class="footer-sep" aria-hidden="true">&bull;</span>
                     <span class="footer-version">v1.0.0-alpha</span>
                 </div>
+
 
                 <!-- Right: social + site links -->
                 <div class="footer-links-inline">
@@ -184,6 +206,11 @@
 
     <!-- Bootstrap JS -->
     <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Global Loader (inizializzato subito come ES module) -->
+    <script type="module">
+        import { initLoader } from '../js/loader.js';
+        initLoader();
+    </script>
     <!-- Game Page JS -->
     <script src="../js/game_page.js"></script>
 </body>

@@ -137,8 +137,8 @@ body {
 }
 
 .logo-img {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -563,6 +563,40 @@ body {
   align-items: center;
 }
 
+/* Nuovi span strutturali del footer */
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgb(var(--darcula-fg));
+  font-weight: 500;
+}
+
+.footer-brand strong {
+  color: rgb(var(--darcula-fg));
+  font-weight: 700;
+}
+
+.footer-authors {
+  color: rgb(var(--darcula-comment));
+}
+
+.footer-sep {
+  color: rgba(var(--darcula-comment), 0.4);
+}
+
+.footer-license {
+  color: rgb(var(--darcula-blue));
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.footer-license:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+
 /* ===========================
    CODE SNIPPET DECORATION
    =========================== */
@@ -632,18 +666,232 @@ body {
 .code-decoration .cm  { color: var(--vscode-cm); } /* Comments */
 
 /* ===========================
+   GLOBAL LOADER
+   =========================== */
+
+/* Previene lo scroll durante il caricamento */
+body.loader-open { overflow: hidden !important; }
+
+#globalLoader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: rgb(var(--darcula-bg));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  /* Transizione di uscita */
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Stato di uscita */
+#globalLoader.gl--exiting {
+  opacity: 0;
+  transform: scale(1.06);
+}
+
+/* ── Logo wrapper (contenitore anelli + immagine) ── */
+.gl-logo-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gl-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gl-ring--outer {
+  color: rgb(var(--darcula-blue));
+  animation: gl-spin 2.2s linear infinite;
+}
+
+.gl-ring--inner {
+  color: rgb(var(--darcula-green));
+  animation: gl-spin 3.6s linear infinite reverse;
+  opacity: 0.75;
+}
+
+@keyframes gl-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Immagine logo centrata ── */
+.gl-logo-img {
+  position: relative;
+  z-index: 1;
+  width: 60px;
+  height: auto;
+  object-fit: contain;
+  animation: gl-pulse 2.2s ease-in-out infinite;
+  /* Drop-shadow leggero che si adatta al tema */
+  filter: drop-shadow(0 0 8px rgba(var(--darcula-blue), 0.45));
+}
+
+/* In light-mode il logo (B&N) rischia di sparire: aggiungi un'ombra scura */
+:root.light-mode .gl-logo-img {
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+}
+
+@keyframes gl-pulse {
+  0%, 100% { opacity: 1;    transform: scale(1);    }
+  50%       { opacity: 0.8; transform: scale(0.96);  }
+}
+
+/* ── Pallini rimbalzanti ── */
+.gl-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gl-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: gl-bounce 1s ease-in-out infinite;
+}
+
+.gl-dot--green  {
+  background: rgb(var(--darcula-green));
+  box-shadow: 0 0 12px rgba(var(--darcula-green), 0.7);
+}
+.gl-dot--yellow {
+  background: rgb(var(--darcula-yellow));
+  box-shadow: 0 0 12px rgba(var(--darcula-yellow), 0.7);
+}
+.gl-dot--red    {
+  background: rgb(var(--darcula-red));
+  box-shadow: 0 0 12px rgba(var(--darcula-red), 0.7);
+}
+
+@keyframes gl-bounce {
+  0%, 100% { transform: translateY(0);    opacity: 1;    }
+  50%       { transform: translateY(-10px); opacity: 0.75; }
+}
+
+/* ── Testo di stato ── */
+.gl-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(var(--darcula-fg), 0.55);
+}
+
+/* Puntini animati dopo "Resolving Environment" */
+.gl-ellipsis::after {
+  content: '';
+  display: inline-block;
+  width: 1.2em;
+  animation: gl-ellipsis 1.5s steps(4, end) infinite;
+}
+
+@keyframes gl-ellipsis {
+  0%  { content: '';    }
+  25% { content: '.';   }
+  50% { content: '..';  }
+  75% { content: '...'; }
+}
+
+/* ===========================
    RESPONSIVE
    =========================== */
 
-@media (max-width: 768px) {
-  .profile-info { display: none; }
-  .logo-text { font-size: 1.1rem; }
-  .btn-play { min-width: 160px; padding: 0.9rem 1.5rem; }
-  .play-buttons { gap: 0.75rem; }
-  .game-hero { padding: 3rem 1rem; }
+/* ── Fix code-decoration overflow ──────────────────────────────────────────
+   Il testo generato con white-space:pre può forzare l'espansione orizzontale
+   del container. Queste regole isolano il hero content con min-width:0 e
+   fissano il code block a larghezza massima, eliminando l'allargamento. */
+
+.game-hero,
+.hero-content {
+  /* Impedisce al flexbox di uscire dai confini del viewport */
+  min-width: 0;
+  width: 100%;
 }
 
-@media (max-width: 480px) {
-  .btn-play { min-width: 100%; }
-  .play-buttons { flex-direction: column; }
+.code-decoration {
+  /* La larghezza è già al 100% del parent ma limitata da max-width.
+     overflow:hidden è già presente; aggiungiamo anche overflow-x:hidden
+     per sicurezza e forziamo il box-sizing. */
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
+
+/* ── Tablet (≤768px) ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .profile-info { display: none; }
+  .logo-text    { font-size: 1.1rem; }
+  .game-hero    { padding: 3rem 1rem; }
+
+  /* Pulsanti play: dimensioni ridotte ma non al 100% ancora */
+  .btn-play     { min-width: 160px; padding: 0.9rem 1.5rem; }
+  .play-buttons { gap: 0.75rem; }
+
+  /* Code block: ridotto per schermi medi, senza overflow */
+  .code-decoration {
+    font-size: 0.78rem;
+    max-width: 100%;
+    height: 130px;
+    padding: 2.2rem 1rem 0.8rem 1rem;
+  }
+
+  /* Footer: colonna centrata su mobile */
+  .footer-bottom {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.9rem;
+  }
+
+  .footer-copy {
+    justify-content: center;
+    text-align: center;
+    font-size: 0.73rem;
+    /* Separa visivamente "CodeGuessr" dai nomi degli autori */
+    line-height: 1.6;
+  }
+
+  .footer-links-inline {
+    justify-content: center;
+  }
+}
+
+/* ── Mobile (≤480px) ─────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Pulsanti a tutta larghezza */
+  .btn-play     { min-width: 100%; }
+  .play-buttons { flex-direction: column; }
+
+  /* Code block ancora più compatto su schermi piccoli */
+  .code-decoration {
+    font-size: 0.72rem;
+    height: 120px;
+    border-radius: 14px;
+  }
+
+  /* Footer copyright: separa su più righe in modo pulito */
+  .footer-copy {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.7rem;
+  }
+
+  /* Nasconde i bullet separatori "•" su mobile piccolo per evitare wrap strano */
+  .footer-version, .footer-sep {
+    display: none;
+  }
+}
+
