@@ -1,6 +1,7 @@
 {
   "name": "codeguessr-frontend",
   "version": "1.0.0",
+  "private": true,
   "description": "GeoGuessr-style game for developers: guess the language, framework, or context from random code snippets. Learn, train your intuition, and have fun.",
   "homepage": "https://github.com/iAVAA/codeguessr#readme",
   "bugs": {
@@ -13,7 +14,7 @@
   "license": "MIT",
   "author": "Salvatore Iavarone, Michele Pio Forlani",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "src/js/index.js",
   "scripts": {
     "dev": "live-server",
     "test": "echo \"Error: no test specified\" && exit 1"

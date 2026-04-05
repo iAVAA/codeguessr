@@ -1,0 +1,21 @@
+{
+  "name": "codeguessr-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GeoGuessr backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "openai": "^6.33.0",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
