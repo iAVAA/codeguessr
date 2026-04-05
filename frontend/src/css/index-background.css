@@ -1,0 +1,46 @@
+/* ==========================================
+    CSS DEL BACKGROUND ANIMATO
+    ========================================== */
+.sfondo-animato-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    opacity: 0.40; /* Colori ben visibili senza dar fastidio */
+    pointer-events: none;
+    user-select: none;
+    overflow: hidden;
+
+    /* Fade morbido per far apparire e scomparire il testo dolcemente */
+    mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.codice-scorrevole {
+    display: flex;
+    flex-direction: column;
+    animation: scrollDown 60s linear infinite; /* VELOCITÀ UNICA E PERFETTA */
+    width: 100%;
+}
+
+.code-block {
+    padding: 2rem;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    white-space: pre; 
+}
+
+@keyframes scrollDown {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+}
+
+/* Colori Sintassi Forzati (immune a Bootstrap) */
+.com { color: #008000 !important; font-style: italic; }
+.kw  { color: #0000ff !important; font-weight: bold; }
+.fn  { color: #ff0404 !important; }
+.str { color: #70f887 !important; }
+.num { color: #d9ff00 !important; }
