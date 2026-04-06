@@ -18,35 +18,28 @@ function chiudiModalRegistrazione() {
     modalInstance.hide();
 }
 
-
-
-async function registraUtente(username, email, password) {
-    const risultato = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-            data: { username: username }
-        }
+ async function loginUtente(email, password) {
+    const risultato = await supabase.auth.signInWithPassword({
+        email: email,  
+        password: password
     });
-
     if (risultato.error) {
         return { successo: false, errore: risultato.error.message };
+    }else {
+        return { successo: true };
     }
-
-    return { successo: true };
 }
 
 
-
-async function handleSubmitRegistrazione(event) {
+async function handleSubmitLogin(event) {
 
     event.preventDefault();
 
-    username = document.getElementById('registerUsername').value;
-    email = document.getElementById('registerEmail').value;
-    password = document.getElementById('registerPassword').value;
+    email = document.getElementById('loginEmail').value;
+    password = document.getElementById('loginPassword').value;
+   
 
-    const esito = await registraUtente(username, email, password);
+    const esito = await loginUtente(email, password);
 
     if (!esito.successo) {
         console.error('Errore Supabase:', esito.errore);
@@ -54,12 +47,12 @@ async function handleSubmitRegistrazione(event) {
         return;                             
     }
 
-    document.getElementById('registrationForm').reset();
+    document.getElementById('loginForm').reset();
     chiudiModalRegistrazione();
 }
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('registrationForm');
-    form.addEventListener('submit', handleSubmitRegistrazione);
+    const form = document.getElementById('loginForm');
+    form.addEventListener('submit', handleSubmitLogin);
 });

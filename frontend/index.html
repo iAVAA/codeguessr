@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrazione - CodeGuessr</title>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="src/css/index.css">
+    <link rel="stylesheet" href="src/css/style.css">
     <link rel="stylesheet" href="src/css/index-background2.css">
 
 </head>
@@ -37,7 +37,7 @@
 
         <!-- SEZIONE DI BENVENUTO -->
         <section class="container text-center my-5">
-            <h1 class="display-4 ">Benvenuto su CodeGuessr!</h1>
+            <h1 class="display-4 fw-bold">Benvenuto su <span class="text-primary">CodeGuessr</span>!</h1>
             <p class="lead">Indovina il linguaggio di programmazione dal codice!</p>
         </section>
         <!-- FINE SEZIONE DI BENVENUTO -->
@@ -48,7 +48,7 @@
             <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5" style="max-width: 440px; width: 100%;">
                 <h1 class="h3 text-center mb-3">Registrazione</h1>
                 <button class="btn btn-light w-100 mb-3 rounded-pill">Accedi con Google</button>
-                <button class="btn btn-primary w-100 mb-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#RegistrationModal">Registrati con l'email</button>
+                <button type="button" class="btn btn-primary w-100 mb-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#RegistrationModal">Registrati con l'email</button>
             </div>
         </section>
         <!-- FINE SEZIONE PRINCIPALE DI REGISTRAZIONE -->
@@ -151,10 +151,13 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form>
+                        <div id="modalErrorAlert" class="alert alert-danger d-none" role="alert"> </div>
+        
+                        <form id="registrationForm">
                             <div class="mb-3">
                                 <label for="registerUsername" class="form-label">Username</label>
                                 <input type="text" class="form-control" id="registerUsername" placeholder="Scegli un username" required>
+                            </div>
                             <div class="mb-3">
                                 <label for="registerEmail" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="registerEmail" placeholder="Inserisci la tua email" required>
@@ -163,7 +166,7 @@
                                 <label for="registerPassword" class="form-label">Password</label>
                                 <input type="password" class="form-control" id="registerPassword" placeholder="Crea una password" required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100 mt-2">Registrati</button>
+                            <button type="submit" id="registerSubmitBtn" class="btn btn-primary w-100 mt-2">Registrati</button>
                         </form>
                     </div>
                 </div>
@@ -186,6 +189,7 @@
     </footer>
     <!-- FINE FOOTER -->
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="src/js/index.js"></script>
     <script src="src/js/index-background2.js"></script>

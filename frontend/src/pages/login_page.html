@@ -22,8 +22,8 @@
     <main class="container min-vh-100 d-flex align-items-start justify-content-center pt-5">
         <section class="card shadow-sm border-0 login-card">
             <h1 class="h3 text-center mb-4">Accedi</h1>
-
-            <form>
+            <div id="modalErrorAlert" class="alert alert-danger d-none" role="alert"> </div>
+            <form id="loginForm">
                 <div class="mb-3">
                     <label for="loginEmail" class="form-label">Email</label>
                     <input type="email" class="form-control" id="loginEmail" placeholder="Inserisci la tua email" required>
@@ -34,11 +34,11 @@
                     <input type="password" class="form-control" id="loginPassword" placeholder="Inserisci la tua password" required>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 mt-2">Accedi</button>
+                <button type="submit" id="loginButton" class="btn btn-primary w-100 mt-2">Accedi</button>
             </form>
 
             <div class="text-center mt-3">
-                <a href="#" class="link-secondary text-decoration-none">Hai dimenticato la password?</a>
+                <a href="reset_password.html" class="link-secondary text-decoration-none">Hai dimenticato la password?</a>
             </div>
 
             <button type="button" class="btn btn-outline-dark w-100 mt-4">Continua con Google</button>
@@ -50,5 +50,7 @@
     </main>
 
     <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/login_page.js"></script>
 </body>
 </html>
