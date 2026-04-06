@@ -5,7 +5,7 @@ supabase = window.supabase.createClient(supabaseURL, supabaseKey);
 // Mostra un messaggio di errore a schermo per 5 secondi
 
 function schermataErrore(messaggio) {
-    const container = document.getElementById('modalErrorAlert');
+    const container = document.getElementById('ErrorAlert');
     container.textContent = messaggio + " coglione!";
     container.classList.remove('d-none');
     setTimeout(() => container.classList.add('d-none'), 5000);
