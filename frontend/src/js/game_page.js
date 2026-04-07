@@ -2,7 +2,8 @@
  * CodeGuessr - Game Page (Lobby)
  * Handles: theme toggle, XP ring animation, profile data, button interactions
  */
-
+// TODO: Pulire e provare ad accorciare codice inutile e suddividere il js in piu script, sta diventando troppo grande e ingestibile
+// TODO: Sistemare responsiveness dei bottoni accedi e registrati in alto a destra
 document.addEventListener('DOMContentLoaded', () => {
 
   // ─── Theme Toggle ───────────────────────────────────────────────────────────
@@ -41,14 +42,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-  // ─── Mock Player Data ────────────────────────────────────────────────────────
+  // ─── Dynamic Player Data (Cookies) ──────────────────────────────────────────
+  // For testing use simulateLogin() on console
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+    return null;
+  }
 
-  const PLAYER = {
-    name: 'Signor S',
-    level: 1,
-    cups: 32,
-    xpPercent: 20,
-    avatar: `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21`,
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + encodeURIComponent(value || "") + expires + "; path=/";
+  }
+
+  function deleteCookie(name) {
+    document.cookie = name + '=; Max-Age=-99999999; path=/;';
+  }
+
+  // Exposed globally to easily test login
+  window.simulateLogin = function () {
+    const mockUser = {
+      name: 'Signor S',
+      level: 42,
+      cups: 1240,
+      xpPercent: 75,
+      avatar: `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21`,
+      missions: [
+        { title: 'Gioca 5 partite', current: 2, target: 5, reward: '+50 XP', completed: false },
+        { title: 'Vinci 1 partita multiplayer', current: 0, target: 1, reward: '+100 XP', completed: false },
+        { title: 'Aggiungi un amico', current: 1, target: 1, reward: 'Fatto', completed: true }
+      ],
+      friends: [
+        { name: 'Marco99', avatar: 'https://api.dicebear.com/8.x/bottts-neutral/svg?seed=Marco99&backgroundColor=1e1f21', online: true },
+        { name: 'DevGirl', avatar: 'https://api.dicebear.com/8.x/bottts-neutral/svg?seed=DevGirl&backgroundColor=1e1f21', online: true },
+        { name: 'AlexWeb', avatar: 'https://api.dicebear.com/8.x/bottts-neutral/svg?seed=AlexWeb&backgroundColor=2d2d2d', online: false }
+      ]
+    };
+    setCookie('codeguessr_user', JSON.stringify(mockUser), 7);
+    window.location.reload();
   };
 
   function setXpProgress(pct) {
@@ -58,11 +95,89 @@ document.addEventListener('DOMContentLoaded', () => {
     const circumference = 2 * Math.PI * r;
     const offset = circumference - (pct / 100) * circumference;
 
-    // In CSS l'offset parte già a 100% (vuoto).
-    // Concediamo 200ms prima di animarlo in su.
     setTimeout(() => {
       ring.style.strokeDashoffset = offset;
     }, 400);
+  }
+
+  function renderMissions(missions) {
+    const container = document.querySelector('.mission-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!missions || missions.length === 0) {
+      container.innerHTML = `<div class="text-center text-darcula-comment py-3"><small>Nessuna missione disponibile.</small></div>`;
+      return;
+    }
+
+    missions.forEach(m => {
+      const pct = Math.min(100, Math.max(0, (m.current / m.target) * 100));
+      const customClass = m.completed ? 'mission-completed' : '';
+      const titleClass = m.completed ? 'text-decoration-line-through text-darcula-comment' : '';
+      const statusText = m.completed ? `<span class="text-success">${m.current}/${m.target}</span>` : `<span>${m.current}/${m.target}</span>`;
+      const rewardText = m.completed ? `<i class="bi bi-check-circle-fill"></i> ${m.reward}` : m.reward;
+
+      container.innerHTML += `
+      <div class="side-item mission-item ${customClass}">
+          <div class="side-item-content">
+              <div class="mission-title ${titleClass}">${m.title}</div>
+              <div class="mission-progress-bar">
+                  <div class="progress-fill ${m.completed ? 'bg-success' : ''}" style="width: ${pct}%;"></div>
+              </div>
+              <div class="mission-info">
+                  <span class="mission-status">${statusText}</span>
+                  <span class="mission-reward">${rewardText}</span>
+              </div>
+          </div>
+      </div>`;
+    });
+  }
+
+  function renderFriends(friends) {
+    const container = document.querySelector('.friends-list');
+    const badgeContainer = document.getElementById('friends-online-badge');
+    
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (!friends || friends.length === 0) {
+        if (badgeContainer) badgeContainer.textContent = '0 Online';
+        container.innerHTML = `<div class="text-center text-darcula-comment py-3"><small>Aggiungi amici per sfidarli.</small></div>`;
+        return;
+    }
+
+    let onlineCount = 0;
+
+    friends.forEach(f => {
+        if (f.online) onlineCount++;
+        const customClass = f.online ? '' : 'offline-item';
+        const statusIconClass = f.online ? 'online' : 'offline';
+        const nameClass = f.online ? '' : '';
+        const statusClass = f.online ? 'text-darcula-green' : 'text-darcula-comment';
+        const statusText = f.online ? 'Online' : 'Offline';
+        const filterStyle = f.online ? '' : 'style="filter: grayscale(100%); opacity: 0.7;"';
+        
+        const buttonHTML = f.online 
+            ? `<button class="btn-sfida" aria-label="Sfida ${f.name}"><i class="bi bi-swords"></i> Sfida</button>` 
+            : ``;
+
+        container.innerHTML += `
+        <div class="side-item friend-item ${customClass}">
+            <div class="friend-info">
+                <div class="friend-avatar-wrapper">
+                    <img src="${f.avatar}" alt="${f.name}" class="friend-avatar" ${filterStyle}>
+                    <div class="status-dot ${statusIconClass}"></div>
+                </div>
+                <div class="friend-details">
+                    <span class="friend-name ${nameClass}">${f.name}</span>
+                    <span class="friend-status-text ${statusClass}">${statusText}</span>
+                </div>
+            </div>
+            ${buttonHTML}
+        </div>`;
+    });
+
+    if (badgeContainer) badgeContainer.textContent = `${onlineCount} Online`;
   }
 
   function loadPlayerData() {
@@ -70,6 +185,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const levelEl = document.getElementById('player-level');
     const cupsEl = document.getElementById('player-cups');
     const avatarEl = document.getElementById('player-avatar');
+    
+    const authWrapper = document.getElementById('auth-buttons-wrapper');
+    const profileWrapper = document.getElementById('profile-dropdown-wrapper');
+
+    const cookieStr = getCookie('codeguessr_user');
+    let PLAYER = null;
+
+    if (cookieStr) {
+      try {
+        PLAYER = JSON.parse(cookieStr);
+        // Logged In: Show Profile Dropdown, Hide Auth Buttons
+        if (authWrapper) {
+            authWrapper.classList.remove('d-flex');
+            authWrapper.classList.add('d-none');
+        }
+        if (profileWrapper) {
+            profileWrapper.classList.remove('d-none');
+        }
+      } catch (e) {
+        console.error("Invalid cookie data", e);
+      }
+    }
+
+    if (!PLAYER) {
+      // Guest fallback when not logged in
+      PLAYER = {
+        name: 'Ospite',
+        level: 0,
+        cups: 0,
+        xpPercent: 0,
+        avatar: `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=guest&backgroundColor=1e1f21`,
+        missions: [
+          { title: 'Crea un account', current: 0, target: 1, reward: '+500 XP', completed: false }
+        ],
+        friends: []
+      };
+      
+      // Not Logged In: Show Auth Buttons, Hide Profile Dropdown completely
+      if (authWrapper) {
+          authWrapper.classList.remove('d-none');
+          authWrapper.classList.add('d-flex');
+      }
+      if (profileWrapper) {
+          profileWrapper.classList.add('d-none');
+      }
+    }
 
     if (nameEl) nameEl.textContent = PLAYER.name;
     if (levelEl) levelEl.textContent = PLAYER.level;
@@ -77,6 +238,51 @@ document.addEventListener('DOMContentLoaded', () => {
     if (avatarEl) avatarEl.src = PLAYER.avatar;
 
     setXpProgress(PLAYER.xpPercent);
+    renderMissions(PLAYER.missions);
+    renderFriends(PLAYER.friends);
+  }
+
+  // --- Dropdown Mobile Setup --- //
+  const profileDropdownWrapper = document.getElementById('profile-dropdown-wrapper');
+  if (profileDropdownWrapper) {
+    profileDropdownWrapper.addEventListener('click', (e) => {
+      // Evita innesco multiplo se clicchi proprio le voci
+      if (e.target.closest('.dropdown-item')) return;
+      profileDropdownWrapper.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!profileDropdownWrapper.contains(e.target)) {
+        profileDropdownWrapper.classList.remove('active');
+      }
+    });
+  }
+
+  // --- Log In / Log Out Buttons --- //
+  const menuBtnLogout = document.getElementById('menu-btn-logout');
+  if (menuBtnLogout) {
+    menuBtnLogout.addEventListener('click', (e) => {
+      e.preventDefault();
+      deleteCookie('codeguessr_user');
+      window.location.reload();
+    });
+  }
+
+  const btnHeaderLogin = document.getElementById('btn-header-login');
+  if (btnHeaderLogin) {
+    btnHeaderLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.simulateLogin();
+    });
+  }
+
+  const btnHeaderSignup = document.getElementById('btn-header-signup');
+  if (btnHeaderSignup) {
+    btnHeaderSignup.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Per il momento simuliamo log-in anche su Signup
+      window.simulateLogin();
+    });
   }
 
   loadPlayerData();

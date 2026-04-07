@@ -131,16 +131,35 @@ body {
 .navbar-brand-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-decoration: none;
   margin-left: 10px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.navbar-brand-logo:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
 }
 
 .logo-img {
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
   flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(var(--darcula-blue), 0.5));
+}
+
+.brand-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: rgb(var(--darcula-fg));
+  letter-spacing: -0.5px;
+}
+
+.brand-accent {
+  color: rgb(var(--darcula-green));
 }
 
 /* ===========================
@@ -212,6 +231,112 @@ body {
 .profile-chevron {
   font-size: 0.7rem;
   color: rgb(var(--darcula-comment));
+  transition: transform 0.3s ease;
+}
+
+/* ===========================
+   PROFILE DROPDOWN
+   =========================== */
+
+.profile-dropdown-wrapper {
+  position: relative;
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 200px;
+  background: rgba(var(--darcula-current), 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  
+  /* Animation preparation */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 1050;
+}
+
+/* Desktop Hover */
+@media (hover: hover) and (pointer: fine) {
+  .profile-dropdown-wrapper:hover .profile-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .profile-dropdown-wrapper:hover .profile-chevron {
+    transform: rotate(180deg);
+  }
+}
+
+/* Mobile Click Active State */
+.profile-dropdown-wrapper.active .profile-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.profile-dropdown-wrapper.active .profile-chevron {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgb(var(--darcula-fg));
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  background: transparent;
+}
+
+.profile-dropdown-menu .dropdown-item i {
+  font-size: 1.05rem;
+  color: rgb(var(--darcula-comment));
+  transition: color 0.2s;
+}
+
+.profile-dropdown-menu .dropdown-item:hover {
+  background: rgba(var(--darcula-blue), 0.15);
+  color: rgb(var(--darcula-blue));
+}
+.profile-dropdown-menu .dropdown-item:hover i {
+  color: rgb(var(--darcula-blue));
+}
+
+.profile-dropdown-menu .dropdown-divider {
+  height: 1px;
+  background: rgba(var(--darcula-comment), 0.15);
+  margin: 0.4rem 0;
+}
+
+.profile-dropdown-menu .dropdown-item.text-danger {
+  color: rgb(var(--darcula-red)) !important;
+}
+.profile-dropdown-menu .dropdown-item.text-danger i {
+  color: rgb(var(--darcula-red)) !important;
+}
+.profile-dropdown-menu .dropdown-item.text-danger:hover {
+  background: rgba(var(--darcula-red), 0.15) !important;
+}
+
+.profile-dropdown-menu .dropdown-item.text-success {
+  color: rgb(var(--darcula-green)) !important;
+}
+.profile-dropdown-menu .dropdown-item.text-success i {
+  color: rgb(var(--darcula-green)) !important;
+}
+.profile-dropdown-menu .dropdown-item.text-success:hover {
+  background: rgba(var(--darcula-green), 0.15) !important;
 }
 
 /* ===========================
