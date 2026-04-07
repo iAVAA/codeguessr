@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+                // Usa .replace() così l'intruso non può usare il tasto "Indietro" del browser per tornare qui
+                window.location.replace('/home');
+            }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrazione - CodeGuessr</title>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
