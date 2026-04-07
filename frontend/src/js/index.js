@@ -1,65 +1,54 @@
-const supabaseURL = 'https://npkgtinzieqlfdblunxn.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa2d0aW56aWVxbGZkYmx1bnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNDgzMDIsImV4cCI6MjA4ODkyNDMwMn0.-RpPiuRK0ZQex6NjdgXW0w8kmsUlVArqiofqGPshvps';
-
-supabase = window.supabase.createClient(supabaseURL, supabaseKey);
-// Mostra un messaggio di errore a schermo per 5 secondi
-
-function schermataErrore(messaggio) {
-    const container = document.getElementById('modalErrorAlert');
-    container.textContent = messaggio + " coglione!";
-    container.classList.remove('d-none');
-    setTimeout(() => container.classList.add('d-none'), 5000);
-}
-
-// Chiude il modal Bootstrap della registrazione
-function chiudiModalRegistrazione() {
-    const modalElement  = document.getElementById('RegistrationModal');
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
-    modalInstance.hide();
-}
-
-
-
-async function registraUtente(username, email, password) {
-    const risultato = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-            data: { username: username }
-        }
-    });
-
-    if (risultato.error) {
-        return { successo: false, errore: risultato.error.message };
-    }
-
-    return { successo: true };
-}
-
-
-
-async function handleSubmitRegistrazione(event) {
-
-    event.preventDefault();
-
-    username = document.getElementById('registerUsername').value;
-    email = document.getElementById('registerEmail').value;
-    password = document.getElementById('registerPassword').value;
-
-    const esito = await registraUtente(username, email, password);
-
-    if (!esito.successo) {
-        console.error('Errore Supabase:', esito.errore);
-        schermataErrore(esito.errore);
-        return;                             
-    }
-
-    document.getElementById('registrationForm').reset();
-    chiudiModalRegistrazione();
-}
-
-
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('registrationForm');
-    form.addEventListener('submit', handleSubmitRegistrazione);
+    form.addEventListener('submit', async (event) => {
+
+        event.preventDefault()
+
+        const datiForm = {
+
+            email: document.getElementById('registerEmail').value,
+            password: document.getElementById('registerPassword').value,
+            nickname: document.getElementById('registerUsername').value
+
+        };
+
+        console.log("invio i dati al server");
+
+
+        try{//provo a collegarmi
+
+        const risposta = await fetch('/api/registrazione', {
+
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+
+            body: JSON.stringify(datiForm)
+
+        });
+
+        const risultato = await risposta.json()
+
+        if(!risposta.ok){
+
+            const alertBox = document.getElementById('modalErrorAlert');
+            alertBox.classList.remove('d-none');
+            alertBox.textContent = risultato.errore;
+            setTimeout(() => alertBox.classList.add('d-none'), 5000);
+
+        }else{
+            alert('Ha funzionato !: ' + risultato.messaggio);
+            //TODO:
+            //reinderizzo utente in home page
+            form.reset()
+        }
+
+    } catch (errore){
+        console.error("Errore di rete:", errore);
+        alert("Impossibile connettersi al server.");
+    }
+
+    });
+
 });
