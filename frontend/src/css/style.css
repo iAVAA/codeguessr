@@ -131,16 +131,35 @@ body {
 .navbar-brand-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-decoration: none;
   margin-left: 10px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.navbar-brand-logo:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
 }
 
 .logo-img {
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
   flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(var(--darcula-blue), 0.5));
+}
+
+.brand-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: rgb(var(--darcula-fg));
+  letter-spacing: -0.5px;
+}
+
+.brand-accent {
+  color: rgb(var(--darcula-green));
 }
 
 /* ===========================
@@ -212,6 +231,112 @@ body {
 .profile-chevron {
   font-size: 0.7rem;
   color: rgb(var(--darcula-comment));
+  transition: transform 0.3s ease;
+}
+
+/* ===========================
+   PROFILE DROPDOWN
+   =========================== */
+
+.profile-dropdown-wrapper {
+  position: relative;
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 200px;
+  background: rgba(var(--darcula-current), 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  
+  /* Animation preparation */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 1050;
+}
+
+/* Desktop Hover */
+@media (hover: hover) and (pointer: fine) {
+  .profile-dropdown-wrapper:hover .profile-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .profile-dropdown-wrapper:hover .profile-chevron {
+    transform: rotate(180deg);
+  }
+}
+
+/* Mobile Click Active State */
+.profile-dropdown-wrapper.active .profile-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.profile-dropdown-wrapper.active .profile-chevron {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgb(var(--darcula-fg));
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  background: transparent;
+}
+
+.profile-dropdown-menu .dropdown-item i {
+  font-size: 1.05rem;
+  color: rgb(var(--darcula-comment));
+  transition: color 0.2s;
+}
+
+.profile-dropdown-menu .dropdown-item:hover {
+  background: rgba(var(--darcula-blue), 0.15);
+  color: rgb(var(--darcula-blue));
+}
+.profile-dropdown-menu .dropdown-item:hover i {
+  color: rgb(var(--darcula-blue));
+}
+
+.profile-dropdown-menu .dropdown-divider {
+  height: 1px;
+  background: rgba(var(--darcula-comment), 0.15);
+  margin: 0.4rem 0;
+}
+
+.profile-dropdown-menu .dropdown-item.text-danger {
+  color: rgb(var(--darcula-red)) !important;
+}
+.profile-dropdown-menu .dropdown-item.text-danger i {
+  color: rgb(var(--darcula-red)) !important;
+}
+.profile-dropdown-menu .dropdown-item.text-danger:hover {
+  background: rgba(var(--darcula-red), 0.15) !important;
+}
+
+.profile-dropdown-menu .dropdown-item.text-success {
+  color: rgb(var(--darcula-green)) !important;
+}
+.profile-dropdown-menu .dropdown-item.text-success i {
+  color: rgb(var(--darcula-green)) !important;
+}
+.profile-dropdown-menu .dropdown-item.text-success:hover {
+  background: rgba(var(--darcula-green), 0.15) !important;
 }
 
 /* ===========================
@@ -365,6 +490,225 @@ body {
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* ===========================
+   SIDE PANELS (Missions & Friends)
+   =========================== */
+
+.side-panel {
+  background: rgba(var(--darcula-current), 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: var(--border-radius-xl);
+  padding: 1.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 450px;
+  overflow-y: auto;
+}
+
+.side-panel::-webkit-scrollbar { width: 6px; }
+.side-panel::-webkit-scrollbar-track { background: transparent; }
+.side-panel::-webkit-scrollbar-thumb { background: rgba(var(--darcula-comment), 0.3); border-radius: 4px; }
+.side-panel::-webkit-scrollbar-thumb:hover { background: rgba(var(--darcula-blue), 0.5); }
+
+.panel-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: rgb(var(--darcula-fg));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(var(--darcula-comment), 0.15);
+  margin-bottom: 0.5rem;
+}
+
+.panel-title i {
+  color: rgb(var(--darcula-blue));
+}
+
+.mission-list,
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Generic Side Item */
+.side-item {
+  background: rgba(var(--darcula-bg), 0.5);
+  border: 1px solid rgba(var(--darcula-comment), 0.15);
+  border-radius: 16px;
+  padding: 1rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.side-item:hover {
+  border-color: rgba(var(--darcula-comment), 0.4);
+  background: rgba(var(--darcula-bg), 0.8);
+}
+
+/* Mission Specifics */
+.mission-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.mission-item:hover {
+  border-color: rgba(var(--darcula-orange), 0.5);
+  transform: translateY(-2px);
+}
+
+.mission-completed {
+  opacity: 0.85;
+}
+
+.mission-completed:hover {
+  border-color: rgba(var(--darcula-green), 0.5);
+}
+
+.mission-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgb(var(--darcula-fg));
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.mission-progress-bar {
+  height: 6px;
+  background: rgba(var(--darcula-comment), 0.2);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.mission-progress-bar .progress-fill {
+  height: 100%;
+  background: rgb(var(--darcula-orange));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.mission-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.mission-status {
+  color: rgb(var(--darcula-comment));
+}
+
+.mission-reward {
+  color: rgb(var(--darcula-yellow));
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Friend Specifics */
+.friend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+}
+
+.friend-item:hover:not(.offline-item) {
+  border-color: rgba(var(--darcula-green), 0.5);
+  transform: translateX(4px);
+}
+
+.friend-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.friend-avatar-wrapper {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.friend-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.status-dot {
+  position: absolute;
+  bottom: 0;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgb(var(--darcula-current));
+}
+
+.status-dot.online {
+  background-color: rgb(var(--darcula-green));
+}
+
+.status-dot.offline {
+  background-color: rgba(var(--darcula-comment), 0.7);
+}
+
+.friend-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.friend-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgb(var(--darcula-fg));
+}
+
+.friend-status-text {
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-top: -2px;
+}
+
+.btn-sfida {
+  background: rgba(var(--darcula-green), 0.1);
+  color: rgb(var(--darcula-green));
+  border: 1px solid rgba(var(--darcula-green), 0.3);
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-sfida:hover {
+  background: rgb(var(--darcula-green));
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(var(--darcula-green), 0.3);
+}
+
+.offline-item {
+  opacity: 0.85;
+}
+
+.offline-item:hover {
+  transform: none;
 }
 
 /* ===========================
