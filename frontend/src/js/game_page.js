@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (badgeContainer) badgeContainer.textContent = `${onlineCount} Online`;
   }
 
-  function loadPlayerData() {
+  async function loadPlayerData() {
     const nameEl = document.getElementById('player-name');
     const levelEl = document.getElementById('player-level');
     const cupsEl = document.getElementById('player-cups');
@@ -189,13 +189,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const authWrapper = document.getElementById('auth-buttons-wrapper');
     const profileWrapper = document.getElementById('profile-dropdown-wrapper');
 
-    const cookieStr = getCookie('codeguessr_user');
-    let PLAYER = null;
+    // 1. Leggiamo i dati VERI dal localStorage
+    const isLogged = localStorage.getItem('isLoggedIn');
+    const idGiocatore = localStorage.getItem('id_giocatore');
 
-    if (cookieStr) {
-      try {
-        PLAYER = JSON.parse(cookieStr);
-        // Logged In: Show Profile Dropdown, Hide Auth Buttons
+    if (isLogged === 'true' && idGiocatore) {
+        // L'UTENTE È VERAMENTE LOGGATO!
         if (authWrapper) {
             authWrapper.classList.remove('d-flex');
             authWrapper.classList.add('d-none');
@@ -203,43 +202,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (profileWrapper) {
             profileWrapper.classList.remove('d-none');
         }
-      } catch (e) {
-        console.error("Invalid cookie data", e);
-      }
+
+        console.log("Bentornato! Il tuo ID segreto è:", idGiocatore);
+
+        try {
+            // 1. Facciamo una chiamata al nostro server passando l'ID
+            const risposta = await fetch(`/api/profilo/${idGiocatore}`);
+            
+            if (!risposta.ok) {
+                throw new Error("Profilo non trovato sul server");
+            }
+
+            // 2. Trasformiamo la risposta in un oggetto JavaScript
+            const datiVeri = await risposta.json();
+
+            // 3. Calcoliamo la barra dell'XP (es. ogni livello richiede 1000 XP)
+            const percentualeXp = Math.min(100, (datiVeri.exp % 1000) / 10);
+
+            // 4. Inseriamo i dati VERI nell'oggetto PLAYER!
+            const PLAYER = {
+                name: datiVeri.nickname,
+                level: datiVeri.livello,
+                cups: datiVeri.exp, // Usiamo l'exp totale come se fossero "coppe" per ora
+                xpPercent: percentualeXp,
+                avatar: `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${idGiocatore}&backgroundColor=1e1f21`,
+                missions: [
+                  { title: 'Gioca 5 partite', current: 2, target: 5, reward: '+50 XP', completed: false }
+                ],
+                friends: []
+            };
+
+            // 5. Aggiorniamo l'HTML
+            if (nameEl) nameEl.textContent = PLAYER.name;
+            if (levelEl) levelEl.textContent = PLAYER.level;
+            if (cupsEl) cupsEl.textContent = PLAYER.cups.toLocaleString('it-IT');
+            if (avatarEl) avatarEl.src = PLAYER.avatar;
+
+            setXpProgress(PLAYER.xpPercent);
+            renderMissions(PLAYER.missions);
+            renderFriends(PLAYER.friends);
+
+        } catch (errore) {
+            console.error("Ops, problema col caricamento profilo:", errore);
+            alert("Errore nel caricamento del profilo. Riprova più tardi.");
+        }
+
+    } else {
+        // L'UTENTE NON È LOGGATO! (È un intruso)
+        // Lo buttiamo fuori e lo rimandiamo alla pagina di login
+        window.location.href = '/index.html'; 
     }
-
-    if (!PLAYER) {
-      // Guest fallback when not logged in
-      PLAYER = {
-        name: 'Ospite',
-        level: 0,
-        cups: 0,
-        xpPercent: 0,
-        avatar: `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=guest&backgroundColor=1e1f21`,
-        missions: [
-          { title: 'Crea un account', current: 0, target: 1, reward: '+500 XP', completed: false }
-        ],
-        friends: []
-      };
-      
-      // Not Logged In: Show Auth Buttons, Hide Profile Dropdown completely
-      if (authWrapper) {
-          authWrapper.classList.remove('d-none');
-          authWrapper.classList.add('d-flex');
-      }
-      if (profileWrapper) {
-          profileWrapper.classList.add('d-none');
-      }
-    }
-
-    if (nameEl) nameEl.textContent = PLAYER.name;
-    if (levelEl) levelEl.textContent = PLAYER.level;
-    if (cupsEl) cupsEl.textContent = PLAYER.cups.toLocaleString('it-IT');
-    if (avatarEl) avatarEl.src = PLAYER.avatar;
-
-    setXpProgress(PLAYER.xpPercent);
-    renderMissions(PLAYER.missions);
-    renderFriends(PLAYER.friends);
   }
 
   // --- Dropdown Mobile Setup --- //
@@ -263,16 +275,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (menuBtnLogout) {
     menuBtnLogout.addEventListener('click', (e) => {
       e.preventDefault();
-      deleteCookie('codeguessr_user');
-      window.location.reload();
+      // Svuotiamo la memoria del browser
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('id_giocatore');
+      // Torniamo alla pagina iniziale
+      window.location.href = '/index.html';
     });
   }
 
+  // (Se per qualche motivo i bottoni di login fossero visibili)
   const btnHeaderLogin = document.getElementById('btn-header-login');
   if (btnHeaderLogin) {
     btnHeaderLogin.addEventListener('click', (e) => {
       e.preventDefault();
-      window.simulateLogin();
+      window.location.href = '/index.html';
     });
   }
 
@@ -280,11 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnHeaderSignup) {
     btnHeaderSignup.addEventListener('click', (e) => {
       e.preventDefault();
-      // Per il momento simuliamo log-in anche su Signup
-      window.simulateLogin();
+      window.location.href = '/index.html';
     });
   }
-
   loadPlayerData();
 
   // ─── Typing Animation for Code Decoration ────────────────────────────────────

@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => alertBox.classList.add('d-none'), 5000);
         }else{
             alert('Login riuscito !: ' + risultato.messaggio);
-            localStorage.setItem('userId', risultato.user); // Salvo l'ID utente per sessioni future
+            localStorage.setItem('id_giocatore', risultato.user); // Salvo l'ID utente per sessioni future
             localStorage.setItem('isLoggedIn', 'true'); // Flag per indicare che l'utente è loggato
             window.location.href = '/home';
             form.reset()

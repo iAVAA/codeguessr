@@ -3,6 +3,13 @@
 
 <head>
     <meta charset="UTF-8" />
+    <script>
+        // Controlla la valigia prima ancora di caricare il resto della pagina
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            // Usa .replace() così l'intruso non può usare il tasto "Indietro" del browser per tornare qui
+            window.location.replace('/index.html');
+        }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description"
         content="CodeGuessr – Guess the programming language from random code snippets. Single player or multiplayer. Train your developer intuition." />

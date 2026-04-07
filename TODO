@@ -7,15 +7,17 @@ Landing_page.html
 
 
 database
-
-1. aggiungere i dati mancanti tra cui. exp, livello, 
+1. aggiungere la tabella per le partite -> fatto
 2. aggiungere le partite ecc.
 
 
 login_page.html
 
-1.farlo andare alla game page dopo login succesful
+1.farlo andare alla game page dopo login succesful-> fatto
 
 generali
+
+index.html
+1. non si sa per quale motivo lo sfondo ha un padding a destra
 
 

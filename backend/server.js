@@ -16,7 +16,7 @@ const ROOT = path.join(__dirname, '..', 'frontend');
 // INIZIALIZZAZIONE SUPABASE
 // ==========================================
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_PUBLISHABLE_DEFAULT_KEY; // Usiamo il nome standard della dashboard
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Usiamo il nome standard della dashboard
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
@@ -42,6 +42,33 @@ app.get('/home', (req, res) => {
 
 app.get('/login', (req, res) => {
     res.sendFile(path.join(ROOT, 'src','pages', 'login_page.html')); 
+});
+
+app.get('/reset_password.html', (req, res) => {
+    res.sendFile(path.join(ROOT, 'src','pages', 'reset_password.html')); 
+});
+
+// Recupero dati profilo giocatore
+app.get('/api/profilo/:id', async (req, res) => {
+    const idDaCercare = req.params.id; // L'ID che ci manderà il frontend
+
+    try {
+        // Chiediamo a Supabase di cercare questo giocatore
+        const { data, error } = await supabase
+            .from('giocatore')
+            .select('nickname, livello, exp')
+            .eq('id_giocatore', idDaCercare)
+            .single(); // Vogliamo un solo risultato
+
+        if (error) throw error;
+
+        // Se lo trova, mandiamo i dati al frontend
+        res.status(200).json(data);
+
+    } catch (err) {
+        console.error("Errore recupero profilo:", err.message);
+        res.status(500).json({ errore: 'Impossibile recuperare il profilo' });
+    }
 });
 
 // ==========================================
@@ -105,6 +132,24 @@ app.post('/api/login', async (req, res) => {
 
 });
 
+app.post('/api/reset_password', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+            options: {
+                redirectTo: 'http://localhost:3000/login' // Reindirizza al login dopo il reset
+            }
+        });
+        if (error) throw error;
+
+        res.status(200).json({ messaggio: 'Email di reset inviata con successo!' });
+
+    } catch (err) {
+        console.error("Errore durante il reset della password:", err.message);
+        res.status(400).json({ errore: 'Impossibile inviare l\'email di reset.' });
+    }
+});
 
 // ==========================================
 // AVVIO SERVER

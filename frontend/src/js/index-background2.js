@@ -1,11 +1,17 @@
 // Lista delle parole da inserire nella griglia
-const words = [
+const words2 = [
     'MAIN', 'THIS', 'PUBLIC', 'PRIVATE', 'INT', 'FLOAT',
     'CLASS', 'VOID', 'RETURN', 'STATIC', 'STRING', 'BOOLEAN',
     'TRUE', 'FALSE', 'NULL', 'FUNCTION', 'CONST', 'LET', 'IF', 'ELSE',
     'ARRAY', 'OBJECT', 'PROMISE', 'AWAIT', 'ASYNC'
 ];
 
+const words= [
+    'COGLIONE', 'PENE', 'VAGINA', 'TETTE', 'MERDA', 'CAZZO', 'FICA', 'STRONZO',
+    'IAVA','PUTTANA','TROIA','DANIELE','GIORGIO','FROCIO','GAY','CONSOLE'
+];
+
+const INTERVALLO_INSERIMENTO = 800;
 // Elemento HTML che contiene tutte le celle
 const container = document.getElementById('codeTrack');
 
@@ -148,7 +154,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
     // Da qui in poi, aggiunge una nuova parola ogni 1.2 secondi
-    setInterval(placeWord, 3000);
+    setInterval(placeWord, INTERVALLO_INSERIMENTO);
 });
 
 // ─────────────────────────────────────────────
