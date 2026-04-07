@@ -37,7 +37,11 @@ app.get('/porco', (req, res) => {
 });
 
 app.get('/home', (req, res) => {
-    res.sendFile(path.join(ROOT, '/pages/game_page.html')); 
+    res.sendFile(path.join(ROOT, 'src','pages', 'game_page.html')); 
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(ROOT, 'src','pages', 'login_page.html')); 
 });
 
 // ==========================================

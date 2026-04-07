@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Login riuscito !: ' + risultato.messaggio);
             localStorage.setItem('userId', risultato.user); // Salvo l'ID utente per sessioni future
             localStorage.setItem('isLoggedIn', 'true'); // Flag per indicare che l'utente è loggato
-            window.location.href = '/home.html'; // Reindirizzo alla home page dopo il login
+            window.location.href = '/home';
             form.reset()
         }
     } catch (errore){
