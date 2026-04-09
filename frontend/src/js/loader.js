@@ -32,7 +32,7 @@ export function initLoader() {
     loaderEl.innerHTML = `
       <!-- Logo immagine con pulsazione -->
       <div class="gl-logo-wrapper" aria-hidden="true">
-        <img class="gl-logo-img" src="../assets/img/logo.webp" alt="CodeGuessr" />
+        <img class="gl-logo-img" src="/src/assets/img/logo.webp" alt="CodeGuessr" />
         <!-- Anelli SVG decorativi attorno al logo -->
         <svg class="gl-ring gl-ring--outer" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="45"

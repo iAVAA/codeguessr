@@ -137,18 +137,11 @@
 
                         <!-- Title -->
                         <h1 class="hero-title mb-2">
-                            Riconosci il<br />
-                            <span class="hero-title-accent">&lt;codice/&gt;</span>
+                            <span class="hero-title-text">Code<span class="hero-title-accent">Guessr</span></span>
                         </h1>
 
                         <!-- Code snippet decoration -->
-                        <div class="code-decoration">
-                            <span class="cm">// Quale linguaggio è questo?</span><br />
-                            <span class="kw">def</span> <span class="fn">solve</span>(n: <span class="fn">Int</span>): <span
-                                class="fn">List</span>[<span class="fn">Int</span>] =<br />
-                            &nbsp;&nbsp;(1 to n).<span class="fn">filter</span>(x => x % 3 == 0 || x % 5 == 0).<span
-                                class="fn">toList</span>
-                        </div>
+                        <div class="code-decoration"></div>
 
                         <!-- Play Buttons -->
                         <div class="play-buttons">
@@ -251,11 +244,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     
     <script type="module">
-        import { initLoader } from 'src/js/loader.js';
+        import { initLoader } from '/src/js/loader.js';
         initLoader();
     </script>
-    
-    <script src="src/js/game_page.js"></script>
+
+    <script src="src/js/game_page/theme.js"></script>
+    <script src="src/js/game_page/auth.js"></script>
+    <script src="src/js/game_page/ui.js"></script>
+    <script src="src/js/game_page/typing.js"></script>
+    <script type="module" src="src/js/game_page/profile.js"></script>
 </body>
 
 </html>
