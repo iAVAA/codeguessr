@@ -2,11 +2,22 @@
   "name": "codeguessr-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "GeoGuessr backend",
+  "description": "GeoGuessr-style game for developers: guess the language, framework, or context from random code snippets. Learn, train your intuition, and have fun.",
+  "homepage": "https://github.com/iAVAA/codeguessr#readme",
+  "bugs": {
+    "url": "https://github.com/iAVAA/codeguessr/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iAVAA/codeguessr.git"
+  },
+  "license": "MIT",
+  "author": "Salvatore Iavarone, Michele Pio Forlani",
+  "type": "commonjs",
   "main": "server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.102.1",
