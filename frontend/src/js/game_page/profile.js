@@ -3,7 +3,7 @@
  * Caricamento profilo giocatore, XP ring, missioni, amici
  */
 
-import { getSession } from './auth.js';
+import { getSession } from '../managers/auth.js';
 
 const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
 const XP_PER_LEVEL = 1000;

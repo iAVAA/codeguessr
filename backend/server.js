@@ -48,6 +48,10 @@ app.get('/reset_password.html', (req, res) => {
     res.sendFile(path.join(ROOT, 'src','pages', 'reset_password.html')); 
 });
 
+app.get('/profilo', (req, res) => {
+    res.sendFile(path.join(ROOT, 'src', 'pages', 'profile_page.html')); 
+});
+
 // Recupero dati profilo giocatore
 app.get('/api/profilo/:id', async (req, res) => {
     const idDaCercare = req.params.id; // L'ID che ci manderà il frontend
