@@ -126,7 +126,7 @@ async function fetchPlayerData(idGiocatore) {
 
 function buildPlayerFromAPI(data, idGiocatore) {
   return {
-    name: data.nickname,
+    name: data.user,
     level: data.livello,
     cups: data.exp,
     xpPercent: Math.min(100, (data.exp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100)),

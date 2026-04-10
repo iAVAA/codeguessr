@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Ha funzionato !: ' + risultato.messaggio);
             //TODO:
             //reinderizzo utente in home page
+            localStorage.setItem('id_giocatore', risultato.user); // Salvo l'ID utente per sessioni future
+            localStorage.setItem('isLoggedIn', 'true'); // Flag per indicare che l'utente è loggato
+            window.location.href = '/home';
             form.reset()
         }
 

@@ -89,7 +89,7 @@ function renderFriends(friends) {
     if (!container) return;
 
     if (!friends || friends.length === 0) {
-        container.innerHTML = `<div class="text-center text-darcula-comment py-4">Non hai ancora aggiunto amici.</div>`;
+        container.innerHTML = `<div class="text-center text-darcula-comment py-4">Non ho amici per pensare a te.</div>`;
         return;
     }
 
@@ -138,36 +138,126 @@ function updateProfileUI(playerData) {
 // ─── API / Data Fetching (Mockup) ─────────────────────────────────────────────
 
 async function fetchFullProfileData(userId) {
-    // In produzione, qui farai una `fetch(/api/profilo/${userId})`
-    // Per ora, restituiamo dati fittizi realistici
+    const res = await fetch(`/api/profilo/${userId}`);
+    if (!res.ok) throw new Error(`Profilo non trovato (${res.status})`);
+    
+    const dataProfilo = await res.json();   
+
+    // 1. Dobbiamo trasformare la lista di ID in una lista di Oggetti per il frontend
+    const res1 = await fetch(`/api/amici/${userId}`);
+    if (!res1.ok) throw new Error(`Amici non trovati (${res1.status})`);
+    const amiciData = await res1.json();
+
+    const amiciFormattati = amiciData.amici.map(amico => ({
+        name: amico.user,
+        avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
+        online: "online"
+    }));
+
+    const amiciInviatiFormattati = amiciData.inviate.map(amico => ({
+        name: amico.user,
+        avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
+        online: amico.online
+    }));
+
+    const amiciRicevutiFormattati = amiciData.ricevute.map(amico => ({
+        name: amico.user,
+        avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
+        online: amico.online
+    }));
+
+    // 2. Calcoliamo quante partite ha fatto in base all'array matches
+    const totalePartite = 0
+
+    // 3. Restituiamo la struttura ESATTA che l'interfaccia si aspetta
+    return {
+        id: dataProfilo.userid,
+        name: dataProfilo.user,
+        level: dataProfilo.livello,
+        xp: dataProfilo.exp,
+        avatar: `${AVATAR_BASE}?seed=${dataProfilo.userid}&backgroundColor=1e1f21`,
+        
+        // Passiamo l'array trasformato, non i semplici ID
+        friends: amiciFormattati, 
+        sentRequests: amiciInviatiFormattati,
+        receivedRequests: amiciRicevutiFormattati,
+        
+        // Il frontend VUOLE l'oggetto stats, dobbiamo passarglielo per forza (anche a zero)
+        stats: {
+            played: totalePartite,
+            won: 0,
+            lost: 0,
+            winRate: 0
+        },
+        
+        // Mappiamo i match del backend sulla history
+        history: []
+    };
+
+    /*
+
+    esempio di come dovrebbe essere strutturato il return (dati fittizi per test):
+
     return new Promise(resolve => {
+
         setTimeout(() => {
+
             resolve({
+
                 id: userId,
+
                 name: "Salvatore Iavarone",
+
                 level: 24,
+
                 xp: 24530,
+
                 avatar: `${AVATAR_BASE}?seed=${userId}&backgroundColor=1e1f21`,
+
                 stats: {
+
                     played: 128,
+
                     won: 84,
+
                     lost: 44,
+
                     winRate: Math.round((84 / 128) * 100)
+
                 },
+
                 history: [
+
                     { result: 'win', language: 'Python', details: 'Single Player • Difficoltà: Normale', xpChange: 24, time: '2 ore fa' },
+
                     { result: 'loss', language: 'Rust', details: 'Multiplayer vs @Mike', xpChange: -10, time: 'Ieri' },
+
                     { result: 'win', language: 'JavaScript', details: 'Single Player • Difficoltà: Difficile', xpChange: 40, time: '3 giorni fa' },
+
                     { result: 'win', language: 'C++', details: 'Multiplayer vs @Anna', xpChange: 35, time: '1 sett. fa' }
+
                 ],
+
                 friends: [
+
                     { name: 'MikeCoder', avatar: `${AVATAR_BASE}?seed=mike`, online: true },
+
                     { name: 'AnnaDev', avatar: `${AVATAR_BASE}?seed=anna`, online: false },
+
                     { name: 'SyntaxError99', avatar: `${AVATAR_BASE}?seed=syntax`, online: false }
+
                 ]
+
             });
+
         }, 500); // Simula ritardo di rete
+
+
+
     });
+
+    */
+
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────

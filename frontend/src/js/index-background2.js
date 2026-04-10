@@ -7,8 +7,7 @@ const words2 = [
 ];
 
 const words= [
-    'COGLIONE', 'PENE', 'VAGINA', 'TETTE', 'MERDA', 'CAZZO', 'FICA', 'STRONZO',
-    'IAVA','PUTTANA','TROIA','DANIELE','GIORGIO','FROCIO','GAY','CONSOLE'
+    'IAVA'
 ];
 
 const INTERVALLO_INSERIMENTO = 800;
