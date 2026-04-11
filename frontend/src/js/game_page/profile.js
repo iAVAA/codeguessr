@@ -123,8 +123,39 @@ async function fetchPlayerData(idGiocatore) {
   if (!res.ok) throw new Error(`Profilo non trovato (${res.status})`);
   return res.json();
 }
+async function fetchPlayerAmici(idGiocatore) {
 
-function buildPlayerFromAPI(data, idGiocatore) {
+  const res1 = await fetch(`/api/amici/${idGiocatore}`);
+  if (!res1.ok) throw new Error(`Amici non trovati (${res1.status})`);
+  const amiciData = await res1.json();
+
+  const amiciFormattati = amiciData.amici.map(amico => ({
+    name: amico.user,
+    avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
+    online: "online"
+  }));
+
+  const amiciInviatiFormattati = amiciData.inviate.map(amico => ({
+    name: amico.user,
+    avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
+    online: amico.online
+  }));
+
+  const amiciRicevutiFormattati = amiciData.ricevute.map(amico => ({
+    name: amico.user,
+    avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
+    online: amico.online
+  }));
+
+  return {
+    amici: amiciFormattati,
+    inviate: amiciInviatiFormattati,
+    ricevute: amiciRicevutiFormattati
+  };
+
+}
+
+function buildPlayerFromAPI(data, idGiocatore, amiciData) {
   return {
     name: data.user,
     level: data.livello,
@@ -134,7 +165,7 @@ function buildPlayerFromAPI(data, idGiocatore) {
     missions: [
       { title: 'Gioca 5 partite', current: 2, target: 5, reward: '+50 XP', completed: false },
     ],
-    friends: [],
+    friends: amiciData.amici
   };
 }
 
@@ -152,7 +183,8 @@ async function loadPlayerData() {
 
   try {
     const apiData = await fetchPlayerData(idGiocatore);
-    const player = buildPlayerFromAPI(apiData, idGiocatore);
+    const amiciData = await fetchPlayerAmici(idGiocatore);
+    const player = buildPlayerFromAPI(apiData, idGiocatore,amiciData);
     updateProfileUI(player);
   } catch (err) {
     console.error('[Profile] Errore caricamento profilo:', err);
