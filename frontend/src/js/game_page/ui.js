@@ -6,10 +6,10 @@
 // ─── Toast ───────────────────────────────────────────────────────────────────
 
 const TOAST_COLORS = {
-  blue:   '--darcula-blue',
-  green:  '--darcula-green',
+  blue: '--darcula-blue',
+  green: '--darcula-green',
   orange: '--darcula-orange',
-  red:    '--darcula-red',
+  red: '--darcula-red',
 };
 
 /**
@@ -17,7 +17,7 @@ const TOAST_COLORS = {
  * @param {string} message
  * @param {'blue'|'green'|'orange'|'red'} [color='blue']
  */
-export function showToast(message, color = 'blue') {
+function showToast(message, color = 'blue') {
   document.getElementById('cg-toast')?.remove();
 
   const varName = TOAST_COLORS[color] ?? TOAST_COLORS.blue;
@@ -63,13 +63,13 @@ function initGameButtons() {
   document.getElementById('btn-singleplayer')?.addEventListener('click', () => {
     console.log('[CodeGuessr] Starting Single Player…');
     showToast('🎮 Single Player – Caricamento partita…', 'blue');
-    // TODO: navigare alla partita singleplayer
+    window.location.href = '/match';
   });
 
   document.getElementById('btn-multiplayer')?.addEventListener('click', () => {
     console.log('[CodeGuessr] Starting Multiplayer…');
     showToast('👥 Multiplayer – Creazione stanza…', 'green');
-    // TODO: navigare alla lobby multiplayer
+    window.location.href = '/match';
   });
 }
 

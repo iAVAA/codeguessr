@@ -100,6 +100,11 @@ app.get('/profilo', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'profile_page.html'));
 });
 
+// Pagina di partita
+app.get('/match', (req, res) => {
+    res.sendFile(path.join(ROOT, 'src', 'pages', 'match_page.html'));
+});
+
 // ==========================================
 // API AMICI (GET)
 // ==========================================

@@ -1915,3 +1915,197 @@ body.loader-open { overflow: hidden !important; }
     padding: 1rem;
   }
 }
+
+/* ===========================
+   MATCH PAGE
+   =========================== */
+
+.match-main {
+  position: relative;
+  overflow: hidden;
+}
+
+.match-player-card {
+  background: rgba(var(--darcula-current), 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  min-width: 250px;
+}
+
+.match-avatar {
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  background: #1e1f21;
+}
+
+.match-player-name {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: rgb(var(--darcula-fg));
+}
+
+.match-player-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: rgba(var(--darcula-fg), 0.7);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.health-fill {
+  background: linear-gradient(90deg, #28a745, #5cb85c);
+  transition: width 0.5s ease-in-out, background-color 0.5s ease;
+  box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+}
+
+.health-fill.warning {
+  background: linear-gradient(90deg, #ffc107, #ffcd39);
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+}
+
+.health-fill.danger {
+  background: linear-gradient(90deg, #dc3545, #e4606d);
+  box-shadow: 0 0 10px rgba(220, 53, 69, 0.4);
+}
+
+.match-round-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: rgba(var(--darcula-fg), 0.7);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 0.3rem;
+}
+
+.match-timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 40px rgba(52, 152, 219, 0.4);
+  transition: all 0.3s ease;
+}
+
+.match-timer.hurry {
+  color: #ff5f56;
+  text-shadow: 0 0 20px rgba(255, 95, 86, 0.8), 0 0 40px rgba(255, 95, 86, 0.4);
+  animation: pulseTimer 1s infinite;
+}
+
+@keyframes pulseTimer {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.vscode-match-window {
+  background: rgba(var(--darcula-bg), 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px rgba(var(--darcula-green), 0.1);
+}
+
+.vscode-titlebar {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(var(--darcula-bg), 0.9);
+  border-bottom: 1px solid rgba(var(--darcula-comment), 0.2);
+  position: relative;
+}
+
+.vscode-mac-btns {
+  display: flex;
+  gap: 8px;
+  position: absolute;
+  left: 1rem;
+}
+
+.vscode-mac-btns .mac-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.vscode-mac-btns .close { background-color: #ff5f56; box-shadow: inset 0 0 0 1px #e0443e; }
+.vscode-mac-btns .minimize { background-color: #ffbd2e; box-shadow: inset 0 0 0 1px #dea123; }
+.vscode-mac-btns .maximize { background-color: #27c93f; box-shadow: inset 0 0 0 1px #1aab29; }
+
+.vscode-title {
+  width: 100%;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: rgba(var(--darcula-fg), 0.5);
+}
+
+.vscode-editor-body {
+  flex-grow: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  color: rgb(var(--darcula-fg));
+}
+
+.vscode-editor-body pre {
+  margin: 0;
+}
+
+.match-guess-container {
+  background: rgba(var(--darcula-current), 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: 20px;
+}
+
+.guess-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: rgb(var(--darcula-fg));
+}
+
+.guess-input {
+  background: rgba(var(--darcula-bg), 0.6) !important;
+  border: 1px solid rgba(var(--darcula-comment), 0.3) !important;
+  color: rgb(var(--darcula-fg)) !important;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0.8rem 1.2rem;
+}
+
+.guess-input:focus {
+  border-color: rgb(var(--darcula-green)) !important;
+  box-shadow: 0 0 15px rgba(var(--darcula-green), 0.4) !important;
+  outline: none;
+}
+
+.guess-btn {
+  background: linear-gradient(135deg, rgb(var(--darcula-green)), #2eb872) !important;
+  border: none !important;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0 2rem;
+  color: #fff !important;
+  box-shadow: 0 4px 15px rgba(var(--darcula-green), 0.4);
+  transition: all 0.2s ease;
+}
+
+.guess-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--darcula-green), 0.6);
+}

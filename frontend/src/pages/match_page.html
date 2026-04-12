@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.replace('/index.html');
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeGuessr - Partita</title>
+  <link rel="icon" type="image/webp" href="src/assets/img/logo.webp" />
+
+  <!-- Anti-FOUC -->
+  <script id="fouc-prevention">
+    (function () {
+      var t = localStorage.getItem('codeguessr-theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (t === 'light' || (!t && !prefersDark)) {
+        document.documentElement.classList.add('light-mode');
+      }
+    })();
+  </script>
+
+  <!-- Nessun highlight.js qui, caricheremo Monaco tramite script AMD -->
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="src/css/style.css" />
+
+  <style id="anti-flash">
+    body.loader-open>*:not(#globalLoader):not(#noscript-wall):not(script):not(style) {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <script type="module">
+    import { initLoader } from '/src/js/loader.js';
+    initLoader();
+  </script>
+
+  <!-- Pulsante esci -->
+  <a href="/home" class="btn btn-sm btn-outline-danger m-3 position-absolute z-3" style="top:0; left:0;"><i
+      class="bi bi-box-arrow-left"></i> Abbandona</a>
+
+  <main class="match-main" id="match-main">
+    <div class="container-fluid w-100 p-4"
+      style="max-width: 1400px; display: flex; flex-direction: column; min-height: 100vh;">
+
+      <!-- TOP: SCOREBOARD -->
+      <div class="match-scoreboard row align-items-center mb-4 mt-4">
+
+        <!-- Player 1 -->
+        <div class="col-12 col-md-4 d-flex justify-content-start mb-3 mb-md-0">
+          <div class="match-player-card">
+            <div class="d-flex align-items-center gap-3">
+              <img src="" alt="Player" class="match-avatar" id="match-p1-avatar">
+              <div class="match-player-info">
+                <div class="match-player-name text-truncate" id="match-p1-name" style="max-width: 150px;">Caricamento...
+                </div>
+                <div class="match-player-stats">
+                  <span class="stat-tier">LVL <span id="match-p1-lvl">--</span></span>
+                  <span class="stat-divider">&bull;</span>
+                  <span class="profile-cups">
+                    <i class="bi bi-trophy-fill"></i> <span id="match-p1-cups">--</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- Health Bar -->
+            <div class="match-health-wrap mt-2">
+              <div class="progress"
+                style="height: 12px; background: rgba(var(--darcula-bg), 0.8); border: 1px solid rgba(var(--darcula-comment), 0.3);">
+                <div class="progress-bar health-fill" id="match-p1-health" role="progressbar" style="width: 100%;"
+                  aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <div class="health-text text-end mt-1"
+                style="font-size: 0.75rem; color: rgb(var(--darcula-comment)); font-family: 'JetBrains Mono', monospace;">
+                <span id="match-p1-hp">100</span>/100
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Data -->
+        <div
+          class="col-12 col-md-4 d-flex flex-column align-items-center text-center order-first order-md-0 mb-3 mb-md-0">
+          <div class="match-round-text" id="match-round">Round 1/5</div>
+          <div class="match-timer" id="match-timer">00:30</div>
+        </div>
+
+        <!-- Player 2 -->
+        <div class="col-12 col-md-4 d-flex justify-content-end">
+          <div class="match-player-card match-opponent-card text-end">
+            <div class="d-flex align-items-center gap-3 flex-row-reverse">
+              <img src="" alt="Opponent" class="match-avatar" id="match-p2-avatar">
+              <div class="match-player-info">
+                <div class="match-player-name text-truncate" id="match-p2-name" style="max-width: 150px;">Caricamento...
+                </div>
+                <div class="match-player-stats justify-content-end">
+                  <span class="profile-cups">
+                    <i class="bi bi-trophy-fill"></i> <span id="match-p2-cups">--</span>
+                  </span>
+                  <span class="stat-divider">&bull;</span>
+                  <span class="stat-tier">LVL <span id="match-p2-lvl">--</span></span>
+                </div>
+              </div>
+            </div>
+            <!-- Health Bar -->
+            <div class="match-health-wrap mt-2">
+              <div class="progress"
+                style="height: 12px; background: rgba(var(--darcula-bg), 0.8); border: 1px solid rgba(var(--darcula-comment), 0.3);">
+                <div class="progress-bar health-fill" id="match-p2-health" role="progressbar" style="width: 100%;"
+                  aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <div class="health-text text-start mt-1"
+                style="font-size: 0.75rem; color: rgb(var(--darcula-comment)); font-family: 'JetBrains Mono', monospace;">
+                <span id="match-p2-hp">100</span>/100
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE: CODE WINDOW -->
+      <div class="row flex-grow-1 justify-content-center align-items-center">
+        <div class="col-12 col-xl-10">
+          <div class="vscode-match-window shadow-lg">
+            <!-- Fake Titlebar -->
+            <div class="vscode-titlebar">
+              <div class="vscode-mac-btns">
+                <span class="mac-btn close"></span>
+                <span class="mac-btn minimize"></span>
+                <span class="mac-btn maximize"></span>
+              </div>
+              <div class="vscode-title"><i class="bi bi-file-earmark-code"></i> snippet.txt - Visual Studio Code</div>
+            </div>
+            <!-- Editor -->
+            <div class="vscode-editor-body p-0" style="display: flex; flex-direction: column;">
+              <div id="monaco-container"
+                style="flex-grow: 1; width: 100%; height: 100%; min-height: 400px; display: block;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM: GUESS BOX -->
+      <div class="row justify-content-center mt-5 mb-3">
+        <div class="col-12 col-md-8 col-lg-6 text-center">
+          <div class="match-guess-container p-4">
+            <h5 class="guess-label mb-3">Indovina il linguaggio <i class="bi bi-keyboard"></i></h5>
+            <form id="guess-form" class="d-flex gap-2">
+              <input type="text" class="form-control guess-input" id="guess-input"
+                placeholder="Es. Python, JavaScript..." autocomplete="off" required>
+              <button type="submit" class="btn btn-primary guess-btn"><i class="bi bi-send-fill"></i> Invia</button>
+            </form>
+            <div id="guess-feedback" class="mt-2 text-center text-darcula-comment"
+              style="min-height: 24px; font-weight:500;">Attesa risposta...</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Monaco Editor Loader -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+
+  <script src="/src/js/managers/theme.js"></script>
+  <script type="module" src="/src/js/match_page/match.js"></script>
+</body>
+
+</html>
