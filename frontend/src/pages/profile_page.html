@@ -71,12 +71,6 @@
         </a>
 
         <div class="d-flex align-items-center gap-3">
-            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-                <div class="theme-toggle-thumb">
-                    <i class="bi bi-moon-stars-fill moon-icon"></i>
-                    <i class="bi bi-sun-fill sun-icon"></i>
-                </div>
-            </button>
 
             <div class="profile-dropdown-wrapper" id="profile-dropdown-wrapper">
                 <div class="profile-widget" id="profile-widget" tabindex="0">
@@ -437,8 +431,8 @@
         <div class="cg-settings-footer">
           <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0-alpha</span>
           <div class="d-flex gap-2">
-            <button class="cg-btn-secondary" id="settings-reset">Ripristina</button>
-            <button class="cg-btn-primary" id="settings-save">Salva</button>
+            <button class="cg-btn-secondary" id="settings-cancel">Annulla</button>
+            <button class="cg-btn-primary" id="settings-save">Applica</button>
           </div>
         </div>
 
@@ -446,20 +440,52 @@
     </div>
 
 
-    <footer class="site-footer mt-auto">
+    <!-- =====================
+       FOOTER
+       ===================== -->
+    <footer class="site-footer" id="site-footer">
         <div class="container">
+
             <div class="footer-bottom">
+
+                <!-- Left: copyright + authors + license -->
                 <div class="footer-copy">
-                    <span class="footer-brand"><i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong></span>
-                    <span class="footer-sep">&mdash;</span>
-                    <span class="footer-authors">Salvatore Iavarone &amp; Michele Pio Forlani</span>
-                    <span class="footer-sep">&bull;</span>
-                    <a href="#" class="footer-license">Licenza MIT</a>
+                    <!-- Riga 1: brand -->
+                    <span class="footer-brand">
+                        <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
+                    </span>
+                    <!-- Separatore desktop -->
+                    <span class="footer-sep" aria-hidden="true">&mdash;</span>
+                    <!-- Riga 2: autori -->
+                    <span class="footer-authors">
+                        Salvatore Iavarone &amp; Michele Pio Forlani
+                    </span>
+                    <!-- Separatore desktop -->
+                    <span class="footer-sep" aria-hidden="true">&bull;</span>
+                    <!-- Licenza + versione -->
+                    <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
+                        class="footer-license">Licenza MIT</a>
+                    <span class="footer-sep" aria-hidden="true">&bull;</span>
+                    <span class="footer-version">v1.0.0-alpha</span>
                 </div>
+
+
+                <!-- Right: social + site links -->
                 <div class="footer-links-inline">
-                    <a href="#" class="social-btn"><i class="bi bi-github"></i></a>
+                    <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
+                        title="GitHub">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/in/salvatoreiavarone" class="social-btn" aria-label="LinkedIn" title="LinkedIn">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr" target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
+                        <i class="bi bi-envelope-fill"></i>
+                    </a>
                 </div>
+
             </div>
+
         </div>
     </footer>
 

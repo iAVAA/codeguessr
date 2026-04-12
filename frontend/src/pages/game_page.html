@@ -2,466 +2,411 @@
 <html lang="it">
 
 <head>
-    <meta charset="UTF-8" />
-    <script>
-        // Controlla la valigia prima ancora di caricare il resto della pagina
-        if (localStorage.getItem('isLoggedIn') !== 'true') {
-            // Usa .replace() così l'intruso non può usare il tasto "Indietro" del browser per tornare qui
-            window.location.replace('/index.html');
-        }
-    </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"
-        content="CodeGuessr - Guess the programming language from random code snippets. Single player or multiplayer. Train your developer intuition." />
-    <meta name="theme-color" content="#313335" />
-    <title>CodeGuessr - Lobby</title>
-    <link rel="icon" type="image/webp" href="src/assets/img/logo.webp" />
-
-    <!-- Anti-FOUC: applica il tema dal localStorage PRIMA che il CSS venga parsato -->
-    <script id="fouc-prevention">
-        (function () {
-            var t = localStorage.getItem('codeguessr-theme');
-            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (t === 'light' || (!t && !prefersDark)) {
-                document.documentElement.classList.add('light-mode');
-            }
-        })();
-    </script>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">    <link rel="stylesheet" href="src/css/style.css">
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet" />
-        
-    <link rel="stylesheet" href="src/css/style.css" />
-
-    <style id="anti-flash">
-        body.loader-open > *:not(#globalLoader):not(#noscript-wall):not(script):not(style) {
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <script>
+    // Controlla la valigia prima ancora di caricare il resto della pagina
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      // Usa .replace() così l'intruso non può usare il tasto "Indietro" del browser per tornare qui
+      window.location.replace('/index.html');
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="CodeGuessr - Guess the programming language from random code snippets. Single player or multiplayer. Train your developer intuition." />
+  <meta name="theme-color" content="#313335" />
+  <title>CodeGuessr - Lobby</title>
+  <link rel="icon" type="image/webp" href="src/assets/img/logo.webp" />
+  <!-- Anti-FOUC: applica il tema dal localStorage PRIMA che il CSS venga parsato -->
+  <script id="fouc-prevention">
+    (function () {
+      var t = localStorage.getItem('codeguessr-theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (t === 'light' || (!t && !prefersDark)) {
+        document.documentElement.classList.add('light-mode');
+      }
+    })();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="src/css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="src/css/style.css" />
+  <style id="anti-flash">
+    body.loader-open>*:not(#globalLoader):not(#noscript-wall):not(script):not(style) {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  </style>
 </head>
 
 <body>
-    <noscript>
-      <div id="noscript-wall" role="alert" aria-live="assertive">
-        <div class="ns-logo">
-          <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" onerror="this.style.display='none'">
-          <span>Code<b>Guessr</b></span>
-        </div>
-
-        <div class="ns-icon-wrap" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>
-          <h1 class="ns-title">JavaScript <span>disabilitato</span></h1>
-
-          <p class="ns-desc">
-            CodeGuessr richiede JavaScript per funzionare. Senza di esso non è possibile
-            caricare le partite, il profilo o le classifiche.
-          </p>
-
-          <div class="ns-code" aria-label="Istruzioni per abilitare JavaScript">
-            <span class="c-dim"># Come abilitare JavaScript</span><br>
-            <span class="c-kw">Chrome</span>  →  Impostazioni > Privacy > JavaScript → <span class="c-val">Consentito</span><br>
-            <span class="c-kw">Firefox</span> →  <span class="c-val">about:config</span> > javascript.enabled → <span class="c-val">true</span><br>
-            <span class="c-kw">Safari</span>  →  Preferenze > Sicurezza > Abilita JavaScript → <span class="c-val"><i class="bi bi-check"></i></span>
-          </div>
-
-          <div class="ns-links">
-            <a class="ns-link" href="https://enable-javascript.com/it/" target="_blank">
-              Guida dettagliata per il tuo browser
-            </a>
-          </div>
+  <noscript>
+    <div id="noscript-wall" role="alert" aria-live="assertive">
+      <div class="ns-logo">
+        <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" onerror="this.style.display='none'">
+        <span>Code<b>Guessr</b></span>
       </div>
-    </noscript>
-
-    <script type="module">
-        import { initLoader } from '/src/js/loader.js';
-        initLoader();
-    </script>
-
-    <!-- =====================
-       NAVBAR / HEADER
-       ===================== -->
-    <nav class="navbar-codeguessr d-flex align-items-center justify-content-between" style="position:relative">
-
-        <!-- Brand Logo (left) -->
-        <a href="#" class="navbar-brand-logo" id="nav-brand">
-            <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" class="logo-img" />
-            <span class="brand-text">Code<span class="brand-accent">Guessr</span></span>
+      <div class="ns-icon-wrap" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <h1 class="ns-title">JavaScript <span>disabilitato</span></h1>
+      <p class="ns-desc">
+        CodeGuessr richiede JavaScript per funzionare. Senza di esso non è possibile
+        caricare le partite, il profilo o le classifiche.
+      </p>
+      <div class="ns-code" aria-label="Istruzioni per abilitare JavaScript">
+        <span class="c-dim"># Come abilitare JavaScript</span><br>
+        <span class="c-kw">Chrome</span> → Impostazioni > Privacy > JavaScript → <span
+          class="c-val">Consentito</span><br>
+        <span class="c-kw">Firefox</span> → <span class="c-val">about:config</span> > javascript.enabled → <span
+          class="c-val">true</span><br>
+        <span class="c-kw">Safari</span> → Preferenze > Sicurezza > Abilita JavaScript → <span class="c-val"><i
+            class="bi bi-check"></i></span>
+      </div>
+      <div class="ns-links">
+        <a class="ns-link" href="https://enable-javascript.com/it/" target="_blank">
+          Guida dettagliata per il tuo browser
         </a>
-
-        <!-- Right Side: Theme Toggle + Profile -->
-        <div class="d-flex align-items-center gap-3">
-
-            <!-- Theme Toggle -->
-            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode">
-                <div class="theme-toggle-thumb">
-                    <i class="bi bi-moon-stars-fill moon-icon"></i>
-                    <i class="bi bi-sun-fill sun-icon"></i>
-                </div>
-            </button>
-
-            <!-- Auth Buttons (Visible when NOT logged in) -->
-            <div id="auth-buttons-wrapper" class="d-none align-items-center gap-2">
-                <button class="btn btn-sm btn-outline-secondary px-3" id="btn-header-login" style="border-radius: 12px; font-weight: 600; color: rgb(var(--darcula-fg)); border-color: rgba(var(--darcula-comment), 0.5);">Accedi</button>
-                <button class="btn btn-sm px-3" id="btn-header-signup" style="border-radius: 12px; font-weight: 600; background: rgb(var(--darcula-green)); border: none; color: #fff;">Registrati</button>
-            </div>
-
-            <!-- Profile Widget & Dropdown Menu --> 
-            <div class="profile-dropdown-wrapper d-none" id="profile-dropdown-wrapper">
-                <div class="profile-widget" id="profile-widget" tabindex="0">
-                    <!-- Name + Stats -->
-                    <div class="profile-info">
-                        <span class="profile-name" id="player-name">GuesserPro</span>
-                        <div class="profile-stats">
-                            <span class="stat-tier">LVL <span id="player-level">12</span></span>
-                            <span class="stat-divider">&bull;</span>
-                            <span class="profile-cups">
-                                <i class="bi bi-trophy-fill"></i> <span id="player-cups">1 240</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Avatar with thin XP ring -->
-                    <div class="profile-avatar-wrapper">
-                        <svg class="xp-ring" viewBox="0 0 36 36">
-                            <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
-                            <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"></circle>
-                        </svg>
-                        <img src="https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21"
-                            alt="Player avatar" class="profile-avatar" id="player-avatar"
-                            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Ccircle cx=\'24\' cy=\'24\' r=\'24\' fill=\'%23464a4a\'/%3E%3Ctext x=\'50%25\' y=\'55%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Inter\' font-weight=\'700\' font-size=\'18\' fill=\'%23a9b7c6\'%3EG%3C/text%3E%3C/svg%3E'" />
-                    </div>
-
-                    <i class="bi bi-chevron-down profile-chevron" id="profile-chevron"></i>
-                </div>
-
-                <!-- The Menu -->
-                <div class="profile-dropdown-menu" id="profile-dropdown">
-                    <a href="/profilo" class="dropdown-item" id="menu-btn-profile"><i class="bi bi-person-fill"></i> Il mio Profilo</a>
-                    <a href="#" class="dropdown-item" id="menu-btn-settings"><i class="bi bi-gear-fill"></i> Impostazioni</a>
-                    <div class="dropdown-divider" id="menu-divider"></div>
-                    <a href="#" class="dropdown-item text-danger" id="menu-btn-logout"><i class="bi bi-box-arrow-right"></i> Log out</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- =====================
-       HERO / MAIN CONTENT
-       ===================== -->
-    <main class="game-hero" id="main-lobby">
-        <div class="container-fluid w-100" style="max-width: 1600px;">
-            <div class="row align-items-center justify-content-center h-100 gy-5">
-
-                <!-- PANNELLO SINISTRO (Missioni) -->
-                <div class="col-12 col-lg-3 order-2 order-lg-1">
-                    <div class="side-panel">
-                        <div class="panel-title">
-                            <i class="bi bi-card-checklist"></i> Missioni
-                        </div>
-                        <div class="mission-list">
-                            <!-- Popolato dinamicamente da game_page.js -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CONTENUTO CENTRALE (Hero) -->
-                <div class="col-12 col-lg-6 order-1 order-lg-2 d-flex justify-content-center">
-                    <!-- Content -->
-                    <div class="hero-content w-100 m-0">
-
-                        <!-- Title -->
-                        <h1 class="hero-title mb-2">
-                            <span class="hero-title-text">Code<span class="hero-title-accent">Guessr</span></span>
-                        </h1>
-
-                        <!-- Code snippet decoration -->
-                        <div class="code-decoration"></div>
-
-                        <!-- Play Buttons -->
-                        <div class="play-buttons">
-
-                            <!-- Single Player -->
-                            <button class="btn-play btn-singleplayer" id="btn-singleplayer" aria-label="Gioca in single player">
-                                <div class="btn-play-icon">
-                                    <i class="bi bi-controller"></i>
-                                </div>
-                                <div class="btn-play-text">
-                                    <span class="btn-play-label">Gioca da solo</span>
-                                    <span class="btn-play-title">Single Player</span>
-                                </div>
-                            </button>
-
-                            <!-- Multiplayer -->
-                            <button class="btn-play btn-multiplayer" id="btn-multiplayer" aria-label="Gioca in multiplayer">
-                                <div class="btn-play-icon">
-                                    <i class="bi bi-people-fill"></i>
-                                </div>
-                                <div class="btn-play-text">
-                                    <span class="btn-play-label">Sfida amici</span>
-                                    <span class="btn-play-title">Multiplayer</span>
-                                </div>
-                            </button>
-
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- PANNELLO DESTRO (Amici) -->
-                <div class="col-12 col-lg-3 order-3 order-lg-3">
-                    <div class="side-panel">
-                        <div class="panel-title d-flex justify-content-between align-items-center mb-0">
-                            <span><i class="bi bi-people"></i> Amici</span>
-                            <span class="badge rounded-pill" id="friends-online-badge" style="font-size:0.75rem; background:rgba(var(--darcula-green), 0.15); color:rgb(var(--darcula-green)); border: 1px solid rgba(var(--darcula-green), 0.3);">0 Online</span>
-                        </div>
-                        <div class="friends-list">
-                            <!-- Popolato dinamicamente da game_page.js -->
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </main>
-
-
-
-    <!-- =====================
-       SETTINGS MODAL
-       ===================== -->
-    <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-      <div class="cg-settings-modal" id="settings-modal">
-
-        <!-- Header -->
-        <div class="cg-settings-header">
-          <div class="cg-settings-title-group">
-            <div class="cg-settings-icon-wrap"><i class="bi bi-gear-fill"></i></div>
-            <h2 class="cg-settings-title" id="settings-title">Impostazioni</h2>
-          </div>
-          <button class="cg-settings-close" id="settings-close" aria-label="Chiudi impostazioni">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-
-        <!-- Body -->
-        <div class="cg-settings-body">
-
-          <!-- SEZIONE: Audio -->
-          <section class="cg-settings-section">
-            <div class="cg-settings-section-label"><i class="bi bi-volume-up-fill"></i> Audio</div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Volume musica</span>
-                <span class="cg-settings-row-desc">Musica di sottofondo in lobby e partita</span>
-              </div>
-              <div class="cg-slider-group">
-                <i class="bi bi-volume-down cg-slider-icon"></i>
-                <input type="range" class="cg-slider" id="volume-music" min="0" max="100" value="60" aria-label="Volume musica">
-                <i class="bi bi-volume-up cg-slider-icon"></i>
-                <span class="cg-slider-value" id="volume-music-val">60%</span>
-              </div>
-            </div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Volume effetti</span>
-                <span class="cg-settings-row-desc">Suoni di click, notifiche e feedback</span>
-              </div>
-              <div class="cg-slider-group">
-                <i class="bi bi-volume-down cg-slider-icon"></i>
-                <input type="range" class="cg-slider" id="volume-sfx" min="0" max="100" value="80" aria-label="Volume effetti">
-                <i class="bi bi-volume-up cg-slider-icon"></i>
-                <span class="cg-slider-value" id="volume-sfx-val">80%</span>
-              </div>
-            </div>
-          </section>
-
-          <!-- SEZIONE: Aspetto -->
-          <section class="cg-settings-section">
-            <div class="cg-settings-section-label"><i class="bi bi-palette-fill"></i> Aspetto</div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Tema</span>
-                <span class="cg-settings-row-desc">Seleziona l'aspetto visivo dell'interfaccia</span>
-              </div>
-              <div class="cg-theme-picker" id="theme-picker" role="group" aria-label="Seleziona tema">
-                <button class="cg-theme-btn" data-theme="dark" aria-pressed="true">
-                  <i class="bi bi-moon-stars-fill"></i> Dark
-                </button>
-                <button class="cg-theme-btn" data-theme="light" aria-pressed="false">
-                  <i class="bi bi-sun-fill"></i> Light
-                </button>
-                <button class="cg-theme-btn" data-theme="system" aria-pressed="false">
-                  <i class="bi bi-display"></i> Sistema
-                </button>
-              </div>
-            </div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Animazioni ridotte</span>
-                <span class="cg-settings-row-desc">Disabilita le animazioni di digitazione e transizioni</span>
-              </div>
-              <label class="cg-toggle" aria-label="Animazioni ridotte">
-                <input type="checkbox" id="toggle-animations" role="switch">
-                <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
-              </label>
-            </div>
-          </section>
-
-          <!-- SEZIONE: Gameplay -->
-          <section class="cg-settings-section">
-            <div class="cg-settings-section-label"><i class="bi bi-controller"></i> Gameplay</div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Difficoltà predefinita</span>
-                <span class="cg-settings-row-desc">Impostazione di partenza per le nuove partite</span>
-              </div>
-              <div class="cg-theme-picker" id="difficulty-picker" role="group" aria-label="Difficoltà">
-                <button class="cg-theme-btn cg-diff-btn" data-diff="easy" aria-pressed="false">Facile</button>
-                <button class="cg-theme-btn cg-diff-btn" data-diff="normal" aria-pressed="true">Normale</button>
-                <button class="cg-theme-btn cg-diff-btn" data-diff="hard" aria-pressed="false">Difficile</button>
-              </div>
-            </div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Mostra timer</span>
-                <span class="cg-settings-row-desc">Visualizza il conto alla rovescia durante la partita</span>
-              </div>
-              <label class="cg-toggle" aria-label="Mostra timer">
-                <input type="checkbox" id="toggle-timer" role="switch" checked>
-                <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
-              </label>
-            </div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Highlight sintassi</span>
-                <span class="cg-settings-row-desc">Colora il codice nei snippet durante la partita</span>
-              </div>
-              <label class="cg-toggle" aria-label="Highlight sintassi">
-                <input type="checkbox" id="toggle-syntax" role="switch" checked>
-                <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
-              </label>
-            </div>
-          </section>
-
-          <!-- SEZIONE: Notifiche -->
-          <section class="cg-settings-section">
-            <div class="cg-settings-section-label"><i class="bi bi-bell-fill"></i> Notifiche</div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Sfide ricevute</span>
-                <span class="cg-settings-row-desc">Notifica quando un amico ti sfida</span>
-              </div>
-              <label class="cg-toggle" aria-label="Notifiche sfide">
-                <input type="checkbox" id="toggle-notif-challenge" role="switch" checked>
-                <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
-              </label>
-            </div>
-
-            <div class="cg-settings-row">
-              <div class="cg-settings-row-info">
-                <span class="cg-settings-row-name">Amici online</span>
-                <span class="cg-settings-row-desc">Notifica quando un amico si connette</span>
-              </div>
-              <label class="cg-toggle" aria-label="Notifiche amici online">
-                <input type="checkbox" id="toggle-notif-friends" role="switch">
-                <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
-              </label>
-            </div>
-          </section>
-
-        </div>
-
-        <!-- Footer -->
-        <div class="cg-settings-footer">
-          <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0-alpha</span>
-          <div class="d-flex gap-2">
-            <button class="cg-btn-secondary" id="settings-reset">Ripristina</button>
-            <button class="cg-btn-primary" id="settings-save">Salva</button>
-          </div>
-        </div>
-
       </div>
     </div>
-
-    <!-- =====================
+  </noscript>
+  <script type="module">
+    import { initLoader } from '/src/js/loader.js';
+    initLoader();
+  </script>
+  <!-- =====================
+       NAVBAR / HEADER
+       ===================== -->
+  <nav class="navbar-codeguessr d-flex align-items-center justify-content-between" style="position:relative">
+    <!-- Brand Logo (left) -->
+    <a href="#" class="navbar-brand-logo" id="nav-brand">
+      <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" class="logo-img" />
+      <span class="brand-text">Code<span class="brand-accent">Guessr</span></span>
+    </a>
+    <!-- Right Side: Theme Toggle + Profile -->
+    <div class="d-flex align-items-center gap-3">
+      <!-- Auth Buttons (Visible when NOT logged in) -->
+      <div id="auth-buttons-wrapper" class="d-none align-items-center gap-2">
+        <button class="btn btn-sm btn-outline-secondary px-3" id="btn-header-login"
+          style="border-radius: 12px; font-weight: 600; color: rgb(var(--darcula-fg)); border-color: rgba(var(--darcula-comment), 0.5);">Accedi</button>
+        <button class="btn btn-sm px-3" id="btn-header-signup"
+          style="border-radius: 12px; font-weight: 600; background: rgb(var(--darcula-green)); border: none; color: #fff;">Registrati</button>
+      </div>
+      <!-- Profile Widget & Dropdown Menu -->
+      <div class="profile-dropdown-wrapper d-none" id="profile-dropdown-wrapper">
+        <div class="profile-widget" id="profile-widget" tabindex="0">
+          <!-- Name + Stats -->
+          <div class="profile-info">
+            <span class="profile-name" id="player-name">GuesserPro</span>
+            <div class="profile-stats">
+              <span class="stat-tier">LVL <span id="player-level">12</span></span>
+              <span class="stat-divider">&bull;</span>
+              <span class="profile-cups">
+                <i class="bi bi-trophy-fill"></i> <span id="player-cups">1 240</span>
+              </span>
+            </div>
+          </div>
+          <!-- Avatar with thin XP ring -->
+          <div class="profile-avatar-wrapper">
+            <svg class="xp-ring" viewBox="0 0 36 36">
+              <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
+              <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"></circle>
+            </svg>
+            <img src="https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21"
+              alt="Player avatar" class="profile-avatar" id="player-avatar"
+              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Ccircle cx=\'24\' cy=\'24\' r=\'24\' fill=\'%23464a4a\'/%3E%3Ctext x=\'50%25\' y=\'55%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Inter\' font-weight=\'700\' font-size=\'18\' fill=\'%23a9b7c6\'%3EG%3C/text%3E%3C/svg%3E'" />
+          </div>
+          <i class="bi bi-chevron-down profile-chevron" id="profile-chevron"></i>
+        </div>
+        <!-- The Menu -->
+        <div class="profile-dropdown-menu" id="profile-dropdown">
+          <a href="/profilo" class="dropdown-item" id="menu-btn-profile"><i class="bi bi-person-fill"></i> Il mio
+            Profilo</a>
+          <a href="#" class="dropdown-item" id="menu-btn-settings"><i class="bi bi-gear-fill"></i> Impostazioni</a>
+          <div class="dropdown-divider" id="menu-divider"></div>
+          <a href="#" class="dropdown-item text-danger" id="menu-btn-logout"><i class="bi bi-box-arrow-right"></i> Log
+            out</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <!-- =====================
+       HERO / MAIN CONTENT
+       ===================== -->
+  <main class="game-hero" id="main-lobby">
+    <div class="container-fluid w-100" style="max-width: 1600px;">
+      <div class="row align-items-center justify-content-center h-100 gy-5">
+        <!-- PANNELLO SINISTRO (Missioni) -->
+        <div class="col-12 col-lg-3 order-2 order-lg-1">
+          <div class="side-panel">
+            <div class="panel-title">
+              <i class="bi bi-card-checklist"></i> Missioni
+            </div>
+            <div class="mission-list">
+              <!-- Popolato dinamicamente da game_page.js -->
+            </div>
+          </div>
+        </div>
+        <!-- CONTENUTO CENTRALE (Hero) -->
+        <div class="col-12 col-lg-6 order-1 order-lg-2 d-flex justify-content-center">
+          <!-- Content -->
+          <div class="hero-content w-100 m-0">
+            <!-- Title -->
+            <h1 class="hero-welcome mb-3">
+              Bentornato, <span class="hero-title-accent" id="hero-welcome-name">Giocatore</span> <span class="hero-title-accent"><i class="bi bi-file-earmark-code-fill"></i></span>
+            </h1>
+            <!-- Code snippet decoration -->
+            <div class="code-decoration"></div>
+            <!-- Play Buttons -->
+            <div class="play-buttons">
+              <!-- Single Player -->
+              <button class="btn-play btn-singleplayer" id="btn-singleplayer" aria-label="Gioca in single player">
+                <div class="btn-play-icon">
+                  <i class="bi bi-controller"></i>
+                </div>
+                <div class="btn-play-text">
+                  <span class="btn-play-label">Gioca da solo</span>
+                  <span class="btn-play-title">Single Player</span>
+                </div>
+              </button>
+              <!-- Multiplayer -->
+              <button class="btn-play btn-multiplayer" id="btn-multiplayer" aria-label="Gioca in multiplayer">
+                <div class="btn-play-icon">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="btn-play-text">
+                  <span class="btn-play-label">Sfida amici</span>
+                  <span class="btn-play-title">Multiplayer</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- PANNELLO DESTRO (Amici) -->
+        <div class="col-12 col-lg-3 order-3 order-lg-3">
+          <div class="side-panel">
+            <div class="panel-title d-flex justify-content-between align-items-center mb-0">
+              <span><i class="bi bi-people"></i> Amici</span>
+              <span class="badge rounded-pill" id="friends-online-badge"
+                style="font-size:0.75rem; background:rgba(var(--darcula-green), 0.15); color:rgb(var(--darcula-green)); border: 1px solid rgba(var(--darcula-green), 0.3);">0
+                Online</span>
+            </div>
+            <div class="friends-list">
+              <!-- Popolato dinamicamente da game_page.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- =====================
+       SETTINGS MODAL
+       ===================== -->
+  <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+    aria-labelledby="settings-title">
+    <div class="cg-settings-modal" id="settings-modal">
+      <!-- Header -->
+      <div class="cg-settings-header">
+        <div class="cg-settings-title-group">
+          <div class="cg-settings-icon-wrap"><i class="bi bi-gear-fill"></i></div>
+          <h2 class="cg-settings-title" id="settings-title">Impostazioni</h2>
+        </div>
+        <button class="cg-settings-close" id="settings-close" aria-label="Chiudi impostazioni">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <!-- Body -->
+      <div class="cg-settings-body">
+        <!-- SEZIONE: Audio -->
+        <section class="cg-settings-section">
+          <div class="cg-settings-section-label"><i class="bi bi-volume-up-fill"></i> Audio</div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Volume musica</span>
+              <span class="cg-settings-row-desc">Musica di sottofondo in lobby e partita</span>
+            </div>
+            <div class="cg-slider-group">
+              <i class="bi bi-volume-down cg-slider-icon"></i>
+              <input type="range" class="cg-slider" id="volume-music" min="0" max="100" value="60"
+                aria-label="Volume musica">
+              <i class="bi bi-volume-up cg-slider-icon"></i>
+              <span class="cg-slider-value" id="volume-music-val">60%</span>
+            </div>
+          </div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Volume effetti</span>
+              <span class="cg-settings-row-desc">Suoni di click, notifiche e feedback</span>
+            </div>
+            <div class="cg-slider-group">
+              <i class="bi bi-volume-down cg-slider-icon"></i>
+              <input type="range" class="cg-slider" id="volume-sfx" min="0" max="100" value="80"
+                aria-label="Volume effetti">
+              <i class="bi bi-volume-up cg-slider-icon"></i>
+              <span class="cg-slider-value" id="volume-sfx-val">80%</span>
+            </div>
+          </div>
+        </section>
+        <!-- SEZIONE: Aspetto -->
+        <section class="cg-settings-section">
+          <div class="cg-settings-section-label"><i class="bi bi-palette-fill"></i> Aspetto</div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Tema</span>
+              <span class="cg-settings-row-desc">Seleziona l'aspetto visivo dell'interfaccia</span>
+            </div>
+            <div class="cg-theme-picker" id="theme-picker" role="group" aria-label="Seleziona tema">
+              <button class="cg-theme-btn" data-theme="dark" aria-pressed="true">
+                <i class="bi bi-moon-stars-fill"></i> Dark
+              </button>
+              <button class="cg-theme-btn" data-theme="light" aria-pressed="false">
+                <i class="bi bi-sun-fill"></i> Light
+              </button>
+              <button class="cg-theme-btn" data-theme="system" aria-pressed="false">
+                <i class="bi bi-display"></i> Sistema
+              </button>
+            </div>
+          </div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Animazioni ridotte</span>
+              <span class="cg-settings-row-desc">Disabilita le animazioni di digitazione e transizioni</span>
+            </div>
+            <label class="cg-toggle" aria-label="Animazioni ridotte">
+              <input type="checkbox" id="toggle-animations" role="switch">
+              <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
+            </label>
+          </div>
+        </section>
+        <!-- SEZIONE: Gameplay -->
+        <section class="cg-settings-section">
+          <div class="cg-settings-section-label"><i class="bi bi-controller"></i> Gameplay</div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Difficoltà predefinita</span>
+              <span class="cg-settings-row-desc">Impostazione di partenza per le nuove partite</span>
+            </div>
+            <div class="cg-theme-picker" id="difficulty-picker" role="group" aria-label="Difficoltà">
+              <button class="cg-theme-btn cg-diff-btn" data-diff="easy" aria-pressed="false">Facile</button>
+              <button class="cg-theme-btn cg-diff-btn" data-diff="normal" aria-pressed="true">Normale</button>
+              <button class="cg-theme-btn cg-diff-btn" data-diff="hard" aria-pressed="false">Difficile</button>
+            </div>
+          </div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Mostra timer</span>
+              <span class="cg-settings-row-desc">Visualizza il conto alla rovescia durante la partita</span>
+            </div>
+            <label class="cg-toggle" aria-label="Mostra timer">
+              <input type="checkbox" id="toggle-timer" role="switch" checked>
+              <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
+            </label>
+          </div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Highlight sintassi</span>
+              <span class="cg-settings-row-desc">Colora il codice nei snippet durante la partita</span>
+            </div>
+            <label class="cg-toggle" aria-label="Highlight sintassi">
+              <input type="checkbox" id="toggle-syntax" role="switch" checked>
+              <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
+            </label>
+          </div>
+        </section>
+        <!-- SEZIONE: Notifiche -->
+        <section class="cg-settings-section">
+          <div class="cg-settings-section-label"><i class="bi bi-bell-fill"></i> Notifiche</div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Sfide ricevute</span>
+              <span class="cg-settings-row-desc">Notifica quando un amico ti sfida</span>
+            </div>
+            <label class="cg-toggle" aria-label="Notifiche sfide">
+              <input type="checkbox" id="toggle-notif-challenge" role="switch" checked>
+              <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
+            </label>
+          </div>
+          <div class="cg-settings-row">
+            <div class="cg-settings-row-info">
+              <span class="cg-settings-row-name">Amici online</span>
+              <span class="cg-settings-row-desc">Notifica quando un amico si connette</span>
+            </div>
+            <label class="cg-toggle" aria-label="Notifiche amici online">
+              <input type="checkbox" id="toggle-notif-friends" role="switch">
+              <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
+            </label>
+          </div>
+        </section>
+      </div>
+      <!-- Footer -->
+      <div class="cg-settings-footer">
+        <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0-alpha</span>
+        <div class="d-flex gap-2">
+          <button class="cg-btn-secondary" id="settings-cancel">Annulla</button>
+          <button class="cg-btn-primary" id="settings-save">Applica</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- =====================
        FOOTER
        ===================== -->
-    <footer class="site-footer" id="site-footer">
-        <div class="container">
-
-            <div class="footer-bottom">
-
-                <!-- Left: copyright + authors + license -->
-                <div class="footer-copy">
-                    <!-- Riga 1: brand -->
-                    <span class="footer-brand">
-                        <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
-                    </span>
-                    <!-- Separatore desktop -->
-                    <span class="footer-sep" aria-hidden="true">&mdash;</span>
-                    <!-- Riga 2: autori -->
-                    <span class="footer-authors">
-                        Salvatore Iavarone &amp; Michele Pio Forlani
-                    </span>
-                    <!-- Separatore desktop -->
-                    <span class="footer-sep" aria-hidden="true">&bull;</span>
-                    <!-- Licenza + versione -->
-                    <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
-                        class="footer-license">Licenza MIT</a>
-                    <span class="footer-sep" aria-hidden="true">&bull;</span>
-                    <span class="footer-version">v1.0.0-alpha</span>
-                </div>
-
-
-                <!-- Right: social + site links -->
-                <div class="footer-links-inline">
-                    <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
-                        title="GitHub">
-                        <i class="bi bi-github"></i>
-                    </a>
-                    <a href="https://www.linkedin.com/in/salvatoreiavarone" class="social-btn" aria-label="LinkedIn" title="LinkedIn">
-                        <i class="bi bi-linkedin"></i>
-                    </a>
-                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr" target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
-                        <i class="bi bi-envelope-fill"></i>
-                    </a>
-                </div>
-
-            </div>
-
+  <footer class="site-footer" id="site-footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <!-- Left: copyright + authors + license -->
+        <div class="footer-copy">
+          <!-- Riga 1: brand -->
+          <span class="footer-brand">
+            <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
+          </span>
+          <!-- Separatore desktop -->
+          <span class="footer-sep" aria-hidden="true">&mdash;</span>
+          <!-- Riga 2: autori -->
+          <span class="footer-authors">
+            Salvatore Iavarone &amp; Michele Pio Forlani
+          </span>
+          <!-- Separatore desktop -->
+          <span class="footer-sep" aria-hidden="true">&bull;</span>
+          <!-- Licenza + versione -->
+          <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank" class="footer-license">Licenza
+            MIT</a>
+          <span class="footer-sep" aria-hidden="true">&bull;</span>
+          <span class="footer-version">v1.0.0-alpha</span>
         </div>
-    </footer>
-
-
-    <script>
-        document.body.classList.add('loader-open');
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-
-
-    <script src="src/js/game_page/ui.js"></script>
-    <script src="src/js/game_page/typing.js"></script>
-
-    <script src="src/js/managers/theme.js"></script>
-    <script src="src/js/managers/auth.js"></script>
-    <script src="src/js/managers/settings.js"></script>
-    <script type="module" src="src/js/game_page/profile.js"></script>
+        <!-- Right: social + site links -->
+        <div class="footer-links-inline">
+          <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
+            title="GitHub">
+            <i class="bi bi-github"></i>
+          </a>
+          <a href="https://www.linkedin.com/in/salvatoreiavarone" class="social-btn" aria-label="LinkedIn"
+            title="LinkedIn">
+            <i class="bi bi-linkedin"></i>
+          </a>
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr"
+            target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
+            <i class="bi bi-envelope-fill"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script>
+    document.body.classList.add('loader-open');
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+    crossorigin="anonymous"></script>
+  <script src="src/js/game_page/ui.js"></script>
+  <script src="src/js/game_page/typing.js"></script>
+  <script src="src/js/managers/theme.js"></script>
+  <script src="src/js/managers/auth.js"></script>
+  <script src="src/js/managers/settings.js"></script>
+  <script type="module" src="src/js/game_page/profile.js"></script>
 </body>
 
 </html>

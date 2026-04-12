@@ -105,6 +105,7 @@ function updateProfileUI({ name, level, cups, xpPercent, avatar, missions, frien
   const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
   setText('player-name', name);
+  setText('hero-welcome-name', name);
   setText('player-level', level);
   setText('player-cups', cups.toLocaleString('it-IT'));
 
@@ -184,7 +185,7 @@ async function loadPlayerData() {
   try {
     const apiData = await fetchPlayerData(idGiocatore);
     const amiciData = await fetchPlayerAmici(idGiocatore);
-    const player = buildPlayerFromAPI(apiData, idGiocatore,amiciData);
+    const player = buildPlayerFromAPI(apiData, idGiocatore, amiciData);
     updateProfileUI(player);
   } catch (err) {
     console.error('[Profile] Errore caricamento profilo:', err);

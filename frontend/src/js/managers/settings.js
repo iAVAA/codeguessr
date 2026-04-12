@@ -8,15 +8,15 @@ const SETTINGS_KEY = 'codeguessr-settings';
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_SETTINGS = {
-  volumeMusic:       60,
-  volumeSfx:         80,
-  theme:             'dark',
+  volumeMusic: 60,
+  volumeSfx: 80,
+  theme: 'dark',
   reducedAnimations: false,
-  difficulty:        'normal',
-  showTimer:         true,
-  syntaxHighlight:   true,
-  notifChallenge:    true,
-  notifFriends:      false,
+  difficulty: 'normal',
+  showTimer: true,
+  syntaxHighlight: true,
+  notifChallenge: true,
+  notifFriends: false,
 };
 
 // ─── Persist ─────────────────────────────────────────────────────────────────
@@ -80,7 +80,18 @@ function initThemePicker(settings) {
     if (!btn) return;
     btns.forEach(b => b.setAttribute('aria-pressed', 'false'));
     btn.setAttribute('aria-pressed', 'true');
+    applyTempTheme(btn.dataset.theme);
   });
+}
+
+function applyTempTheme(theme) {
+  const html = document.documentElement;
+  if (theme === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    html.classList.toggle('light-mode', !prefersDark);
+  } else {
+    html.classList.toggle('light-mode', theme === 'light');
+  }
 }
 
 // ─── Difficulty Picker ────────────────────────────────────────────────────────
@@ -114,23 +125,23 @@ function initToggle(id, settingKey, settings) {
 // ─── Read State from DOM ──────────────────────────────────────────────────────
 
 function readCurrentSettings() {
-  const getSlider    = (id) => parseInt(el(id)?.value ?? 0, 10);
-  const getToggle    = (id) => el(id)?.checked ?? false;
-  const getPicker    = (pickerId, attr) => {
+  const getSlider = (id) => parseInt(el(id)?.value ?? 0, 10);
+  const getToggle = (id) => el(id)?.checked ?? false;
+  const getPicker = (pickerId, attr) => {
     const active = document.querySelector(`#${pickerId} [aria-pressed="true"]`);
     return active?.dataset[attr] ?? null;
   };
 
   return {
-    volumeMusic:       getSlider('volume-music'),
-    volumeSfx:         getSlider('volume-sfx'),
-    theme:             getPicker('theme-picker', 'theme') ?? 'dark',
+    volumeMusic: getSlider('volume-music'),
+    volumeSfx: getSlider('volume-sfx'),
+    theme: getPicker('theme-picker', 'theme') ?? 'dark',
     reducedAnimations: getToggle('toggle-animations'),
-    difficulty:        getPicker('difficulty-picker', 'diff') ?? 'normal',
-    showTimer:         getToggle('toggle-timer'),
-    syntaxHighlight:   getToggle('toggle-syntax'),
-    notifChallenge:    getToggle('toggle-notif-challenge'),
-    notifFriends:      getToggle('toggle-notif-friends'),
+    difficulty: getPicker('difficulty-picker', 'diff') ?? 'normal',
+    showTimer: getToggle('toggle-timer'),
+    syntaxHighlight: getToggle('toggle-syntax'),
+    notifChallenge: getToggle('toggle-notif-challenge'),
+    notifFriends: getToggle('toggle-notif-friends'),
   };
 }
 
@@ -160,9 +171,37 @@ function openSettings() {
   el('settings-close')?.focus();
 }
 
+function revertUnsavedSettings() {
+  const current = loadSettings();
+  initSlider('volume-music', 'volume-music-val', 'volumeMusic', current);
+  initSlider('volume-sfx', 'volume-sfx-val', 'volumeSfx', current);
+
+  document.querySelectorAll('#theme-picker .cg-theme-btn').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.theme === current.theme));
+  });
+  document.querySelectorAll('#difficulty-picker .cg-diff-btn').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.diff === current.difficulty));
+  });
+
+  ['toggle-animations', 'toggle-timer', 'toggle-syntax', 'toggle-notif-challenge', 'toggle-notif-friends'].forEach(id => {
+    const map = {
+      'toggle-animations': 'reducedAnimations',
+      'toggle-timer': 'showTimer',
+      'toggle-syntax': 'syntaxHighlight',
+      'toggle-notif-challenge': 'notifChallenge',
+      'toggle-notif-friends': 'notifFriends',
+    };
+    const input = el(id);
+    if (input) input.checked = current[map[id]];
+  });
+
+  applyThemeSetting(current.theme);
+}
+
 function closeSettings() {
   const overlay = el('settings-overlay');
   if (!overlay) return;
+  revertUnsavedSettings();
   overlay.setAttribute('aria-hidden', 'true');
   overlay.classList.remove('open');
   document.body.style.overflow = '';
@@ -175,14 +214,14 @@ function initSettings() {
 
   // Populate controls
   initSlider('volume-music', 'volume-music-val', 'volumeMusic', settings);
-  initSlider('volume-sfx',   'volume-sfx-val',   'volumeSfx',   settings);
+  initSlider('volume-sfx', 'volume-sfx-val', 'volumeSfx', settings);
   initThemePicker(settings);
   initDifficultyPicker(settings);
-  initToggle('toggle-animations',    'reducedAnimations', settings);
-  initToggle('toggle-timer',         'showTimer',         settings);
-  initToggle('toggle-syntax',        'syntaxHighlight',   settings);
-  initToggle('toggle-notif-challenge','notifChallenge',   settings);
-  initToggle('toggle-notif-friends', 'notifFriends',      settings);
+  initToggle('toggle-animations', 'reducedAnimations', settings);
+  initToggle('toggle-timer', 'showTimer', settings);
+  initToggle('toggle-syntax', 'syntaxHighlight', settings);
+  initToggle('toggle-notif-challenge', 'notifChallenge', settings);
+  initToggle('toggle-notif-friends', 'notifFriends', settings);
 
   // Open via menu
   el('menu-btn-settings')?.addEventListener('click', (e) => {
@@ -220,40 +259,9 @@ function initSettings() {
     }
   });
 
-  // Reset button
-  el('settings-reset')?.addEventListener('click', () => {
-    if (!confirm('Ripristinare tutte le impostazioni ai valori predefiniti?')) return;
-    saveSettings({ ...DEFAULT_SETTINGS });
-    // Reload sliders & pickers
-    initSlider('volume-music', 'volume-music-val', 'volumeMusic', DEFAULT_SETTINGS);
-    initSlider('volume-sfx',   'volume-sfx-val',   'volumeSfx',   DEFAULT_SETTINGS);
-
-    // Reset theme picker
-    document.querySelectorAll('#theme-picker .cg-theme-btn').forEach(b => {
-      b.setAttribute('aria-pressed', String(b.dataset.theme === DEFAULT_SETTINGS.theme));
-    });
-    // Reset difficulty picker
-    document.querySelectorAll('#difficulty-picker .cg-diff-btn').forEach(b => {
-      b.setAttribute('aria-pressed', String(b.dataset.diff === DEFAULT_SETTINGS.difficulty));
-    });
-    // Reset toggles
-    ['toggle-animations', 'toggle-timer', 'toggle-syntax', 'toggle-notif-challenge', 'toggle-notif-friends'].forEach(id => {
-      const map = {
-        'toggle-animations':     'reducedAnimations',
-        'toggle-timer':          'showTimer',
-        'toggle-syntax':         'syntaxHighlight',
-        'toggle-notif-challenge':'notifChallenge',
-        'toggle-notif-friends':  'notifFriends',
-      };
-      const input = el(id);
-      if (input) input.checked = DEFAULT_SETTINGS[map[id]];
-    });
-
-    applyThemeSetting(DEFAULT_SETTINGS.theme);
-
-    if (typeof showToast === 'function') {
-      showToast('🔄 Impostazioni ripristinate', 'orange');
-    }
+  // Cancel button
+  el('settings-cancel')?.addEventListener('click', () => {
+    closeSettings();
   });
 }
 
