@@ -20,6 +20,26 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ==========================================
+// INIZIALIZZAZIONE OPENROUTER (lazy ESM import)
+// ==========================================
+// @openrouter/sdk è un modulo ESM-only: viene importato dinamicamente
+// al primo utilizzo e poi riutilizzato tramite questa variabile.
+let openrouter = null;
+async function getOpenRouter() {
+    if (!openrouter) {
+        const { OpenRouter } = await import('@openrouter/sdk');
+        openrouter = new OpenRouter({
+            apiKey: process.env.OPENROUTER_API_KEY,
+            defaultHeaders: {
+                'HTTP-Referer': 'https://github.com/iAVAA/codeguessr',
+                'X-Title': 'CodeGuessr'
+            }
+        });
+    }
+    return openrouter;
+}
+
 /**
  * ==========================================
  * DOCUMENTAZIONE SCHEMA DATABASE (SUPABASE)
@@ -340,6 +360,90 @@ app.post('/api/reset_password', async (req, res) => {
     } catch (err) {
         console.error("Errore durante il reset della password:", err.message);
         res.status(400).json({ errore: "Impossibile inviare l'email di reset." });
+    }
+});
+
+// ==========================================
+// API VALUTAZIONE RISPOSTA - OPENAI (POST)
+// ==========================================
+
+/**
+ * POST /api/valuta-risposta
+ * Valuta la risposta del giocatore tramite OpenRouter (LLM) e restituisce un punteggio da 0 a 100.
+ * L'LLM deduce autonomamente il linguaggio corretto analizzando il frammento di codice.
+ *
+ * Body richiesto:
+ *   { snippet: string, risposta: string }
+ *
+ * Risposta:
+ *   { punteggio: number, linguaggio: string }
+ *   - punteggio: intero 0–100
+ *   - linguaggio: nome del linguaggio rilevato dall'AI (es. "JavaScript")
+ */
+app.post('/api/valuta-risposta', async (req, res) => {
+    const { snippet, risposta } = req.body;
+
+    // Validazione campi obbligatori
+    if (!snippet || !risposta) {
+        return res.status(400).json({ errore: 'snippet e risposta sono obbligatori.' });
+    }
+
+    const prompt = `Sei un valutatore per un gioco chiamato CodeGuessr, in cui i giocatori devono indovinare il linguaggio di programmazione di un frammento di codice.
+
+Analizza il seguente frammento di codice e determina il linguaggio di programmazione corretto:
+
+\`\`\`
+${snippet}
+\`\`\`
+
+La risposta del giocatore è: "${risposta}"
+
+Assegna un punteggio da 0 a 100 in base alla correttezza della risposta:
+- 100: risposta identica o sinonimo perfetto del linguaggio corretto (es. "JS" per "JavaScript")
+- 70-99: risposta molto vicina ma con piccole imprecisioni (es. "TypeScript" per "JavaScript")
+- 30-69: risposta parzialmente corretta (es. "C" per "C++")
+- 1-29: risposta lontana ma nello stesso ecosistema
+- 0: risposta completamente sbagliata o non pertinente
+
+Rispondi ESCLUSIVAMENTE con un oggetto JSON valido nel seguente formato, senza testo aggiuntivo:
+{"punteggio": <numero>, "linguaggio": "<nome del linguaggio corretto>"}`;
+
+    try {
+        const client = await getOpenRouter();
+
+        const completion = await client.chat.send({
+            chatRequest: {
+                model: 'openai/gpt-4o-mini',
+                messages: [{ role: 'user', content: prompt }],
+                stream: false
+            }
+        });
+
+        // Il campo della risposta dipende dalla versione dell'SDK:
+        // può essere completion.chatCompletion o direttamente completion
+        const chatResult = completion.chatCompletion ?? completion;
+        const rawOutput = chatResult.choices[0].message.content.trim();
+
+        let punteggio, linguaggio;
+        try {
+            const parsed = JSON.parse(rawOutput);
+            punteggio  = Math.min(100, Math.max(0, parseInt(parsed.punteggio, 10)));
+            linguaggio = parsed.linguaggio || null;
+        } catch (parseErr) {
+            console.error('[OpenRouter] Output non parsabile come JSON:', rawOutput);
+            return res.status(500).json({ errore: 'Risposta non valida da OpenRouter.' });
+        }
+
+        if (isNaN(punteggio)) {
+            console.error('[OpenRouter] Punteggio non numerico nel JSON:', rawOutput);
+            return res.status(500).json({ errore: 'Punteggio non valido da OpenRouter.' });
+        }
+
+        res.status(200).json({ punteggio, linguaggio });
+
+    } catch (err) {
+        console.error('[OpenRouter] Errore valutazione risposta:', err.message);
+        res.status(500).json({ errore: 'Errore durante la valutazione con OpenRouter.' });
     }
 });
 

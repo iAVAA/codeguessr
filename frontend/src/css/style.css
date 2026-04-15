@@ -1931,21 +1931,21 @@ body.loader-open { overflow: hidden !important; }
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(var(--darcula-comment), 0.2);
   border-radius: 20px;
-  padding: 1rem 1.5rem;
-  min-width: 250px;
+  padding: 0.5rem 1.25rem;
+  min-width: 200px;
 }
 
 .match-avatar {
   border-radius: 50%;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   background: #1e1f21;
 }
 
 .match-player-name {
   font-family: 'Inter', sans-serif;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: rgb(var(--darcula-fg));
 }
 
@@ -1978,15 +1978,15 @@ body.loader-open { overflow: hidden !important; }
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
   color: rgba(var(--darcula-fg), 0.7);
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 2px;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0px;
 }
 
 .match-timer {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 3rem;
+  font-size: 2.2rem;
   font-weight: 700;
   line-height: 1;
   color: #fff;
@@ -2108,4 +2108,171 @@ body.loader-open { overflow: hidden !important; }
 .guess-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(var(--darcula-green), 0.6);
+}
+
+/* ===========================
+   NEW MATCH PAGE STYLES
+   =========================== */
+
+/* Play Area Single Container */
+.play-area-container {
+  background: rgba(var(--darcula-current), 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: 24px;
+  box-shadow: 0 15px 45px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+/* Timer Styling Upgrade */
+.match-timer-container {
+  background: rgba(var(--darcula-current), 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(var(--darcula-comment), 0.3);
+  border-radius: 20px;
+  padding: 0.25rem 1.8rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  display: inline-block;
+}
+
+/* Countdown Overlay */
+.match-countdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  background: rgba(var(--darcula-bg), 0.65);
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.match-countdown-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: rgb(var(--darcula-fg));
+  text-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+  letter-spacing: 1px;
+}
+
+.match-countdown-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8rem;
+  font-weight: 800;
+  color: rgb(var(--darcula-green));
+  text-shadow: 0 0 50px rgba(var(--darcula-green), 0.7);
+  animation: countdownPulse 1s ease-in-out infinite;
+  line-height: 1;
+}
+
+@keyframes countdownPulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  20% { transform: scale(1.1); opacity: 1; }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+
+/* ===========================
+   MATCH HEADER
+   =========================== */
+
+.match-header {
+  height: 60px;
+}
+
+.match-leave-btn {
+  padding: 0.5rem 1.4rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  background: rgba(var(--darcula-red), 0.9);
+  border: none;
+}
+
+.match-leave-btn:hover {
+  background: rgb(var(--darcula-red));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(var(--darcula-red), 0.4) !important;
+}
+
+.match-header-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(var(--darcula-current), 0.8) !important;
+  color: rgb(var(--darcula-fg)) !important;
+  border: 1px solid rgba(var(--darcula-comment), 0.2) !important;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.match-header-btn:hover {
+  background: rgb(var(--darcula-blue)) !important;
+  border-color: rgb(var(--darcula-blue)) !important;
+  color: #fff !important;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 15px rgba(var(--darcula-blue), 0.4) !important;
+}
+
+.match-header-btn i {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.match-header-btn:hover i {
+  transform: rotate(15deg);
+}
+
+/* ===========================
+   MOBILE EDITOR FIX
+   =========================== */
+
+/* Mobile: altezza esplicita in pixel sull'intero blocco editor + Monaco.
+   Monaco richiede un'altezza pixel concreta nel parent per renderizzarsi
+   correttamente — su mobile flex-column senza altezza esplicita collassa a 0. */
+.vscode-match-window--responsive {
+  height: 380px;
+  min-height: 380px;
+  flex-shrink: 0;
+}
+
+.match-editor-body {
+  flex-grow: 1;
+  height: 100%;
+}
+
+.match-monaco-container {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Desktop: torniamo al flex naturale che occupa tutto lo spazio disponibile */
+@media (min-width: 992px) {
+  .vscode-match-window--responsive {
+    height: auto;
+    min-height: 0;
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-shrink: 1;
+  }
+  .match-editor-body {
+    flex-grow: 1;
+    min-height: 0;
+  }
+  .match-monaco-container {
+    min-height: 0;
+  }
+}
+
+/* Box risposta: larghezza piena su mobile, colonna fissa su desktop */
+.match-guess-wrapper {
+  width: 100%;
+}
+
+@media (min-width: 992px) {
+  .match-guess-wrapper {
+    min-width: 300px;
+    max-width: 380px;
+    width: 380px;
+    flex-shrink: 0;
+  }
 }

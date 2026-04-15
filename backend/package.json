@@ -20,10 +20,10 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@openrouter/sdk": "^0.12.7",
     "@supabase/supabase-js": "^2.102.1",
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
-    "openai": "^6.33.0",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {

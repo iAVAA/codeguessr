@@ -23,8 +23,6 @@
     })();
   </script>
 
-  <!-- Nessun highlight.js qui, caricheremo Monaco tramite script AMD -->
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link
@@ -38,6 +36,20 @@
       pointer-events: none !important;
     }
   </style>
+
+  <style>
+    /* Prevent scrolling on desktop, locking the UI perfectly into the viewport */
+    @media (min-width: 992px) {
+      body {
+        height: 100vh;
+        overflow: hidden !important;
+      }
+      .match-main,
+      .match-main > .container-fluid {
+        min-height: 0 !important;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -46,20 +58,40 @@
     initLoader();
   </script>
 
-  <!-- Pulsante esci -->
-  <a href="/home" class="btn btn-sm btn-outline-danger m-3 position-absolute z-3" style="top:0; left:0;"><i
-      class="bi bi-box-arrow-left"></i> Abbandona</a>
+  <!-- Countdown Overlay -->
+  <div id="match-countdown-overlay" class="match-countdown-overlay d-flex flex-column align-items-center justify-content-center">
+    <div class="match-countdown-title mb-3">Preparati!</div>
+    <div id="match-countdown-text" class="match-countdown-text">3</div>
+  </div>
 
-  <main class="match-main" id="match-main">
-    <div class="container-fluid w-100 p-4"
-      style="max-width: 1400px; display: flex; flex-direction: column; min-height: 100vh;">
+  <main class="match-main flex-grow-1 d-flex flex-column" id="match-main">
+    <div class="container-fluid w-100 p-3 p-lg-4 d-flex flex-column flex-grow-1"
+      style="max-width: 1400px;">
+
+      <!-- MATCH HEADER -->
+      <div class="match-header w-100 d-flex justify-content-between align-items-center mb-2 px-2">
+        <!-- Left: Leave btn -->
+        <a href="/home" class="btn btn-danger rounded-pill d-flex align-items-center gap-2 shadow match-leave-btn">
+          <i class="bi bi-box-arrow-left"></i> Abbandona
+        </a>
+
+        <!-- Right: Settings and Info -->
+        <div class="d-flex gap-2">
+          <button class="btn btn-dark rounded-circle shadow d-flex align-items-center justify-content-center match-header-btn" title="Informazioni">
+            <i class="bi bi-question-lg fs-5"></i>
+          </button>
+          <button class="btn btn-dark rounded-circle shadow d-flex align-items-center justify-content-center match-header-btn" title="Impostazioni" data-bs-toggle="modal" data-bs-target="#settingsModal">
+            <i class="bi bi-gear-fill fs-5"></i>
+          </button>
+        </div>
+      </div>
 
       <!-- TOP: SCOREBOARD -->
-      <div class="match-scoreboard row align-items-center mb-4 mt-4">
+      <div class="match-scoreboard row align-items-stretch mb-2 mt-2 px-2 gx-2 gx-lg-5">
 
         <!-- Player 1 -->
-        <div class="col-12 col-md-4 d-flex justify-content-start mb-3 mb-md-0">
-          <div class="match-player-card">
+        <div class="col-12 col-md-4 d-flex mb-3 mb-md-0">
+          <div class="match-player-card w-100 h-100 d-flex flex-column justify-content-center">
             <div class="d-flex align-items-center gap-3">
               <img src="" alt="Player" class="match-avatar" id="match-p1-avatar">
               <div class="match-player-info">
@@ -77,12 +109,12 @@
             <!-- Health Bar -->
             <div class="match-health-wrap mt-2">
               <div class="progress"
-                style="height: 12px; background: rgba(var(--darcula-bg), 0.8); border: 1px solid rgba(var(--darcula-comment), 0.3);">
-                <div class="progress-bar health-fill" id="match-p1-health" role="progressbar" style="width: 100%;"
+                style="height: 12px; background: rgba(var(--darcula-bg), 0.8); border: 1px solid rgba(var(--darcula-comment), 0.3); border-radius: 6px;">
+                <div class="progress-bar health-fill" id="match-p1-health" role="progressbar" style="width: 100%; border-radius: 6px;"
                   aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
               </div>
-              <div class="health-text text-end mt-1"
-                style="font-size: 0.75rem; color: rgb(var(--darcula-comment)); font-family: 'JetBrains Mono', monospace;">
+              <div class="health-text text-end mt-1 fw-bold"
+                style="font-size: 0.8rem; color: rgb(var(--darcula-fg)); font-family: 'JetBrains Mono', monospace;">
                 <span id="match-p1-hp">100</span>/100
               </div>
             </div>
@@ -91,14 +123,16 @@
 
         <!-- Center Data -->
         <div
-          class="col-12 col-md-4 d-flex flex-column align-items-center text-center order-first order-md-0 mb-3 mb-md-0">
-          <div class="match-round-text" id="match-round">Round 1/5</div>
-          <div class="match-timer" id="match-timer">00:30</div>
+          class="col-12 col-md-4 d-flex align-items-stretch justify-content-center mb-3 mb-md-0">
+          <div class="match-timer-container h-100 d-flex flex-column align-items-center justify-content-center">
+            <div class="match-round-text mb-1" id="match-round">Round 1/5</div>
+            <div class="match-timer" id="match-timer">00:30</div>
+          </div>
         </div>
 
         <!-- Player 2 -->
-        <div class="col-12 col-md-4 d-flex justify-content-end">
-          <div class="match-player-card match-opponent-card text-end">
+        <div class="col-12 col-md-4 d-flex mb-3 mb-md-0">
+          <div class="match-player-card match-opponent-card text-end w-100 h-100 d-flex flex-column justify-content-center">
             <div class="d-flex align-items-center gap-3 flex-row-reverse">
               <img src="" alt="Opponent" class="match-avatar" id="match-p2-avatar">
               <div class="match-player-info">
@@ -116,12 +150,12 @@
             <!-- Health Bar -->
             <div class="match-health-wrap mt-2">
               <div class="progress"
-                style="height: 12px; background: rgba(var(--darcula-bg), 0.8); border: 1px solid rgba(var(--darcula-comment), 0.3);">
-                <div class="progress-bar health-fill" id="match-p2-health" role="progressbar" style="width: 100%;"
+                style="height: 12px; background: rgba(var(--darcula-bg), 0.8); border: 1px solid rgba(var(--darcula-comment), 0.3); border-radius: 6px;">
+                <div class="progress-bar health-fill" id="match-p2-health" role="progressbar" style="width: 100%; border-radius: 6px;"
                   aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
               </div>
-              <div class="health-text text-start mt-1"
-                style="font-size: 0.75rem; color: rgb(var(--darcula-comment)); font-family: 'JetBrains Mono', monospace;">
+              <div class="health-text text-start mt-1 fw-bold"
+                style="font-size: 0.8rem; color: rgb(var(--darcula-fg)); font-family: 'JetBrains Mono', monospace;">
                 <span id="match-p2-hp">100</span>/100
               </div>
             </div>
@@ -129,46 +163,93 @@
         </div>
       </div>
 
-      <!-- MIDDLE: CODE WINDOW -->
-      <div class="row flex-grow-1 justify-content-center align-items-center">
-        <div class="col-12 col-xl-10">
-          <div class="vscode-match-window shadow-lg">
-            <!-- Fake Titlebar -->
-            <div class="vscode-titlebar">
-              <div class="vscode-mac-btns">
-                <span class="mac-btn close"></span>
-                <span class="mac-btn minimize"></span>
-                <span class="mac-btn maximize"></span>
+      <!-- MIDDLE: PLAY AREA (Code + Guess) -->
+      <div class="row flex-grow-1 justify-content-center align-items-stretch pb-2">
+        <div class="col-12 col-xl-12 d-flex flex-column">
+          <div class="play-area-container p-3 p-md-4 d-flex flex-column flex-lg-row gap-4 gap-lg-5 flex-grow-1">
+            
+            <!-- CODE WINDOW -->
+            <div class="vscode-match-window vscode-match-window--responsive shadow-lg d-flex flex-column">
+              <!-- Fake Titlebar -->
+              <div class="vscode-titlebar">
+                <div class="vscode-mac-btns">
+                  <span class="mac-btn close"></span>
+                  <span class="mac-btn minimize"></span>
+                  <span class="mac-btn maximize"></span>
+                </div>
+                <div class="vscode-title"><i class="bi bi-file-earmark-code"></i> snippet.txt - Visual Studio Code</div>
               </div>
-              <div class="vscode-title"><i class="bi bi-file-earmark-code"></i> snippet.txt - Visual Studio Code</div>
+              <!-- Editor -->
+              <div class="vscode-editor-body p-0 flex-grow-1 match-editor-body" style="display: flex; flex-direction: column;">
+                <div id="monaco-container" class="match-monaco-container"></div>
+              </div>
             </div>
-            <!-- Editor -->
-            <div class="vscode-editor-body p-0" style="display: flex; flex-direction: column;">
-              <div id="monaco-container"
-                style="flex-grow: 1; width: 100%; height: 100%; min-height: 400px; display: block;"></div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- BOTTOM: GUESS BOX -->
-      <div class="row justify-content-center mt-5 mb-3">
-        <div class="col-12 col-md-8 col-lg-6 text-center">
-          <div class="match-guess-container p-4">
-            <h5 class="guess-label mb-3">Indovina il linguaggio <i class="bi bi-keyboard"></i></h5>
-            <form id="guess-form" class="d-flex gap-2">
-              <input type="text" class="form-control guess-input" id="guess-input"
-                placeholder="Es. Python, JavaScript..." autocomplete="off" required>
-              <button type="submit" class="btn btn-primary guess-btn"><i class="bi bi-send-fill"></i> Invia</button>
-            </form>
-            <div id="guess-feedback" class="mt-2 text-center text-darcula-comment"
-              style="min-height: 24px; font-weight:500;">Attesa risposta...</div>
+            <!-- GUESS BOX -->
+            <div class="match-guess-wrapper d-flex flex-column justify-content-center">
+              <div class="match-guess-container p-4 w-100 d-flex flex-column justify-content-center h-100" style="min-height: 200px;">
+                <h5 class="guess-label mb-3 text-center">Indovina il linguaggio <i class="bi bi-keyboard"></i></h5>
+                <form id="guess-form" class="d-flex flex-column gap-3 mt-auto mb-auto">
+                  <input type="text" class="form-control guess-input w-100 text-center" id="guess-input"
+                    placeholder="Python, JS, C++..." autocomplete="off" required>
+                  <button type="submit" class="btn btn-primary guess-btn w-100 py-2"><i class="bi bi-send-fill"></i> Invia</button>
+                </form>
+                <div id="guess-feedback" class="mt-3 text-center text-darcula-comment"
+                  style="min-height: 24px; font-weight:500;">Attesa risposta...</div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
 
     </div>
   </main>
+
+  <!-- =====================
+       FOOTER
+       ===================== -->
+  <footer class="site-footer" id="site-footer" style="flex-shrink: 0;">
+    <div class="container">
+      <div class="footer-bottom">
+        <!-- Left: copyright + authors + license -->
+        <div class="footer-copy">
+          <!-- Riga 1: brand -->
+          <span class="footer-brand">
+            <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
+          </span>
+          <!-- Separatore desktop -->
+          <span class="footer-sep" aria-hidden="true">&mdash;</span>
+          <!-- Riga 2: autori -->
+          <span class="footer-authors">
+            Salvatore Iavarone &amp; Michele Pio Forlani
+          </span>
+          <!-- Separatore desktop -->
+          <span class="footer-sep" aria-hidden="true">&bull;</span>
+          <!-- Licenza + versione -->
+          <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank" class="footer-license">Licenza
+            MIT</a>
+          <span class="footer-sep" aria-hidden="true">&bull;</span>
+          <span class="footer-version">v1.0.0-alpha</span>
+        </div>
+        <!-- Right: social + site links -->
+        <div class="footer-links-inline">
+          <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
+            title="GitHub">
+            <i class="bi bi-github"></i>
+          </a>
+          <a href="https://www.linkedin.com/in/salvatoreiavarone" class="social-btn" aria-label="LinkedIn"
+            title="LinkedIn">
+            <i class="bi bi-linkedin"></i>
+          </a>
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr"
+            target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
+            <i class="bi bi-envelope-fill"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Monaco Editor Loader -->
