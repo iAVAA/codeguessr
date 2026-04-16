@@ -9,7 +9,7 @@ const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
 const XP_PER_LEVEL = 1000;
 
 // ─── XP Ring ─────────────────────────────────────────────────────────────────
-
+// TODO: fix setXpProgress to be dynamic with XP from DB
 function setXpProgress(pct) {
   const ring = document.getElementById('xp-ring-progress');
   if (!ring) return;
@@ -49,7 +49,7 @@ function buildFriendHTML(friend) {
   const { name, avatar, online } = friend;
   const filterStyle = online ? '' : 'style="filter:grayscale(100%);opacity:0.7;"';
   const challengeBtn = online
-    ? `<button class="btn-sfida" aria-label="Sfida ${name}"><i class="bi bi-swords"></i> Sfida</button>`
+    ? `<button class="btn-challenge" aria-label="Sfida ${name}"><i class="bi bi-swords"></i> Sfida</button>`
     : '';
 
   return `
@@ -97,7 +97,6 @@ function renderFriends(friends) {
 // ─── UI State Helpers ────────────────────────────────────────────────────────
 
 function showProfile() {
-  document.getElementById('auth-buttons-wrapper')?.classList.replace('d-flex', 'd-none');
   document.getElementById('profile-dropdown-wrapper')?.classList.remove('d-none');
 }
 

@@ -51,7 +51,7 @@ function buildFriendHTML(friend) {
     const statusText = friend.online ? 'Online' : 'Offline';
     
     const challengeBtn = friend.online
-        ? `<button class="btn-sfida"><i class="bi bi-swords"></i> Sfida</button>`
+        ? `<button class="btn-challenge"><i class="bi bi-swords"></i> Sfida</button>`
         : '';
 
     return `
