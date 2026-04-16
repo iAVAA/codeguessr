@@ -364,6 +364,113 @@ app.post('/api/reset_password', async (req, res) => {
 });
 
 // ==========================================
+// COSTANTI GITHUB (Spostate dal Frontend)
+// ==========================================
+const EXT_TO_MONACO = {
+  js: 'javascript', ts: 'typescript', jsx: 'javascript', tsx: 'typescript',
+  py: 'python', rb: 'ruby', java: 'java', cpp: 'cpp', cc: 'cpp', cxx: 'cpp',
+  c: 'c', h: 'c', cs: 'csharp', go: 'go', rs: 'rust', kt: 'kotlin',
+  swift: 'swift', php: 'php', lua: 'lua', r: 'r', scala: 'scala',
+  sh: 'shell', bash: 'shell', sql: 'sql', html: 'html', css: 'css',
+  json: 'json', yml: 'yaml', yaml: 'yaml', xml: 'xml', md: 'markdown'
+};
+
+// ==========================================
+// COSTANTI GITHUB
+// ==========================================
+const GITHUB_QUERIES = [
+  { q: 'leetcode solutions language:python',    ext: 'py'   },
+  { q: 'leetcode problems language:java',      ext: 'java' },
+  { q: 'leetcode algorithm language:cpp',       ext: 'cpp'  },
+  { q: 'leetcode daily challenge language:js',  ext: 'js'   },
+  { q: 'leetcode two sum language:python',     ext: 'py'   },
+  { q: 'leetcode linked list language:java',   ext: 'java' },
+  { q: 'leetcode binary tree language:cpp',    ext: 'cpp'  },
+  { q: 'leetcode dynamic programming language:py', ext: 'py' },
+  { q: 'leetcode reverse string language:js',  ext: 'js'   },
+  { q: 'leetcode merge sorted language:cpp',   ext: 'cpp'  },
+  { q: 'leetcode valid parentheses language:java', ext: 'java' },
+  { q: 'leetcode top interview questions language:py', ext: 'py' },
+  { q: 'leetcode blind 75 language:js',        ext: 'js'   },
+  { q: 'leetcode hash map language:cpp',       ext: 'cpp'  },
+  { q: 'leetcode depth first search language:py', ext: 'py' }
+];
+// ==========================================
+// API GITHUB SNIPPET (GET)
+// ==========================================
+/**
+ * GET /api/random-snippet
+ * Cerca un file di codice casuale su GitHub e lo formatta per il frontend.
+ */
+app.get('/api/random-snippet', async (req, res) => {
+    try {
+        if (!process.env.GITHUB_TOKEN) {
+            console.error("[Backend] ERRORE: GITHUB_TOKEN non trovato nel file .env!");
+            return res.status(500).json({ errore: 'Configurazione server mancante' });
+        }
+
+        const queryObj = GITHUB_QUERIES[Math.floor(Math.random() * GITHUB_QUERIES.length)];
+        const page = Math.floor(Math.random() * 3) + 1;
+
+        const headers = { 
+            'Accept': 'application/vnd.github+json',
+            'User-Agent': 'CodeGuessr-Server',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'Authorization': `token ${process.env.GITHUB_TOKEN}`
+        };
+
+        // 1. Estrai solo le parole chiave (es. "sort algorithm language:python" diventa "sort algorithm")
+        const keywords = queryObj.q.split('language:')[0].trim();
+        
+        // 2. Ricerca GLOBALE direttamente nei file di codice (come nel tuo script Python)
+        const codeSearchQuery = `${keywords} extension:${queryObj.ext}`;
+        const codeSearchUrl = `https://api.github.com/search/code?q=${encodeURIComponent(codeSearchQuery)}&per_page=30&page=${page}`;
+        
+        const codeRes = await fetch(codeSearchUrl, { headers });
+        if (!codeRes.ok) throw new Error(`Code search failed: ${codeRes.status} - ${await codeRes.text()}`);
+        
+        const codeData = await codeRes.json();
+        if (!codeData.items || codeData.items.length === 0) {
+            throw new Error(`Nessun file trovato per la query: ${codeSearchQuery}`);
+        }
+
+        // 3. Prendi un file a caso dai risultati globali
+        const file = codeData.items[Math.floor(Math.random() * codeData.items.length)];
+        const repoFullName = file.repository.full_name; // L'API ci fornisce già il nome del repo qui
+
+        // 4. Scarica il contenuto usando l'API ufficiale (Base64)
+        const contentRes = await fetch(file.url, { headers });
+        if (!contentRes.ok) throw new Error(`Content fetch failed: ${contentRes.status} - ${await contentRes.text()}`);
+        const contentData = await contentRes.json();
+
+        // 5. Decodifica il Base64 in testo leggibile
+        let rawCode = Buffer.from(contentData.content, 'base64').toString('utf-8');
+
+        // 6. Tronca a ~40 righe
+        const lines = rawCode.split('\n');
+        if (lines.length > 40) {
+            const start = lines.findIndex(l => l.trim().length > 0);
+            rawCode = lines.slice(start > -1 ? start : 0, (start > -1 ? start : 0) + 40).join('\n');
+        }
+
+        // 7. Determina il linguaggio per Monaco Editor
+        const ext = file.name.split('.').pop().toLowerCase();
+        const monacoLang = EXT_TO_MONACO[ext] || 'plaintext';
+
+        res.status(200).json({
+            code: rawCode,
+            monacoLang,
+            source: `${repoFullName} — ${file.path}`,
+            fileUrl: file.html_url
+        });
+
+    } catch (error) {
+        console.error("[Backend] Errore fetch snippet GitHub:", error.message);
+        res.status(500).json({ errore: 'Impossibile recuperare lo snippet da GitHub' });
+    }
+});
+
+// ==========================================
 // API VALUTAZIONE RISPOSTA - OPENAI (POST)
 // ==========================================
 
@@ -388,25 +495,26 @@ app.post('/api/valuta-risposta', async (req, res) => {
         return res.status(400).json({ errore: 'snippet e risposta sono obbligatori.' });
     }
 
-    const prompt = `Sei un valutatore per un gioco chiamato CodeGuessr, in cui i giocatori devono indovinare il linguaggio di programmazione di un frammento di codice.
+    const prompt = `Sei un valutatore esperto per un gioco in cui i giocatori devono spiegare cosa fa un dato frammento di codice.
+La domanda a cui il giocatore deve rispondere è: "Cosa fa questo codice?".
 
-Analizza il seguente frammento di codice e determina il linguaggio di programmazione corretto:
+Analizza il seguente frammento di codice:
 
 \`\`\`
 ${snippet}
 \`\`\`
 
-La risposta del giocatore è: "${risposta}"
+La spiegazione fornita dal giocatore è: "${risposta}"
 
-Assegna un punteggio da 0 a 100 in base alla correttezza della risposta:
-- 100: risposta identica o sinonimo perfetto del linguaggio corretto (es. "JS" per "JavaScript")
-- 70-99: risposta molto vicina ma con piccole imprecisioni (es. "TypeScript" per "JavaScript")
-- 30-69: risposta parzialmente corretta (es. "C" per "C++")
-- 1-29: risposta lontana ma nello stesso ecosistema
-- 0: risposta completamente sbagliata o non pertinente
+Valuta la correttezza della risposta del giocatore rispetto all'effettivo scopo e funzionamento del codice. Assegna un punteggio da 0 a 100 in base ai seguenti criteri:
+- 100: Spiegazione perfetta, che coglie esattamente la logica e lo scopo principale del codice.
+- 70-99: Spiegazione per lo più corretta, ma imprecisa o mancante di alcuni dettagli tecnici secondari.
+- 30-69: Spiegazione parziale; il giocatore ha capito il contesto generale ma ha frainteso la logica chiave.
+- 1-29: Spiegazione ampiamente errata, ma che menziona concetti o elementi effettivamente presenti nel codice.
+- 0: Risposta completamente sbagliata, non pertinente o insensata.
 
-Rispondi ESCLUSIVAMENTE con un oggetto JSON valido nel seguente formato, senza testo aggiuntivo:
-{"punteggio": <numero>, "linguaggio": "<nome del linguaggio corretto>"}`;
+Rispondi ESCLUSIVAMENTE con un oggetto JSON valido nel seguente formato, senza blocchi di codice markdown o testo aggiuntivo:
+{"punteggio": <numero>}`;
 
     try {
         const client = await getOpenRouter();
@@ -419,16 +527,17 @@ Rispondi ESCLUSIVAMENTE con un oggetto JSON valido nel seguente formato, senza t
             }
         });
 
-        // Il campo della risposta dipende dalla versione dell'SDK:
-        // può essere completion.chatCompletion o direttamente completion
+        // Il campo della risposta dipende dalla versione dell'SDK
         const chatResult = completion.chatCompletion ?? completion;
-        const rawOutput = chatResult.choices[0].message.content.trim();
+        let rawOutput = chatResult.choices[0].message.content.trim();
 
-        let punteggio, linguaggio;
+        // Pulizia preventiva: rimuove eventuali backtick markdown se l'LLM li inserisce per errore
+        rawOutput = rawOutput.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+
+        let punteggio;
         try {
             const parsed = JSON.parse(rawOutput);
-            punteggio  = Math.min(100, Math.max(0, parseInt(parsed.punteggio, 10)));
-            linguaggio = parsed.linguaggio || null;
+            punteggio = Math.min(100, Math.max(0, parseInt(parsed.punteggio, 10)));
         } catch (parseErr) {
             console.error('[OpenRouter] Output non parsabile come JSON:', rawOutput);
             return res.status(500).json({ errore: 'Risposta non valida da OpenRouter.' });
@@ -436,14 +545,14 @@ Rispondi ESCLUSIVAMENTE con un oggetto JSON valido nel seguente formato, senza t
 
         if (isNaN(punteggio)) {
             console.error('[OpenRouter] Punteggio non numerico nel JSON:', rawOutput);
-            return res.status(500).json({ errore: 'Punteggio non valido da OpenRouter.' });
+            return res.status(500).json({ errore: 'Punteggio non valido elaborato dall\'AI.' });
         }
 
-        res.status(200).json({ punteggio, linguaggio });
+        res.status(200).json({ punteggio });
 
     } catch (err) {
         console.error('[OpenRouter] Errore valutazione risposta:', err.message);
-        res.status(500).json({ errore: 'Errore durante la valutazione con OpenRouter.' });
+        res.status(500).json({ errore: 'Errore durante la valutazione della risposta.' });
     }
 });
 
