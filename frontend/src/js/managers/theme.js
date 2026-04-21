@@ -24,8 +24,6 @@ function initTheme() {
   } else {
     applyTheme('dark');
   }
-
-  document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
 }
 
 initTheme();

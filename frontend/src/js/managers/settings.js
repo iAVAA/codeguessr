@@ -263,6 +263,15 @@ function initSettings() {
   el('settings-cancel')?.addEventListener('click', () => {
     closeSettings();
   });
+
+  // Delete Profile button
+  el('btn-delete-profile')?.addEventListener('click', () => {
+    if (confirm("Sei sicuro di voler eliminare definitivamente il tuo profilo? Questa azione non può essere annullata.")) {
+      alert("Il profilo è stato eliminato con successo. (Mockup)");
+      localStorage.removeItem('isLoggedIn');
+      window.location.replace('/index.html');
+    }
+  });
 }
 
 initSettings();

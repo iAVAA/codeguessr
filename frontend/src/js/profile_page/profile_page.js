@@ -49,9 +49,9 @@ function buildFriendHTML(friend) {
     const statusClass = friend.online ? 'online' : 'offline';
     const textClass = friend.online ? 'text-darcula-green' : 'text-darcula-comment';
     const statusText = friend.online ? 'Online' : 'Offline';
-    
+
     const challengeBtn = friend.online
-        ? `<button class="btn-sfida"><i class="bi bi-swords"></i> Sfida</button>`
+        ? `<button class="btn-challenge"><i class="bi bi-swords"></i> Sfida</button>`
         : '';
 
     return `
@@ -105,14 +105,14 @@ function updateProfileUI(playerData) {
     setText('player-name', playerData.name);
     setText('player-level', playerData.level);
     setText('player-cups', playerData.xp.toLocaleString('it-IT'));
-    
+
     const navAvatar = document.getElementById('player-avatar');
     if (navAvatar) navAvatar.src = playerData.avatar;
 
     // Aggiorna Profilo Main
     setText('page-name', playerData.name);
     setText('page-userid', playerData.id);
-    
+
     const mainAvatar = document.getElementById('page-avatar');
     if (mainAvatar) mainAvatar.src = playerData.avatar;
 
@@ -140,8 +140,8 @@ function updateProfileUI(playerData) {
 async function fetchFullProfileData(userId) {
     const res = await fetch(`/api/profilo/${userId}`);
     if (!res.ok) throw new Error(`Profilo non trovato (${res.status})`);
-    
-    const dataProfilo = await res.json();   
+
+    const dataProfilo = await res.json();
 
     // 1. Dobbiamo trasformare la lista di ID in una lista di Oggetti per il frontend
     const res1 = await fetch(`/api/amici/${userId}`);
@@ -176,12 +176,12 @@ async function fetchFullProfileData(userId) {
         level: dataProfilo.livello,
         xp: dataProfilo.exp,
         avatar: `${AVATAR_BASE}?seed=${dataProfilo.userid}&backgroundColor=1e1f21`,
-        
+
         // Passiamo l'array trasformato, non i semplici ID
-        friends: amiciFormattati, 
+        friends: amiciFormattati,
         sentRequests: amiciInviatiFormattati,
         receivedRequests: amiciRicevutiFormattati,
-        
+
         // Il frontend VUOLE l'oggetto stats, dobbiamo passarglielo per forza (anche a zero)
         stats: {
             played: totalePartite,
@@ -189,7 +189,7 @@ async function fetchFullProfileData(userId) {
             lost: 0,
             winRate: 0
         },
-        
+
         // Mappiamo i match del backend sulla history
         history: []
     };
@@ -276,15 +276,6 @@ async function initProfilePage() {
     } catch (error) {
         console.error('[Profile Page] Errore caricamento dati:', error);
         alert('Impossibile caricare il profilo. Riprova più tardi.');
-    }
-
-    // Gestione bottone Modifica Profilo
-    const btnEdit = document.getElementById('btn-edit-profile');
-    if (btnEdit) {
-        btnEdit.addEventListener('click', () => {
-            // Qui puoi aprire un modale per modificare bio, banner, ecc.
-            alert('Funzione di modifica profilo in arrivo!');
-        });
     }
 }
 
