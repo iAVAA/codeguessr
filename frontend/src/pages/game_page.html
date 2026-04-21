@@ -198,7 +198,12 @@
                         <div class="side-panel">
                             <div class="panel-title d-flex justify-content-between align-items-center mb-0">
                                 <span><i class="bi bi-people"></i> Amici</span>
-                                <span class="badge rounded-pill" id="friends-online-badge">Online</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge rounded-pill" id="friends-online-badge">Online</span>
+                                    <button class="btn-add-friend" id="btn-add-friend" aria-label="Aggiungi amico" title="Aggiungi amico">
+                                        <i class="bi bi-person-plus-fill"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="friends-list"></div>
@@ -328,6 +333,20 @@
                             <input type="checkbox" id="toggle-notif-friends" role="switch">
                             <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
                             </label>
+                        </div>
+                    </section>
+
+                    <!-- Danger Zone -->
+                    <section class="cg-settings-section" style="border-bottom: none;">
+                        <div class="cg-settings-section-label text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Zona Pericolosa</div>
+                        <div class="cg-settings-row">
+                            <div class="cg-settings-row-info">
+                                <span class="cg-settings-row-name text-danger">Elimina Profilo</span>
+                                <span class="cg-settings-row-desc">Questa azione è irreversibile. Tutti i tuoi dati andranno persi.</span>
+                            </div>
+                            <button class="cg-btn-danger" id="btn-delete-profile">
+                                <i class="bi bi-trash3-fill"></i> Elimina
+                            </button>
                         </div>
                     </section>
                 </div>

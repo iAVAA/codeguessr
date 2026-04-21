@@ -696,7 +696,6 @@ body.loader-open { overflow: hidden !important; }
   }
 }
 
-/*TODO: I'M HERE*/
 /* ── Settings Overlay ───────────────────────────────────────────────── */
 .cg-settings-overlay {
   position: fixed;
@@ -1178,559 +1177,55 @@ body.loader-open { overflow: hidden !important; }
   border-color: rgba(var(--darcula-blue), 0.55);
 }
 
-/* ===========================
-   PROFILE PAGE STYLES
-   =========================== */
-
-.profile-page-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Card principale (Header) */
-.profile-header-card {
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: var(--border-radius-xl);
-  overflow: hidden;
-  position: relative;
-}
-
-/* Banner immagine */
-.profile-banner {
-  height: 200px;
-  width: 100%;
-  background-size: cover;
-  background-position: center;
-  background-color: rgb(var(--darcula-blue)); /* Fallback */
-  position: relative;
-}
-
-/* Sfumatura scura sotto al banner per stacco più pulito */
-.profile-banner::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 50px;
-  background: linear-gradient(to top, rgba(var(--darcula-current), 0.8), transparent);
-}
-
-/* Contenuto Header (Avatar, Info, Bottoni) */
-.profile-header-content {
-  padding: 0 2rem 2rem 2rem;
-  position: relative;
-}
-
-/* Wrapper Immagine Profilo sovrapposta */
-.profile-main-avatar-wrapper {
-  margin-top: -60px; /* Sale sopra al banner */
-  position: relative;
-  z-index: 2;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: rgb(var(--darcula-bg));
-  padding: 6px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
-
-.profile-main-avatar {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  background: rgb(var(--darcula-current));
-}
-
-/* Testi Profilo */
-.profile-main-name {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: rgb(var(--darcula-fg));
-  letter-spacing: -0.02em;
-}
-
-.profile-flag {
-  font-size: 1.2rem;
-  vertical-align: middle;
-}
-
-.profile-main-bio {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: rgb(var(--darcula-fg));
-  opacity: 0.85;
-  max-width: 500px;
-  margin: 0;
-  font-style: italic;
-}
-
-/* Scatole Statistiche (Giocate, Vinte, ecc.) */
-.stat-box {
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: var(--border-radius-lg);
-  padding: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: transform 0.2s, border-color 0.2s;
-}
-
-.stat-box:hover {
-  transform: translateY(-3px);
-  border-color: rgba(var(--darcula-comment), 0.4);
-}
-
-.stat-box-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: rgba(var(--darcula-bg), 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.stat-box-data {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-box-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: rgb(var(--darcula-fg));
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.stat-box-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgb(var(--darcula-comment));
-}
-
-/* Elemento Singola Partita (Storico) */
-.history-item:hover {
-  border-color: rgba(var(--darcula-blue), 0.4);
-}
-
-.history-result {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-}
-
-.history-result.win {
-  background: rgba(var(--darcula-green), 0.15);
-  color: rgb(var(--darcula-green));
-}
-
-.history-result.loss {
+/* ── Danger Button ─────────────────────────────────────────────────── */
+.cg-btn-danger {
   background: rgba(var(--darcula-red), 0.15);
   color: rgb(var(--darcula-red));
-}
-
-/* Responsive Fixes per Profilo */
-@media (max-width: 576px) {
-  .profile-header-content {
-    padding: 0 1rem 1.5rem 1rem;
-  }
-  .profile-main-avatar-wrapper {
-    margin: -50px auto 0 auto; /* Centra l'avatar su mobile */
-    width: 100px;
-    height: 100px;
-  }
-  .profile-main-info {
-    text-align: center;
-  }
-  .profile-actions {
-    width: 100%;
-  }
-  .profile-actions button {
-    width: 100%;
-    justify-content: center;
-  }
-  .stat-box {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.5rem;
-    padding: 1rem;
-  }
-}
-
-/* ===========================
-   MATCH PAGE
-   =========================== */
-
-.match-main {
-  position: relative;
-  overflow: hidden;
-}
-
-.match-player-card {
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 20px;
-  padding: 0.5rem 1.25rem;
-  min-width: 200px;
-}
-
-.match-avatar {
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  background: #1e1f21;
-}
-
-.match-player-name {
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 1rem;
-  color: rgb(var(--darcula-fg));
-}
-
-.match-player-stats {
+  border: 1px solid rgba(var(--darcula-red), 0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  color: rgba(var(--darcula-fg), 0.7);
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.health-fill {
-  background: linear-gradient(90deg, #28a745, #5cb85c);
-  transition: width 0.5s ease-in-out, background-color 0.5s ease;
-  box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
-}
-
-.health-fill.warning {
-  background: linear-gradient(90deg, #ffc107, #ffcd39);
-  box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
-}
-
-.health-fill.danger {
-  background: linear-gradient(90deg, #dc3545, #e4606d);
-  box-shadow: 0 0 10px rgba(220, 53, 69, 0.4);
-}
-
-.match-round-text {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 600;
-  color: rgba(var(--darcula-fg), 0.7);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 0px;
-}
-
-.match-timer {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 2.2rem;
-  font-weight: 700;
-  line-height: 1;
-  color: #fff;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 40px rgba(52, 152, 219, 0.4);
-  transition: all 0.3s ease;
-}
-
-.match-timer.hurry {
-  color: #ff5f56;
-  text-shadow: 0 0 20px rgba(255, 95, 86, 0.8), 0 0 40px rgba(255, 95, 86, 0.4);
-  animation: pulseTimer 1s infinite;
-}
-
-@keyframes pulseTimer {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-.vscode-match-window {
-  background: rgba(var(--darcula-bg), 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 12px;
-  overflow: hidden;
-  height: 500px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px rgba(var(--darcula-green), 0.1);
-}
-
-.vscode-titlebar {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background: rgba(var(--darcula-bg), 0.9);
-  border-bottom: 1px solid rgba(var(--darcula-comment), 0.2);
-  position: relative;
-}
-
-.vscode-mac-btns {
-  display: flex;
-  gap: 8px;
-  position: absolute;
-  left: 1rem;
-}
-
-.vscode-mac-btns .mac-btn {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-.vscode-mac-btns .close { background-color: #ff5f56; box-shadow: inset 0 0 0 1px #e0443e; }
-.vscode-mac-btns .minimize { background-color: #ffbd2e; box-shadow: inset 0 0 0 1px #dea123; }
-.vscode-mac-btns .maximize { background-color: #27c93f; box-shadow: inset 0 0 0 1px #1aab29; }
-
-.vscode-title {
-  width: 100%;
-  text-align: center;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  color: rgba(var(--darcula-fg), 0.5);
-}
-
-.vscode-editor-body {
-  flex-grow: 1;
-  padding: 1.5rem;
-  overflow-y: auto;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.95rem;
-  color: rgb(var(--darcula-fg));
-}
-
-.vscode-editor-body pre {
-  margin: 0;
-}
-
-.match-guess-container {
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 20px;
-}
-
-.guess-label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  color: rgb(var(--darcula-fg));
-}
-
-.guess-input {
-  background: rgba(var(--darcula-bg), 0.6) !important;
-  border: 1px solid rgba(var(--darcula-comment), 0.3) !important;
-  color: rgb(var(--darcula-fg)) !important;
-  border-radius: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  padding: 0.8rem 1.2rem;
-}
-
-.guess-input:focus {
-  border-color: rgb(var(--darcula-green)) !important;
-  box-shadow: 0 0 15px rgba(var(--darcula-green), 0.4) !important;
-  outline: none;
-}
-
-.guess-btn {
-  background: linear-gradient(135deg, rgb(var(--darcula-green)), #2eb872) !important;
-  border: none !important;
-  border-radius: 12px;
-  font-weight: 600;
-  padding: 0 2rem;
-  color: #fff !important;
-  box-shadow: 0 4px 15px rgba(var(--darcula-green), 0.4);
+  gap: 6px;
   transition: all 0.2s ease;
 }
 
-.guess-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(var(--darcula-green), 0.6);
-}
-
-/* ===========================
-   NEW MATCH PAGE STYLES
-   =========================== */
-
-/* Play Area Single Container */
-.play-area-container {
-  background: rgba(var(--darcula-current), 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 24px;
-  box-shadow: 0 15px 45px rgba(0,0,0,0.25);
-  overflow: hidden;
-}
-
-/* Timer Styling Upgrade */
-.match-timer-container {
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(var(--darcula-comment), 0.3);
-  border-radius: 20px;
-  padding: 0.25rem 1.8rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  display: inline-block;
-}
-
-/* Countdown Overlay */
-.match-countdown-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1050;
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  background: rgba(var(--darcula-bg), 0.65);
-  transition: opacity 0.5s ease, visibility 0.5s ease;
-}
-
-.match-countdown-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: rgb(var(--darcula-fg));
-  text-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
-  letter-spacing: 1px;
-}
-
-.match-countdown-text {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8rem;
-  font-weight: 800;
-  color: rgb(var(--darcula-green));
-  text-shadow: 0 0 50px rgba(var(--darcula-green), 0.7);
-  animation: countdownPulse 1s ease-in-out infinite;
-  line-height: 1;
-}
-
-@keyframes countdownPulse {
-  0% { transform: scale(0.8); opacity: 0; }
-  20% { transform: scale(1.1); opacity: 1; }
-  80% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(0.8); opacity: 0; }
-}
-
-/* ===========================
-   MATCH HEADER
-   =========================== */
-
-.match-header {
-  height: 60px;
-}
-
-.match-leave-btn {
-  padding: 0.5rem 1.4rem;
-  font-weight: 700;
-  transition: all 0.2s ease;
-  background: rgba(var(--darcula-red), 0.9);
-  border: none;
-}
-
-.match-leave-btn:hover {
+.cg-btn-danger:hover {
   background: rgb(var(--darcula-red));
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(var(--darcula-red), 0.4) !important;
-}
-
-.match-header-btn {
-  width: 44px;
-  height: 44px;
-  background: rgba(var(--darcula-current), 0.8) !important;
-  color: rgb(var(--darcula-fg)) !important;
-  border: 1px solid rgba(var(--darcula-comment), 0.2) !important;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
-}
-
-.match-header-btn:hover {
-  background: rgb(var(--darcula-blue)) !important;
-  border-color: rgb(var(--darcula-blue)) !important;
-  color: #fff !important;
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 15px rgba(var(--darcula-blue), 0.4) !important;
-}
-
-.match-header-btn i {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.match-header-btn:hover i {
-  transform: rotate(15deg);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(var(--darcula-red), 0.3);
 }
 
 /* ===========================
-   MOBILE EDITOR FIX
+   ADD FRIEND BUTTON
    =========================== */
-
-/* Mobile: altezza esplicita in pixel sull'intero blocco editor + Monaco.
-   Monaco richiede un'altezza pixel concreta nel parent per renderizzarsi
-   correttamente — su mobile flex-column senza altezza esplicita collassa a 0. */
-.vscode-match-window--responsive {
-  height: 380px;
-  min-height: 380px;
+.btn-add-friend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(var(--darcula-blue), 0.15);
+  color: rgb(var(--darcula-blue));
+  border: 1px solid rgba(var(--darcula-blue), 0.3);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
-.match-editor-body {
-  flex-grow: 1;
-  height: 100%;
+.btn-add-friend:hover {
+  background: rgb(var(--darcula-blue));
+  color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(var(--darcula-blue), 0.3);
 }
 
-.match-monaco-container {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* Desktop: torniamo al flex naturale che occupa tutto lo spazio disponibile */
-@media (min-width: 992px) {
-  .vscode-match-window--responsive {
-    height: auto;
-    min-height: 0;
-    flex-grow: 1;
-    flex-basis: 0;
-    flex-shrink: 1;
-  }
-  .match-editor-body {
-    flex-grow: 1;
-    min-height: 0;
-  }
-  .match-monaco-container {
-    min-height: 0;
-  }
-}
-
-/* Box risposta: larghezza piena su mobile, colonna fissa su desktop */
-.match-guess-wrapper {
-  width: 100%;
-}
-
-@media (min-width: 992px) {
-  .match-guess-wrapper {
-    min-width: 300px;
-    max-width: 380px;
-    width: 380px;
-    flex-shrink: 0;
-  }
+.btn-add-friend i {
+  font-size: 1.1rem;
+  line-height: 1;
 }
