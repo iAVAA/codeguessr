@@ -1,0 +1,435 @@
+/* ===========================
+   PROFILE PAGE STYLES (from style.css)
+   =========================== */
+
+.profile-page-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card principale (Header) */
+.profile-header-card {
+  background: rgba(var(--darcula-current), 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: var(--border-radius-xl);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Banner immagine */
+.profile-banner {
+  height: 200px;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-color: rgb(var(--darcula-blue)); /* Fallback */
+  position: relative;
+}
+
+/* Sfumatura scura sotto al banner per stacco più pulito */
+.profile-banner::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 50px;
+  background: linear-gradient(to top, rgba(var(--darcula-current), 0.8), transparent);
+}
+
+/* Contenuto Header (Avatar, Info, Bottoni) */
+.profile-header-content {
+  padding: 0 2rem 2rem 2rem;
+  position: relative;
+}
+
+/* Wrapper Immagine Profilo sovrapposta */
+.profile-main-avatar-wrapper {
+  margin-top: -60px; /* Sale sopra al banner */
+  position: relative;
+  z-index: 2;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgb(var(--darcula-bg));
+  padding: 6px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.profile-main-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgb(var(--darcula-current));
+}
+
+/* Testi Profilo */
+.profile-main-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: rgb(var(--darcula-fg));
+  letter-spacing: -0.02em;
+}
+
+.profile-main-bio {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgb(var(--darcula-fg));
+  opacity: 0.85;
+  max-width: 500px;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Scatole Statistiche (Giocate, Vinte, ecc.) */
+.stat-box {
+  background: rgba(var(--darcula-current), 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: var(--border-radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.stat-box:hover {
+  transform: translateY(-3px);
+  border-color: rgba(var(--darcula-comment), 0.4);
+}
+
+.stat-box-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(var(--darcula-bg), 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stat-box-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-box-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: rgb(var(--darcula-fg));
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-box-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgb(var(--darcula-comment));
+}
+
+/* Elemento Singola Partita (Storico) */
+.history-item:hover {
+  border-color: rgba(var(--darcula-blue), 0.4);
+}
+
+.history-result {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.history-result.win {
+  background: rgba(var(--darcula-green), 0.15);
+  color: rgb(var(--darcula-green));
+}
+
+.history-result.loss {
+  background: rgba(var(--darcula-red), 0.15);
+  color: rgb(var(--darcula-red));
+}
+
+/* Edit Profile Button Styling */
+.profile-btn-edit {
+  background: rgba(var(--darcula-bg), 0.7);
+  color: rgb(var(--darcula-fg));
+  border: 1px solid rgba(var(--darcula-comment), 0.3);
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.profile-btn-edit i {
+  color: rgb(var(--darcula-blue));
+  transition: transform 0.2s;
+}
+
+.profile-btn-edit:hover {
+  background: rgba(var(--darcula-blue), 0.1);
+  border-color: rgba(var(--darcula-blue), 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.profile-btn-edit:hover i {
+  transform: scale(1.1);
+}
+
+/* Edit Profile Modal Input Styling */
+.cg-input-text {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(var(--darcula-comment), 0.3);
+  color: rgb(var(--darcula-fg));
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.cg-input-text:focus {
+  outline: none;
+  border-color: rgb(var(--darcula-blue));
+  background: rgba(var(--darcula-bg), 0.8);
+  box-shadow: 0 0 0 3px rgba(var(--darcula-blue), 0.15);
+}
+
+.cg-input-text::placeholder {
+  color: rgba(var(--darcula-comment), 0.6);
+}
+
+.cg-input-file {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed rgba(var(--darcula-comment), 0.4);
+  color: rgb(var(--darcula-fg));
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.cg-input-file::file-selector-button {
+  background: rgba(var(--darcula-bg), 0.7);
+  color: rgb(var(--darcula-fg));
+  border: 1px solid rgba(var(--darcula-comment), 0.3);
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cg-input-file::file-selector-button:hover {
+  background: rgba(var(--darcula-blue), 0.15);
+  border-color: rgba(var(--darcula-blue), 0.4);
+  color: rgb(var(--darcula-blue));
+}
+
+.cg-input-file:hover {
+  border-color: rgba(var(--darcula-blue), 0.5);
+}
+
+/* Responsive Fixes per Profilo */
+@media (max-width: 576px) {
+  .profile-header-content {
+    padding: 0 1rem 1.5rem 1rem;
+  }
+  .profile-main-avatar-wrapper {
+    margin: -50px auto 0 auto;
+    width: 100px;
+    height: 100px;
+  }
+  .profile-main-info {
+    text-align: center;
+  }
+  .profile-actions {
+    width: 100%;
+  }
+  .profile-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+  .stat-box {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+}
+
+/* ===========================
+   SIDE PANELS PROFILE PAGE (from main_game.css)
+   =========================== */
+
+.profile-side-panel {
+  background: rgba(var(--darcula-current), 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: var(--border-radius-xl);
+  padding: 1.5rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: auto;
+  min-height: 450px;
+}
+
+.profile-side-panel::-webkit-scrollbar { width: 6px; }
+.profile-side-panel::-webkit-scrollbar-track { background: transparent; }
+.profile-side-panel::-webkit-scrollbar-thumb { background: rgba(var(--darcula-comment), 0.3); border-radius: 4px; }
+.profile-side-panel::-webkit-scrollbar-thumb:hover { background: rgba(var(--darcula-blue), 0.5); }
+
+.profile-panel-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: rgb(var(--darcula-fg));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(var(--darcula-comment), 0.15);
+  margin-bottom: 0.5rem;
+}
+
+.profile-panel-title i {
+  color: rgb(var(--darcula-blue));
+}
+
+.profile-history-list,
+.profile-friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-side-item {
+  background: rgba(var(--darcula-bg), 0.5);
+  border: 1px solid rgba(var(--darcula-comment), 0.15);
+  border-radius: 16px;
+  padding: 1rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.profile-side-item:hover {
+  border-color: rgba(var(--darcula-comment), 0.4);
+  background: rgba(var(--darcula-bg), 0.8);
+}
+
+.profile-friend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+}
+
+.profile-friend-item:hover:not(.profile-offline-item) {
+  border-color: rgba(var(--darcula-green), 0.5);
+  transform: translateX(4px);
+}
+
+.profile-friend-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-friend-avatar-wrapper {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.profile-friend-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-status-dot {
+  position: absolute;
+  bottom: 0;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgb(var(--darcula-current));
+}
+
+.profile-status-dot.online {
+  background-color: rgb(var(--darcula-green));
+}
+
+.profile-status-dot.offline {
+  background-color: rgba(var(--darcula-comment), 0.7);
+}
+
+.profile-friend-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-friend-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgb(var(--darcula-fg));
+}
+
+.profile-friend-status-text {
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-top: -2px;
+}
+
+.profile-btn-challenge {
+  background: rgba(var(--darcula-green), 0.1);
+  color: rgb(var(--darcula-green));
+  border: 1px solid rgba(var(--darcula-green), 0.3);
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-btn-challenge:hover {
+  background: rgb(var(--darcula-green));
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(var(--darcula-green), 0.3);
+}
+
+.profile-offline-item {
+  opacity: 0.85;
+}
+
+.profile-offline-item:hover {
+  transform: none;
+}
