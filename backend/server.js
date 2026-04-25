@@ -249,6 +249,49 @@ app.get('/api/profilo/:id', async (req, res) => {
     }
 });
 
+
+app.get('/api/search/:nome', async (req, res) => {
+    // Nota: ho chiamato il parametro "nome" invece di "id" per maggiore chiarezza
+    const testoRicerca = req.params.nome;
+
+    try {
+        const { data, error } = await supabase
+            .from('giocatore')
+            .select('id_giocatore, nickname, livello, exp') // Prendi i campi che ti servono
+            .ilike('nickname', `${testoRicerca}%`) // Cerca i nickname che INIZIANO con il testo cercato
+            .limit(10); // Consiglio: metti un limite per non scaricare troppi dati se l'utente digita solo "A"
+
+        if (error) throw error;
+
+        // Formattiamo i dati in modo che il frontend (la funzione buildResultItem) li legga correttamente
+        
+        const risultati = []; // Inizializziamo un array vuoto prima del ciclo
+
+        // Scorriamo tutto l'array 'data' restituito dal database
+        for (let i = 0; i < data.length; i++) {
+            const gioc = data[i]; // Prendiamo il singolo giocatore dell'iterazione corrente
+
+            // Creiamo un nuovo oggetto formattato per il frontend
+            const giocatoreFormattato = {
+                name: gioc.nickname,          // Puoi cambiarlo se hai il nome reale nel DB
+                username: gioc.nickname,
+                avatarSeed: gioc.nickname,    // Genera l'avatar in base al nickname
+                livello: gioc.livello         // Dati extra se ti servono in futuro
+            };
+
+            // Aggiungiamo l'oggetto appena creato all'array dei risultati
+            risultati.push(giocatoreFormattato);
+        }
+
+        // Restituiamo un array (JSON)
+        res.status(200).json(risultati);
+
+    } catch (err) {
+        console.error("Errore ricerca giocatori:", err.message);
+        res.status(500).json({ errore: 'Impossibile completare la ricerca' });
+    }
+});
+
 // ==========================================
 // API REGISTRAZIONE (POST)
 // ==========================================
