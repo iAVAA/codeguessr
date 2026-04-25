@@ -151,9 +151,15 @@ app.get('/match', (req, res) => {
 // La rotta non ha più ":id". Diventa fissa!
 app.get('/api/mie-amicizie', async (req, res) => {
     
+    console.log("\n--- NUOVA CHIAMATA RICEVUTA ---");
+    console.log("URL:", req.originalUrl);
+    // Stampiamo tutti gli headers che arrivano, così vediamo se c'è almeno qualcosa!
+    console.log("TUTTI GLI HEADERS:", req.headers); 
+    
     const authHeader = req.get('Authorization'); 
 
     if (!authHeader) {
+        console.log("ERRORE: Manca l'header Authorization in questa specifica chiamata!");
         return res.status(401).json({ errore: 'Accesso negato. Token mancante.' });
     }
 
@@ -163,7 +169,7 @@ app.get('/api/mie-amicizie', async (req, res) => {
     // 2. Trasformiamo tutto in minuscolo SOLO per fare il controllo (così accetta sia Bearer che bearer)
     if (!headerPulito.toLowerCase().startsWith('bearer ')) {
         console.log("Formato errato. Ricevuto:", headerPulito);
-        return res.status(401).json({ errore: 'Accesso negato. Formato token non valido.' });
+        return res.status(401).json({ errore: 'Accesso negato. Formato token non valido poco dio.' });
     }
 
     // 3. Estraiamo il token tagliando i primi 7 caratteri ("Bearer " sono 7 lettere) 

@@ -74,14 +74,16 @@ function initGameButtons() {
 }
 
 // ===== START CUSTOM: ADD FRIEND SEARCH (btn-add-friend) =====
+
 let relazioniUtente = {};
-// Funzione per caricare le relazioni dell'utente e popolare l'oggetto di lookup
-async function caricaRelazioni(currentUserId) {
+
+// 1. Funzione per caricare le relazioni dell'utente e popolare l'oggetto di lookup
+async function caricaRelazioni() {
     try {
         const token = localStorage.getItem('supabaseToken');
 
         if (!token) {
-            console.error("Utente non loggato, nessun token trovato.");
+            console.warn("Utente non loggato, nessun token trovato.");
             return;
         }
 
@@ -89,7 +91,7 @@ async function caricaRelazioni(currentUserId) {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                // Questo è lo standard di sicurezza web (Bearer Token)
+                // Standard di sicurezza web (Bearer Token)
                 'Authorization': `Bearer ${token}` 
             }
         });
@@ -101,203 +103,199 @@ async function caricaRelazioni(currentUserId) {
         // Puliamo l'oggetto per sicurezza
         relazioniUtente = {};
 
-        // Riempiamo l'oggetto di lookup per velocizzare i controlli futuri
-        data.amici.forEach(u => relazioniUtente[u.userid] = 'amici');
-        data.inviate.forEach(u => relazioniUtente[u.userid] = 'inviata');
-        data.ricevute.forEach(u => relazioniUtente[u.userid] = 'ricevuta');
+        // Riempiamo l'oggetto di lookup (controlliamo prima che gli array esistano)
+        if (data.amici) data.amici.forEach(u => relazioniUtente[u.user] = 'amici');
+        if (data.inviate) data.inviate.forEach(u => relazioniUtente[u.user] = 'inviata');
+        if (data.ricevute) data.ricevute.forEach(u => relazioniUtente[u.user] = 'ricevuta');
 
         console.log("I MIEI DATI REALI SONO:", relazioniUtente);
     } catch (err) {
         console.error("Errore nel caricamento relazioni:", err);
     }
 }
-// 1. Funzione di utilità: Debounce (ritarda la chiamata al server mentre l'utente digita)
+
+// 2. Funzione di utilità: Debounce (ritarda la chiamata al server mentre l'utente digita)
 function debounce(func, delay) {
-  let timeoutId;
-  return function (...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
 }
 
-// 2. Costruzione della UI del singolo giocatore trovato
+// 3. Costruzione della UI del singolo giocatore trovato
 function buildResultItem(player) {
-  const safeName = player.name;
-  const safeUsername = player.username;
-  
-  // 1. ECCO LA RIGA MANCANTE: recuperiamo l'id del giocatore!
-  // (Usa 'player.userid' o 'player.id_giocatore' in base a come lo hai chiamato nel backend)
-  const idCercato = player.username; 
-  
-  const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
-
-  // 2. Ora la ricerca funzionerà senza errori
-  const stato = relazioniUtente[idCercato] || 'nessuno';
-
-  // Prepariamo la variabile per il bottone
-  let buttonHTML = '';
-
-  if (stato === 'amici') {
-    buttonHTML = `
-      <button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;">
-        <i class="bi bi-person-check"></i>
-        Amici
-      </button>
-    `;
-  } else if (stato === 'inviata') {
-    buttonHTML = `
-      <button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;">
-        <i class="bi bi-clock"></i>
-        Inviata
-      </button>
-    `;
-  } else if (stato === 'ricevuta') {
-    // Opzionale: se lui ti ha inviato una richiesta, potresti mostrare "Accetta" invece di "Aggiungi"
-    buttonHTML = `
-      <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${idCercato}">
-        <i class="bi bi-check-circle"></i>
-        Accetta
-      </button>
-    `;
-  } else {
-    // Bottone "Aggiungi" standard
-    buttonHTML = `
-      <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${idCercato}">
-        <i class="bi bi-person-plus"></i>
-        Aggiungi
-      </button>
-    `;
-  }
-
-  // Ritorno del div completo del giocatore
-  return `
-    <div class="cg-search-result-item">
-      <div class="cg-search-result-user">
-        <img class="cg-search-result-avatar" src="${avatar}" alt="Avatar di ${safeName}">
-        <div class="cg-search-result-text">
-          <span class="cg-search-result-name">${safeName}</span>
-          <span class="cg-search-result-username">@${safeUsername}</span>
-        </div>
-      </div>
-      ${buttonHTML}
-    </div>
-  `;
-}
-
-// 3. Funzione ASINCRONA per chiamare il server
-async function renderFriendSearchResults(resultsNode, query) {
-  const trimmed = query.trim().toLowerCase();
-
-  // Se l'utente ha scritto meno di 2 lettere, non facciamo chiamate
-  if (trimmed.length < 2) {
-    resultsNode.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
-    return;
-  }
-
-  // Mostra "Caricamento..." mentre aspetta la risposta del tuo backend
-  resultsNode.innerHTML = '<div class="cg-search-loading">Caricamento...</div>';
-
-  try {
-    // Chiamata GET al backend: attenzione all'URL che deve combaciare con app.get('/api/search/:id')
-    const response = await fetch(`/api/search/${encodeURIComponent(trimmed)}`);
+    const safeName = player.name;
+    const safeUsername = player.username;
     
-    // Se il server risponde con un errore (es. 500), scateniamo il blocco catch
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
+    // Recuperiamo l'ID del giocatore (assicurati che il backend lo mandi come 'userid' o 'id_giocatore')
+    const idCercato = player.userid; 
+    
+    const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
 
-    // Convertiamo la risposta del server in un array JavaScript
-    const filtered = await response.json();
+    // Controlliamo lo stato dalla nostra memoria
+    const stato = relazioniUtente[idCercato] || 'nessuno';
 
-    // Se l'array è vuoto, il database non ha trovato nessuno
-    if (!filtered.length) {
-      resultsNode.innerHTML = '<div class="cg-search-empty">Nessun giocatore trovato con questa ricerca.</div>';
-      return;
-    }
+    let buttonHTML = '';
 
-    // Se ha trovato risultati, costruiamo l'HTML e lo inseriamo
-    resultsNode.innerHTML = filtered.map(buildResultItem).join('');
-
-  } catch (error) {
-    console.error('Errore durante la ricerca dei giocatori:', error);
-    resultsNode.innerHTML = '<div class="cg-search-empty">Si è verificato un errore durante la ricerca. Riprova più tardi.</div>';
-  }
-}
-
-// 4. Inizializzazione degli eventi
-function initAddFriendSearch() {
-  const openBtn = document.getElementById('btn-add-friend');
-  const overlay = document.getElementById('friend-search-overlay');
-  const closeBtn = document.getElementById('friend-search-close');
-  const input = document.getElementById('friend-search-input');
-  const results = document.getElementById('friend-search-results');
-
-  // Controllo di sicurezza sull'HTML
-  if (!openBtn || !overlay || !closeBtn || !input || !results) {
-    console.error("ATTENZIONE: Un elemento HTML per la ricerca amici non è stato trovato!");
-    return;
-  }
-
-  const openModal = () => {
-    overlay.classList.add('open');
-    overlay.setAttribute('aria-hidden', 'false');
-    requestAnimationFrame(() => input.focus());
-    // Resetta sempre i risultati quando apri il modal
-    results.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
-  };
-
-  const closeModal = () => {
-    overlay.classList.remove('open');
-    overlay.setAttribute('aria-hidden', 'true');
-    input.value = '';
-    results.innerHTML = '';
-  };
-
-  openBtn.addEventListener('click', openModal);
-  closeBtn.addEventListener('click', closeModal);
-
-  overlay.addEventListener('click', (event) => {
-    if (event.target === overlay) closeModal();
-  });
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && overlay.classList.contains('open')) {
-      closeModal();
-    }
-  });
-
-  // La ricerca parte 300 millisecondi dopo che l'utente smette di digitare
-  const debouncedSearch = debounce((query) => {
-    renderFriendSearchResults(results, query);
-  }, 300);
-
-  // Ascoltiamo cosa digita l'utente
-  input.addEventListener('input', () => {
-    debouncedSearch(input.value);
-  });
-
-  // Gestione del pulsante "Aggiungi" dentro i risultati
-  results.addEventListener('click', (event) => {
-    const addButton = event.target.closest('.cg-search-add-btn');
-    if (!addButton) return;
-
-    const username = addButton.dataset.username;
-    if (!username) return;
-
-    // Notifica visiva per l'utente
-    if (typeof showToast === 'function') {
-      showToast(`Richiesta inviata a @${username}`, 'green');
+    if (stato === 'amici') {
+        buttonHTML = `
+            <button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;">
+                <i class="bi bi-person-check"></i>
+                Amici
+            </button>
+        `;
+    } else if (stato === 'inviata') {
+        buttonHTML = `
+            <button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;">
+                <i class="bi bi-clock"></i>
+                Inviata
+            </button>
+        `;
+    } else if (stato === 'ricevuta') {
+        buttonHTML = `
+            <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${idCercato}">
+                <i class="bi bi-check-circle"></i>
+                Accetta
+            </button>
+        `;
     } else {
-      alert(`Richiesta inviata a @${username}`);
+        buttonHTML = `
+            <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${idCercato}">
+                <i class="bi bi-person-plus"></i>
+                Aggiungi
+            </button>
+        `;
     }
-    
-    // Cambiamo l'aspetto del bottone per far capire che è stato cliccato
-    addButton.disabled = true;
-    addButton.innerHTML = '<i class="bi bi-check-lg"></i> Inviata';
-  });
+
+    return `
+        <div class="cg-search-result-item">
+            <div class="cg-search-result-user">
+                <img class="cg-search-result-avatar" src="${avatar}" alt="Avatar di ${safeName}">
+                <div class="cg-search-result-text">
+                    <span class="cg-search-result-name">${safeName}</span>
+                    <span class="cg-search-result-username">@${safeUsername}</span>
+                </div>
+            </div>
+            ${buttonHTML}
+        </div>
+    `;
 }
 
-// Assicuriamoci che il codice parta solo quando la pagina è caricata
+// 4. Funzione asincrona per cercare i giocatori
+async function renderFriendSearchResults(resultsNode, query) {
+    const trimmed = query.trim().toLowerCase();
+
+    if (trimmed.length < 2) {
+        resultsNode.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
+        return;
+    }
+
+    resultsNode.innerHTML = '<div class="cg-search-loading">Caricamento...</div>';
+
+    try {
+        const response = await fetch(`/api/search/${encodeURIComponent(trimmed)}`);
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const filtered = await response.json();
+
+        if (!filtered || !filtered.length) {
+            resultsNode.innerHTML = '<div class="cg-search-empty">Nessun giocatore trovato con questa ricerca.</div>';
+            return;
+        }
+
+        resultsNode.innerHTML = filtered.map(buildResultItem).join('');
+
+    } catch (error) {
+        console.error('Errore durante la ricerca dei giocatori:', error);
+        resultsNode.innerHTML = '<div class="cg-search-empty">Si è verificato un errore durante la ricerca. Riprova più tardi.</div>';
+    }
+}
+
+// 5. Inizializzazione degli eventi
+function initAddFriendSearch() {
+    // 🚀 SCARICA LE AMICIZIE SUBITO ALL'AVVIO DELLA PAGINA!
+    caricaRelazioni();
+
+    const openBtn = document.getElementById('btn-add-friend');
+    const overlay = document.getElementById('friend-search-overlay');
+    const closeBtn = document.getElementById('friend-search-close');
+    const input = document.getElementById('friend-search-input');
+    const results = document.getElementById('friend-search-results');
+
+    if (!openBtn || !overlay || !closeBtn || !input || !results) {
+        console.error("ATTENZIONE: Un elemento HTML per la ricerca amici non è stato trovato!");
+        return;
+    }
+
+    const openModal = () => {
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+        requestAnimationFrame(() => input.focus());
+        results.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
+    };
+
+    const closeModal = () => {
+        // Togliamo il focus prima di chiudere (risolve il warning di Chrome)
+        if (document.activeElement) document.activeElement.blur(); 
+        overlay.classList.remove('open');
+        overlay.setAttribute('aria-hidden', 'true');
+        input.value = '';
+        results.innerHTML = '';
+    };
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) closeModal();
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && overlay.classList.contains('open')) {
+            closeModal();
+        }
+    });
+
+    const debouncedSearch = debounce((query) => {
+        renderFriendSearchResults(results, query);
+    }, 300);
+
+    input.addEventListener('input', () => {
+        debouncedSearch(input.value);
+    });
+
+    // Gestione dei click sui tasti "Aggiungi" o "Accetta"
+    results.addEventListener('click', (event) => {
+        const addButton = event.target.closest('.cg-search-add-btn');
+        // Se si clicca fuori dal tasto o se il tasto è già disabilitato, non fare niente
+        if (!addButton || addButton.disabled) return;
+
+        const username = addButton.dataset.username;
+        const userid = addButton.dataset.userid; 
+        
+        if (!username) return;
+
+        // Feedback per l'utente
+        if (typeof showToast === 'function') {
+            showToast(`Richiesta inviata a @${username}`, 'green');
+        } else {
+            alert(`Richiesta inviata a @${username}`);
+        }
+        
+        // Cambiamo il bottone
+        addButton.disabled = true;
+        addButton.innerHTML = '<i class="bi bi-check-lg"></i> Inviata';
+
+        // Qui, in futuro, andrà la vera chiamata fetch (POST) verso il tuo server
+        // per salvare l'amicizia nel database! Es: inviaRichiestaDb(userid);
+    });
+}
+
+// L'inizio di tutto!
 document.addEventListener('DOMContentLoaded', initAddFriendSearch);
