@@ -2,8 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { createClient } = require("@supabase/supabase-js");
+const cors = require('cors');
 
 const app = express();
+app.use(cors({
+    origin: 'http://localhost:3000', // ← l'URL del tuo frontend
+    allowedHeaders: ['Authorization', 'Content-Type'] // ← fondamentale
+}));
 
 // ==========================================
 // CONFIGURAZIONE AMBIENTE
@@ -143,11 +148,44 @@ app.get('/match', (req, res) => {
  *   "ricevute": [{ "userid": "...", "user": "nickname" }]
  * }
  */
-app.get('/api/amici/:id', async (req, res) => {
-    const mioId = req.params.id;
+// La rotta non ha più ":id". Diventa fissa!
+app.get('/api/mie-amicizie', async (req, res) => {
+    
+    const authHeader = req.get('Authorization'); 
+
+    if (!authHeader) {
+        return res.status(401).json({ errore: 'Accesso negato. Token mancante.' });
+    }
+
+    // 1. Togliamo eventuali spazi vuoti extra all'inizio e alla fine
+    const headerPulito = authHeader.trim();
+
+    // 2. Trasformiamo tutto in minuscolo SOLO per fare il controllo (così accetta sia Bearer che bearer)
+    if (!headerPulito.toLowerCase().startsWith('bearer ')) {
+        console.log("Formato errato. Ricevuto:", headerPulito);
+        return res.status(401).json({ errore: 'Accesso negato. Formato token non valido.' });
+    }
+
+    // 3. Estraiamo il token tagliando i primi 7 caratteri ("Bearer " sono 7 lettere) 
+    // e togliamo eventuali virgolette fantasma o spazi finali
+    let token = headerPulito.substring(7).trim();
+    token = token.replace(/['"]/g, ''); // Rimuove virgolette singole o doppie se presenti
+
+    console.log("Token estratto chirurgicamente e pronto per Supabase!");
 
     try {
-        // 1. Troviamo TUTTE le relazioni dove compaio io (sia come A che come B)
+        // Chiediamo a Supabase di verificare il token e dirci a chi appartiene
+        const { data: authData, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !authData.user) {
+            return res.status(401).json({ errore: 'Token non valido o scaduto.' });
+        }
+
+        // ECCO IL NOSTRO ID SICURO! Nessun hacker può falsificarlo.
+        const mioId = authData.user.id;
+
+        // --- 2. LOGICA AMICIZIE (IDENTICA A PRIMA) ---
+        // Troviamo tutte le relazioni dove compaio io
         const { data: relazioni, error: relError } = await supabase
             .from('amicizia')
             .select('id_utente_a, id_utente_b, stato')
@@ -155,17 +193,21 @@ app.get('/api/amici/:id', async (req, res) => {
 
         if (relError) throw relError;
 
-        // Se l'utente non ha nessun amico e nessuna richiesta, mandiamo le liste vuote
         if (!relazioni || relazioni.length === 0) {
             return res.status(200).json({ amici: [], inviate: [], ricevute: [] });
         }
 
-        // 2. Estraiamo gli ID delle altre persone
-        const idAltriUtenti = relazioni.map(riga =>
-            riga.id_utente_a === mioId ? riga.id_utente_b : riga.id_utente_a
-        );
+        // Estraiamo gli ID delle altre persone
+        const idAltriUtenti = [];
+        for (const riga of relazioni) {
+            if (riga.id_utente_a === mioId) {
+                idAltriUtenti.push(riga.id_utente_b);
+            } else {
+                idAltriUtenti.push(riga.id_utente_a);
+            }
+        }
 
-        // 3. Recuperiamo i nickname in un'unica query
+        // Recuperiamo i nickname in un'unica query
         const { data: profili, error: profiliError } = await supabase
             .from('giocatore')
             .select('id_giocatore, nickname')
@@ -175,30 +217,42 @@ app.get('/api/amici/:id', async (req, res) => {
 
         // Dizionario id -> nickname per lookup veloce
         const mappaProfili = {};
-        profili.forEach(p => { mappaProfili[p.id_giocatore] = p.nickname; });
+        for (const p of profili) {
+            mappaProfili[p.id_giocatore] = p.nickname;
+        }
 
-        // 4. Smistamento nelle tre categorie
+        // Smistamento nelle tre categorie
         const risultato = { amici: [], inviate: [], ricevute: [] };
 
-        relazioni.forEach(riga => {
-            const sonoIoIlMittente = (riga.id_utente_a === mioId);
-            const idAltro = sonoIoIlMittente ? riga.id_utente_b : riga.id_utente_a;
-            const utente = {
-                userid: idAltro,
-                user: mappaProfili[idAltro] || "Utente Sconosciuto"
-            };
+        for (const riga of relazioni) {
+            const sonoIoIlMittente = riga.id_utente_a === mioId;
+
+            let idAltro;
+            if (sonoIoIlMittente) {
+                idAltro = riga.id_utente_b;
+            } else {
+                idAltro = riga.id_utente_a;
+            }
+
+            let nickname;
+            if (mappaProfili[idAltro]) {
+                nickname = mappaProfili[idAltro];
+            } else {
+                nickname = "Utente Sconosciuto";
+            }
+
+            const utente = { userid: idAltro, user: nickname };
 
             if (riga.stato === 'accettata') {
                 risultato.amici.push(utente);
-            } else if (riga.stato === 'in_attesa') {
-                if (sonoIoIlMittente) {
-                    risultato.inviate.push(utente);
-                } else {
-                    risultato.ricevute.push(utente);
-                }
+            } else if (riga.stato === 'in_attesa' && sonoIoIlMittente) {
+                risultato.inviate.push(utente);
+            } else if (riga.stato === 'in_attesa' && !sonoIoIlMittente) {
+                risultato.ricevute.push(utente);
             }
-        });
+        }
 
+        // Invio dei dati sicuri al frontend
         res.status(200).json(risultato);
 
     } catch (err) {
@@ -206,7 +260,6 @@ app.get('/api/amici/:id', async (req, res) => {
         res.status(500).json({ errore: 'Errore server interno' });
     }
 });
-
 // ==========================================
 // API PROFILO (GET)
 // ==========================================
@@ -264,7 +317,7 @@ app.get('/api/search/:nome', async (req, res) => {
         if (error) throw error;
 
         // Formattiamo i dati in modo che il frontend (la funzione buildResultItem) li legga correttamente
-        
+
         const risultati = []; // Inizializziamo un array vuoto prima del ciclo
 
         // Scorriamo tutto l'array 'data' restituito dal database

@@ -74,7 +74,43 @@ function initGameButtons() {
 }
 
 // ===== START CUSTOM: ADD FRIEND SEARCH (btn-add-friend) =====
+let relazioniUtente = {};
+// Funzione per caricare le relazioni dell'utente e popolare l'oggetto di lookup
+async function caricaRelazioni(currentUserId) {
+    try {
+        const token = localStorage.getItem('supabaseToken');
 
+        if (!token) {
+            console.error("Utente non loggato, nessun token trovato.");
+            return;
+        }
+
+        const response = await fetch('/api/mie-amicizie', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                // Questo è lo standard di sicurezza web (Bearer Token)
+                'Authorization': `Bearer ${token}` 
+            }
+        });
+
+        if (!response.ok) throw new Error("Errore di autorizzazione dal server");
+
+        const data = await response.json();
+
+        // Puliamo l'oggetto per sicurezza
+        relazioniUtente = {};
+
+        // Riempiamo l'oggetto di lookup per velocizzare i controlli futuri
+        data.amici.forEach(u => relazioniUtente[u.userid] = 'amici');
+        data.inviate.forEach(u => relazioniUtente[u.userid] = 'inviata');
+        data.ricevute.forEach(u => relazioniUtente[u.userid] = 'ricevuta');
+
+        console.log("I MIEI DATI REALI SONO:", relazioniUtente);
+    } catch (err) {
+        console.error("Errore nel caricamento relazioni:", err);
+    }
+}
 // 1. Funzione di utilità: Debounce (ritarda la chiamata al server mentre l'utente digita)
 function debounce(func, delay) {
   let timeoutId;
@@ -90,9 +126,52 @@ function debounce(func, delay) {
 function buildResultItem(player) {
   const safeName = player.name;
   const safeUsername = player.username;
+  
+  // 1. ECCO LA RIGA MANCANTE: recuperiamo l'id del giocatore!
+  // (Usa 'player.userid' o 'player.id_giocatore' in base a come lo hai chiamato nel backend)
+  const idCercato = player.username; 
+  
   const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
 
-  // Puoi anche usare player.livello se vuoi mostrarlo nella UI in futuro
+  // 2. Ora la ricerca funzionerà senza errori
+  const stato = relazioniUtente[idCercato] || 'nessuno';
+
+  // Prepariamo la variabile per il bottone
+  let buttonHTML = '';
+
+  if (stato === 'amici') {
+    buttonHTML = `
+      <button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;">
+        <i class="bi bi-person-check"></i>
+        Amici
+      </button>
+    `;
+  } else if (stato === 'inviata') {
+    buttonHTML = `
+      <button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;">
+        <i class="bi bi-clock"></i>
+        Inviata
+      </button>
+    `;
+  } else if (stato === 'ricevuta') {
+    // Opzionale: se lui ti ha inviato una richiesta, potresti mostrare "Accetta" invece di "Aggiungi"
+    buttonHTML = `
+      <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${idCercato}">
+        <i class="bi bi-check-circle"></i>
+        Accetta
+      </button>
+    `;
+  } else {
+    // Bottone "Aggiungi" standard
+    buttonHTML = `
+      <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${idCercato}">
+        <i class="bi bi-person-plus"></i>
+        Aggiungi
+      </button>
+    `;
+  }
+
+  // Ritorno del div completo del giocatore
   return `
     <div class="cg-search-result-item">
       <div class="cg-search-result-user">
@@ -102,10 +181,7 @@ function buildResultItem(player) {
           <span class="cg-search-result-username">@${safeUsername}</span>
         </div>
       </div>
-      <button class="cg-search-add-btn" data-username="${safeUsername}">
-        <i class="bi bi-person-plus"></i>
-        Aggiungi
-      </button>
+      ${buttonHTML}
     </div>
   `;
 }

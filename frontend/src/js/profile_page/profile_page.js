@@ -138,13 +138,22 @@ function updateProfileUI(playerData) {
 // ─── API / Data Fetching (Mockup) ─────────────────────────────────────────────
 
 async function fetchFullProfileData(userId) {
+    const token = localStorage.getItem('supabaseToken');
+    
     const res = await fetch(`/api/profilo/${userId}`);
     if (!res.ok) throw new Error(`Profilo non trovato (${res.status})`);
 
     const dataProfilo = await res.json();
 
     // 1. Dobbiamo trasformare la lista di ID in una lista di Oggetti per il frontend
-    const res1 = await fetch(`/api/amici/${userId}`);
+    const res1 = await fetch('/api/mie-amicizie', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            // Questo è lo standard di sicurezza web (Bearer Token)
+            'Authorization': `Bearer ${token}` 
+        }
+    });
     if (!res1.ok) throw new Error(`Amici non trovati (${res1.status})`);
     const amiciData = await res1.json();
 

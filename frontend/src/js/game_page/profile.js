@@ -123,9 +123,20 @@ async function fetchPlayerData(idGiocatore) {
   if (!res.ok) throw new Error(`Profilo non trovato (${res.status})`);
   return res.json();
 }
+
 async function fetchPlayerAmici(idGiocatore) {
 
-  const res1 = await fetch(`/api/amici/${idGiocatore}`);
+const token = localStorage.getItem('supabaseToken');
+
+const res1 = await fetch('/api/mie-amicizie', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    // Questo è lo standard di sicurezza web (Bearer Token)
+    'Authorization': `Bearer ${token}` 
+    }
+  });
+  
   if (!res1.ok) throw new Error(`Amici non trovati (${res1.status})`);
   const amiciData = await res1.json();
 
