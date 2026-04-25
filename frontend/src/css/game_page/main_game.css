@@ -352,6 +352,8 @@
    FRIEND SEARCH MODAL
    =========================== */
 
+/* ===== START CUSTOM: FRIEND SEARCH MODAL (btn-add-friend) ===== */
+
 .cg-friend-search-overlay {
   position: fixed;
   inset: 0;
@@ -592,3 +594,5 @@
     font-size: 0.72rem;
   }
 }
+
+/* ===== END CUSTOM: FRIEND SEARCH MODAL (btn-add-friend) ===== */

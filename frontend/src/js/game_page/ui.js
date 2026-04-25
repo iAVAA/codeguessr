@@ -73,22 +73,26 @@ function initGameButtons() {
   });
 }
 
-const DEMO_PLAYERS = [
-  { name: 'MarcoDev', username: 'marcodev', avatarSeed: 'marcodev' },
-  { name: 'LunaScript', username: 'lunascript', avatarSeed: 'lunascript' },
-  { name: 'PietroC', username: 'pietrocoder', avatarSeed: 'pietrocoder' },
-  { name: 'GiuliaBits', username: 'giuliabits', avatarSeed: 'giuliabits' },
-  { name: 'AlexLoop', username: 'alexloop', avatarSeed: 'alexloop' },
-  { name: 'FedericaByte', username: 'federicabyte', avatarSeed: 'federicabyte' },
-  { name: 'NicoStack', username: 'nicostack', avatarSeed: 'nicostack' },
-  { name: 'ValeNode', username: 'valenode', avatarSeed: 'valenode' },
-];
+// ===== START CUSTOM: ADD FRIEND SEARCH (btn-add-friend) =====
 
+// 1. Funzione di utilità: Debounce (ritarda la chiamata al server mentre l'utente digita)
+function debounce(func, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+
+// 2. Costruzione della UI del singolo giocatore trovato
 function buildResultItem(player) {
   const safeName = player.name;
   const safeUsername = player.username;
   const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
 
+  // Puoi anche usare player.livello se vuoi mostrarlo nella UI in futuro
   return `
     <div class="cg-search-result-item">
       <div class="cg-search-result-user">
@@ -106,26 +110,47 @@ function buildResultItem(player) {
   `;
 }
 
-function renderFriendSearchResults(resultsNode, query) {
+// 3. Funzione ASINCRONA per chiamare il server
+async function renderFriendSearchResults(resultsNode, query) {
   const trimmed = query.trim().toLowerCase();
 
+  // Se l'utente ha scritto meno di 2 lettere, non facciamo chiamate
   if (trimmed.length < 2) {
     resultsNode.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
     return;
   }
 
-  const filtered = DEMO_PLAYERS.filter((player) => {
-    return player.name.toLowerCase().includes(trimmed) || player.username.toLowerCase().includes(trimmed);
-  });
+  // Mostra "Caricamento..." mentre aspetta la risposta del tuo backend
+  resultsNode.innerHTML = '<div class="cg-search-loading">Caricamento...</div>';
 
-  if (!filtered.length) {
-    resultsNode.innerHTML = '<div class="cg-search-empty">Nessun giocatore trovato con questa ricerca.</div>';
-    return;
+  try {
+    // Chiamata GET al backend: attenzione all'URL che deve combaciare con app.get('/api/search/:id')
+    const response = await fetch(`/api/search/${encodeURIComponent(trimmed)}`);
+    
+    // Se il server risponde con un errore (es. 500), scateniamo il blocco catch
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    // Convertiamo la risposta del server in un array JavaScript
+    const filtered = await response.json();
+
+    // Se l'array è vuoto, il database non ha trovato nessuno
+    if (!filtered.length) {
+      resultsNode.innerHTML = '<div class="cg-search-empty">Nessun giocatore trovato con questa ricerca.</div>';
+      return;
+    }
+
+    // Se ha trovato risultati, costruiamo l'HTML e lo inseriamo
+    resultsNode.innerHTML = filtered.map(buildResultItem).join('');
+
+  } catch (error) {
+    console.error('Errore durante la ricerca dei giocatori:', error);
+    resultsNode.innerHTML = '<div class="cg-search-empty">Si è verificato un errore durante la ricerca. Riprova più tardi.</div>';
   }
-
-  resultsNode.innerHTML = filtered.map(buildResultItem).join('');
 }
 
+// 4. Inizializzazione degli eventi
 function initAddFriendSearch() {
   const openBtn = document.getElementById('btn-add-friend');
   const overlay = document.getElementById('friend-search-overlay');
@@ -133,7 +158,9 @@ function initAddFriendSearch() {
   const input = document.getElementById('friend-search-input');
   const results = document.getElementById('friend-search-results');
 
+  // Controllo di sicurezza sull'HTML
   if (!openBtn || !overlay || !closeBtn || !input || !results) {
+    console.error("ATTENZIONE: Un elemento HTML per la ricerca amici non è stato trovato!");
     return;
   }
 
@@ -141,7 +168,8 @@ function initAddFriendSearch() {
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     requestAnimationFrame(() => input.focus());
-    renderFriendSearchResults(results, input.value);
+    // Resetta sempre i risultati quando apri il modal
+    results.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
   };
 
   const closeModal = () => {
@@ -155,9 +183,7 @@ function initAddFriendSearch() {
   closeBtn.addEventListener('click', closeModal);
 
   overlay.addEventListener('click', (event) => {
-    if (event.target === overlay) {
-      closeModal();
-    }
+    if (event.target === overlay) closeModal();
   });
 
   document.addEventListener('keydown', (event) => {
@@ -166,26 +192,36 @@ function initAddFriendSearch() {
     }
   });
 
+  // La ricerca parte 300 millisecondi dopo che l'utente smette di digitare
+  const debouncedSearch = debounce((query) => {
+    renderFriendSearchResults(results, query);
+  }, 300);
+
+  // Ascoltiamo cosa digita l'utente
   input.addEventListener('input', () => {
-    renderFriendSearchResults(results, input.value);
+    debouncedSearch(input.value);
   });
 
+  // Gestione del pulsante "Aggiungi" dentro i risultati
   results.addEventListener('click', (event) => {
     const addButton = event.target.closest('.cg-search-add-btn');
-    if (!addButton) {
-      return;
-    }
+    if (!addButton) return;
 
     const username = addButton.dataset.username;
-    if (!username) {
-      return;
-    }
+    if (!username) return;
 
-    showToast(`Richiesta inviata a @${username}`, 'green');
+    // Notifica visiva per l'utente
+    if (typeof showToast === 'function') {
+      showToast(`Richiesta inviata a @${username}`, 'green');
+    } else {
+      alert(`Richiesta inviata a @${username}`);
+    }
+    
+    // Cambiamo l'aspetto del bottone per far capire che è stato cliccato
     addButton.disabled = true;
     addButton.innerHTML = '<i class="bi bi-check-lg"></i> Inviata';
   });
 }
 
-initGameButtons();
-initAddFriendSearch();
+// Assicuriamoci che il codice parta solo quando la pagina è caricata
+document.addEventListener('DOMContentLoaded', initAddFriendSearch);
