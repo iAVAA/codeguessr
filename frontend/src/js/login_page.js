@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }else{
             alert('Login riuscito !: ' + risultato.messaggio);
             localStorage.setItem('id_giocatore', risultato.user); // Salvo l'ID utente per sessioni future
-            localStorage.setItem('isLoggedIn', 'true'); // Flag per indicare che l'utente è loggato
+            localStorage.setItem('isLoggedIn', 'true'); // Flag per indicare che l'utente è loggato 
+            localStorage.setItem('supabaseToken', risultato.token);
             window.location.href = '/home';
             form.reset()
         }
