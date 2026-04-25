@@ -213,6 +213,36 @@
             </div>
         </main>
 
+        <!-- ===================== ADD FRIEND SEARCH ===================== -->
+        <div class="cg-friend-search-overlay" id="friend-search-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+            aria-labelledby="friend-search-title">
+            <div class="cg-friend-search-modal" id="friend-search-modal">
+                <div class="cg-friend-search-header">
+                    <div class="cg-friend-search-title-group">
+                        <div class="cg-friend-search-icon-wrap">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <h2 class="cg-friend-search-title" id="friend-search-title">Cerca giocatori</h2>
+                    </div>
+
+                    <button class="cg-friend-search-close" id="friend-search-close" aria-label="Chiudi ricerca giocatori">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="cg-friend-search-body">
+                    <label class="cg-friend-search-input-wrap" for="friend-search-input">
+                        <i class="bi bi-search"></i>
+                        <input id="friend-search-input" type="text" placeholder="Cerca per nickname o username" autocomplete="off">
+                    </label>
+
+                    <p class="cg-friend-search-hint">Scrivi almeno 2 caratteri per cercare un giocatore.</p>
+
+                    <div class="cg-friend-search-results" id="friend-search-results" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- ===================== SETTINGS ===================== -->
         <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true"
             aria-labelledby="settings-title">

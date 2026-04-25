@@ -73,4 +73,119 @@ function initGameButtons() {
   });
 }
 
+const DEMO_PLAYERS = [
+  { name: 'MarcoDev', username: 'marcodev', avatarSeed: 'marcodev' },
+  { name: 'LunaScript', username: 'lunascript', avatarSeed: 'lunascript' },
+  { name: 'PietroC', username: 'pietrocoder', avatarSeed: 'pietrocoder' },
+  { name: 'GiuliaBits', username: 'giuliabits', avatarSeed: 'giuliabits' },
+  { name: 'AlexLoop', username: 'alexloop', avatarSeed: 'alexloop' },
+  { name: 'FedericaByte', username: 'federicabyte', avatarSeed: 'federicabyte' },
+  { name: 'NicoStack', username: 'nicostack', avatarSeed: 'nicostack' },
+  { name: 'ValeNode', username: 'valenode', avatarSeed: 'valenode' },
+];
+
+function buildResultItem(player) {
+  const safeName = player.name;
+  const safeUsername = player.username;
+  const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
+
+  return `
+    <div class="cg-search-result-item">
+      <div class="cg-search-result-user">
+        <img class="cg-search-result-avatar" src="${avatar}" alt="Avatar di ${safeName}">
+        <div class="cg-search-result-text">
+          <span class="cg-search-result-name">${safeName}</span>
+          <span class="cg-search-result-username">@${safeUsername}</span>
+        </div>
+      </div>
+      <button class="cg-search-add-btn" data-username="${safeUsername}">
+        <i class="bi bi-person-plus"></i>
+        Aggiungi
+      </button>
+    </div>
+  `;
+}
+
+function renderFriendSearchResults(resultsNode, query) {
+  const trimmed = query.trim().toLowerCase();
+
+  if (trimmed.length < 2) {
+    resultsNode.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
+    return;
+  }
+
+  const filtered = DEMO_PLAYERS.filter((player) => {
+    return player.name.toLowerCase().includes(trimmed) || player.username.toLowerCase().includes(trimmed);
+  });
+
+  if (!filtered.length) {
+    resultsNode.innerHTML = '<div class="cg-search-empty">Nessun giocatore trovato con questa ricerca.</div>';
+    return;
+  }
+
+  resultsNode.innerHTML = filtered.map(buildResultItem).join('');
+}
+
+function initAddFriendSearch() {
+  const openBtn = document.getElementById('btn-add-friend');
+  const overlay = document.getElementById('friend-search-overlay');
+  const closeBtn = document.getElementById('friend-search-close');
+  const input = document.getElementById('friend-search-input');
+  const results = document.getElementById('friend-search-results');
+
+  if (!openBtn || !overlay || !closeBtn || !input || !results) {
+    return;
+  }
+
+  const openModal = () => {
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => input.focus());
+    renderFriendSearchResults(results, input.value);
+  };
+
+  const closeModal = () => {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    input.value = '';
+    results.innerHTML = '';
+  };
+
+  openBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+
+  overlay.addEventListener('click', (event) => {
+    if (event.target === overlay) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && overlay.classList.contains('open')) {
+      closeModal();
+    }
+  });
+
+  input.addEventListener('input', () => {
+    renderFriendSearchResults(results, input.value);
+  });
+
+  results.addEventListener('click', (event) => {
+    const addButton = event.target.closest('.cg-search-add-btn');
+    if (!addButton) {
+      return;
+    }
+
+    const username = addButton.dataset.username;
+    if (!username) {
+      return;
+    }
+
+    showToast(`Richiesta inviata a @${username}`, 'green');
+    addButton.disabled = true;
+    addButton.innerHTML = '<i class="bi bi-check-lg"></i> Inviata';
+  });
+}
+
 initGameButtons();
+initAddFriendSearch();
