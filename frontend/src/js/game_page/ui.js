@@ -131,7 +131,7 @@ function buildResultItem(player) {
     const safeUsername = player.username;
     
     // Recuperiamo l'ID del giocatore (assicurati che il backend lo mandi come 'userid' o 'id_giocatore')
-    const idCercato = player.userid; 
+    const idCercato = player.name; 
     
     const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
 
