@@ -430,6 +430,14 @@
             </div>
         </footer>
 
+        <!-- ===================== AUDIO PERMISSION BANNER ===================== -->
+        <div id="cg-audio-banner" aria-live="polite" hidden>
+            <span class="cg-audio-banner-icon"><i class="bi bi-music-note-beamed"></i></span>
+            <span class="cg-audio-banner-text">Vuoi abilitare la musica di sottofondo?</span>
+            <button id="cg-audio-yes" class="cg-audio-btn cg-audio-btn--yes">Sì, abilita</button>
+            <button id="cg-audio-no"  class="cg-audio-btn cg-audio-btn--no">No grazie</button>
+        </div>
+
         <script>
             document.body.classList.add('loader-open');
         </script>
@@ -443,6 +451,7 @@
         <script src="src/js/game_page/typing.js"></script>
         <script src="src/js/managers/theme.js"></script>
         <script src="src/js/managers/auth.js"></script>
+        <script src="src/js/managers/sound.js"></script>
         <script src="src/js/managers/settings.js"></script>
         <script type="module" src="src/js/game_page/profile.js"></script>
     </body>

@@ -596,3 +596,91 @@
 }
 
 /* ===== END CUSTOM: FRIEND SEARCH MODAL (btn-add-friend) ===== */
+
+/* ===========================
+   AUDIO PERMISSION BANNER
+   =========================== */
+
+#cg-audio-banner {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(var(--darcula-current), 0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: rgb(var(--darcula-fg));
+  padding: 12px 20px;
+  border-radius: 48px;
+  border: 1px solid rgba(var(--darcula-blue), 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  animation: cg-banner-in 0.35s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+#cg-audio-banner[hidden] {
+  display: none;
+}
+
+@keyframes cg-banner-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(18px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
+}
+
+.cg-audio-banner-icon {
+  font-size: 1.25em;
+  line-height: 1;
+}
+
+.cg-audio-banner-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(var(--darcula-fg));
+}
+
+.cg-audio-btn {
+  border: none;
+  border-radius: 24px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.cg-audio-btn:hover  { opacity: 0.85; transform: scale(1.05); }
+.cg-audio-btn:active { transform: scale(0.96); }
+
+.cg-audio-btn--yes {
+  background: rgb(var(--darcula-green));
+  color: rgb(var(--darcula-bg));
+}
+
+.cg-audio-btn--no {
+  background: rgba(var(--darcula-comment), 0.18);
+  color: rgb(var(--darcula-comment));
+}
+
+/* Light mode */
+html.light-mode #cg-audio-banner {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(var(--darcula-blue), 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+}
+
+@media (max-width: 576px) {
+  #cg-audio-banner {
+    flex-wrap: wrap;
+    justify-content: center;
+    border-radius: 20px;
+    padding: 14px 18px;
+    bottom: 16px;
+    width: calc(100% - 32px);
+  }
+}
