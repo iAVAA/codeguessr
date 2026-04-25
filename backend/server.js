@@ -24,12 +24,16 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
+module.exports = { supabase }; // ← aggiungi questa riga
+
 
 // ==========================================
 // INIZIALIZZAZIONE OPENROUTER (lazy ESM import)
 // ==========================================
 // @openrouter/sdk è un modulo ESM-only: viene importato dinamicamente
 // al primo utilizzo e poi riutilizzato tramite questa variabile.
+const verificaToken = require('./auth');
+
 let openrouter = null;
 async function getOpenRouter() {
     if (!openrouter) {
@@ -130,6 +134,86 @@ app.get('/match', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'match_page.html'));
 });
 
+
+
+
+
+
+
+
+app.post('/api/invia-richiesta', async (req, res) => {
+    
+    // --- 1. VERIFICA SICUREZZA (Usiamo il nostro sistema "schiacciasassi") ---
+    const authHeader = req.get('Authorization'); 
+
+    if (!authHeader) {
+        return res.status(401).json({ errore: 'Accesso negato. Token mancante.' });
+    }
+
+    const headerPulito = authHeader.trim();
+    if (!headerPulito.toLowerCase().startsWith('bearer ')) {
+        return res.status(401).json({ errore: 'Accesso negato. Formato token non valido.' });
+    }
+
+    let token = headerPulito.substring(7).trim();
+    token = token.replace(/['"]/g, '');
+
+    try {
+        // --- 2. IDENTIFICAZIONE MITTENTE ---
+        const { data: authData, error: authError } = await supabase.auth.getUser(token);
+        
+        if (authError || !authData.user) {
+            return res.status(401).json({ errore: 'Token non valido o scaduto.' });
+        }
+
+        const mioId = authData.user.id; // id_utente_a
+
+        // --- 3. IDENTIFICAZIONE DESTINATARIO ---
+        // Il frontend ci invierà l'ID dell'amico nel "body" della chiamata
+        const targetId = req.body.targetUserId; // id_utente_b
+
+        if (!targetId) {
+            return res.status(400).json({ errore: 'Devi specificare a chi inviare la richiesta.' });
+        }
+
+        if (mioId === targetId) {
+            return res.status(400).json({ errore: 'Non puoi inviare una richiesta a te stesso!' });
+        }
+
+        // --- 4. INSERIMENTO NEL DATABASE ---
+        // Assicurati che 'Amicizia' sia il nome esatto della tua tabella su Supabase
+        const { data, error } = await supabase
+            .from('Amicizia') 
+            .insert([
+                {
+                    id_utente_a: mioId,
+                    id_utente_b: targetId,
+                    stato: 'in_attesa'
+                    // data_creazione verrà generata in automatico da Supabase (se l'hai impostata come default now())
+                }
+            ]);
+
+        // Gestione degli errori del Database
+        if (error) {
+            console.error("Errore DB durante l'invio della richiesta:", error);
+            
+            // 23505 è il codice standard PostgreSQL per "Violazione di unicità"
+            // Scatta se i due utenti hanno già una riga nella tabella (es. richiesta già inviata)
+            if (error.code === '23505') {
+                return res.status(400).json({ errore: 'Esiste già una richiesta o un\'amicizia con questo utente.' });
+            }
+            
+            throw error; // Passa l'errore al blocco catch generale
+        }
+
+        // --- 5. SUCCESSO! ---
+        res.status(200).json({ messaggio: 'Richiesta di amicizia inviata con successo!' });
+
+    } catch (err) {
+        console.error("Errore critico in /api/invia-richiesta:", err);
+        res.status(500).json({ errore: 'Errore interno del server.' });
+    }
+});
 // ==========================================
 // API AMICI (GET)
 // ==========================================
@@ -149,49 +233,13 @@ app.get('/match', (req, res) => {
  * }
  */
 // La rotta non ha più ":id". Diventa fissa!
-app.get('/api/mie-amicizie', async (req, res) => {
+
+
+app.get('/api/mie-amicizie', verificaToken, async (req, res) => {
     
-    console.log("\n--- NUOVA CHIAMATA RICEVUTA ---");
-    console.log("URL:", req.originalUrl);
-    // Stampiamo tutti gli headers che arrivano, così vediamo se c'è almeno qualcosa!
-    console.log("TUTTI GLI HEADERS:", req.headers); 
-    
-    const authHeader = req.get('Authorization'); 
-
-    if (!authHeader) {
-        console.log("ERRORE: Manca l'header Authorization in questa specifica chiamata!");
-        return res.status(401).json({ errore: 'Accesso negato. Token mancante.' });
-    }
-
-    // 1. Togliamo eventuali spazi vuoti extra all'inizio e alla fine
-    const headerPulito = authHeader.trim();
-
-    // 2. Trasformiamo tutto in minuscolo SOLO per fare il controllo (così accetta sia Bearer che bearer)
-    if (!headerPulito.toLowerCase().startsWith('bearer ')) {
-        console.log("Formato errato. Ricevuto:", headerPulito);
-        return res.status(401).json({ errore: 'Accesso negato. Formato token non valido poco dio.' });
-    }
-
-    // 3. Estraiamo il token tagliando i primi 7 caratteri ("Bearer " sono 7 lettere) 
-    // e togliamo eventuali virgolette fantasma o spazi finali
-    let token = headerPulito.substring(7).trim();
-    token = token.replace(/['"]/g, ''); // Rimuove virgolette singole o doppie se presenti
-
-    console.log("Token estratto chirurgicamente e pronto per Supabase!");
+    const mioId = req.utenteId; // ← arriva già verificato dal middleware
 
     try {
-        // Chiediamo a Supabase di verificare il token e dirci a chi appartiene
-        const { data: authData, error: authError } = await supabase.auth.getUser(token);
-
-        if (authError || !authData.user) {
-            return res.status(401).json({ errore: 'Token non valido o scaduto.' });
-        }
-
-        // ECCO IL NOSTRO ID SICURO! Nessun hacker può falsificarlo.
-        const mioId = authData.user.id;
-
-        // --- 2. LOGICA AMICIZIE (IDENTICA A PRIMA) ---
-        // Troviamo tutte le relazioni dove compaio io
         const { data: relazioni, error: relError } = await supabase
             .from('amicizia')
             .select('id_utente_a, id_utente_b, stato')
@@ -203,7 +251,6 @@ app.get('/api/mie-amicizie', async (req, res) => {
             return res.status(200).json({ amici: [], inviate: [], ricevute: [] });
         }
 
-        // Estraiamo gli ID delle altre persone
         const idAltriUtenti = [];
         for (const riga of relazioni) {
             if (riga.id_utente_a === mioId) {
@@ -213,7 +260,6 @@ app.get('/api/mie-amicizie', async (req, res) => {
             }
         }
 
-        // Recuperiamo i nickname in un'unica query
         const { data: profili, error: profiliError } = await supabase
             .from('giocatore')
             .select('id_giocatore, nickname')
@@ -221,32 +267,17 @@ app.get('/api/mie-amicizie', async (req, res) => {
 
         if (profiliError) throw profiliError;
 
-        // Dizionario id -> nickname per lookup veloce
         const mappaProfili = {};
         for (const p of profili) {
             mappaProfili[p.id_giocatore] = p.nickname;
         }
 
-        // Smistamento nelle tre categorie
         const risultato = { amici: [], inviate: [], ricevute: [] };
 
         for (const riga of relazioni) {
             const sonoIoIlMittente = riga.id_utente_a === mioId;
-
-            let idAltro;
-            if (sonoIoIlMittente) {
-                idAltro = riga.id_utente_b;
-            } else {
-                idAltro = riga.id_utente_a;
-            }
-
-            let nickname;
-            if (mappaProfili[idAltro]) {
-                nickname = mappaProfili[idAltro];
-            } else {
-                nickname = "Utente Sconosciuto";
-            }
-
+            const idAltro = sonoIoIlMittente ? riga.id_utente_b : riga.id_utente_a;
+            const nickname = mappaProfili[idAltro] || "Utente Sconosciuto";
             const utente = { userid: idAltro, user: nickname };
 
             if (riga.stato === 'accettata') {
@@ -258,7 +289,6 @@ app.get('/api/mie-amicizie', async (req, res) => {
             }
         }
 
-        // Invio dei dati sicuri al frontend
         res.status(200).json(risultato);
 
     } catch (err) {
