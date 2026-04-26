@@ -4,6 +4,7 @@ const path = require('path');
 const { createClient } = require("@supabase/supabase-js");
 const cors = require('cors');
 
+// non so se serve ma è meglio metterlo subito per evitare problemi di CORS con il frontend in sviluppo 
 const app = express();
 app.use(cors({
     origin: 'http://localhost:3000', // ← l'URL del tuo frontend
@@ -134,83 +135,128 @@ app.get('/match', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'match_page.html'));
 });
 
+// Usiamo DELETE perché stiamo eliminando una riga esistente
+app.delete('/api/rifiuta-richiesta/:id', verificaToken, async (req, res) => {
+  // Stessa logica di ruoli:
+  // 1. Tu (mioId) sei la persona che RIFIUTA, quindi nel DB sei "id_utente_b" (il destinatario).
+  const mioId = req.utenteId;
+  // 2. L'ID nell'URL è la persona che te l'aveva INVIATA, quindi nel DB è "id_utente_a" (il mittente).
+  const mittenteId = req.params.id;
 
+  if (!mittenteId) {
+    return res.status(400).json({ errore: 'Devi specificare la richiesta di chi vuoi rifiutare.' });
+  }
 
+  try {
+    // Chiediamo a Supabase di eliminare la riga specifica
+    const { data, error } = await supabase
+      .from('Amicizia')
+      .delete()
+      .eq('id_utente_a', mittenteId) // Il mittente è lui...
+      .eq('id_utente_b', mioId)      // ...il destinatario sei tu...
+      .eq('stato', 'in_attesa')      // ...e lo stato attuale deve essere "in_attesa"
+      .select(); // Ci fa restituire la riga eliminata, così sappiamo se esisteva
 
+    if (error) {
+      throw error;
+    }
 
+    // Se data è vuoto, non c'era nessuna richiesta "in_attesa" da eliminare
+    if (data.length === 0) {
+      return res.status(404).json({ errore: 'Nessuna richiesta in attesa trovata da questo utente.' });
+    }
 
+    // Tutto perfetto!
+    res.status(200).json({ messaggio: 'Richiesta rifiutata e rimossa con successo.' });
 
-
-app.post('/api/invia-richiesta', async (req, res) => {
+  } catch (err) {
+    console.error("Errore nel rifiutare la richiesta:", err);
+    res.status(500).json({ errore: 'Errore interno del server.' });
+  }
+});
+// Usiamo PUT perché stiamo aggiornando un dato esistente
+app.put('/api/accetta-richiesta/:id', verificaToken, async (req, res) => {
     
-    // --- 1. VERIFICA SICUREZZA (Usiamo il nostro sistema "schiacciasassi") ---
-    const authHeader = req.get('Authorization'); 
+    // Attenzione a chi è chi!
+    // 1. Tu (mioId) sei la persona che ACCETTA, quindi nel DB sei "id_utente_b" (il destinatario).
+    const mioId = req.utenteId;           
+    
+    // 2. L'ID nell'URL è la persona che te l'aveva INVIATA, quindi nel DB è "id_utente_a" (il mittente).
+    const mittenteId = req.params.id;     
 
-    if (!authHeader) {
-        return res.status(401).json({ errore: 'Accesso negato. Token mancante.' });
+    if (!mittenteId) {
+        return res.status(400).json({ errore: 'Devi specificare la richiesta di chi vuoi accettare.' });
     }
-
-    const headerPulito = authHeader.trim();
-    if (!headerPulito.toLowerCase().startsWith('bearer ')) {
-        return res.status(401).json({ errore: 'Accesso negato. Formato token non valido.' });
-    }
-
-    let token = headerPulito.substring(7).trim();
-    token = token.replace(/['"]/g, '');
 
     try {
-        // --- 2. IDENTIFICAZIONE MITTENTE ---
-        const { data: authData, error: authError } = await supabase.auth.getUser(token);
-        
-        if (authError || !authData.user) {
-            return res.status(401).json({ errore: 'Token non valido o scaduto.' });
-        }
-
-        const mioId = authData.user.id; // id_utente_a
-
-        // --- 3. IDENTIFICAZIONE DESTINATARIO ---
-        // Il frontend ci invierà l'ID dell'amico nel "body" della chiamata
-        const targetId = req.body.targetUserId; // id_utente_b
-
-        if (!targetId) {
-            return res.status(400).json({ errore: 'Devi specificare a chi inviare la richiesta.' });
-        }
-
-        if (mioId === targetId) {
-            return res.status(400).json({ errore: 'Non puoi inviare una richiesta a te stesso!' });
-        }
-
-        // --- 4. INSERIMENTO NEL DATABASE ---
-        // Assicurati che 'Amicizia' sia il nome esatto della tua tabella su Supabase
+        // Chiediamo a Supabase di aggiornare la riga specifica
         const { data, error } = await supabase
-            .from('Amicizia') 
+            .from('Amicizia')
+            .update({ stato: 'accettata' }) // Cambiamo lo stato
+            .eq('id_utente_a', mittenteId)  // Dove il mittente è lui...
+            .eq('id_utente_b', mioId)       // ...il destinatario sei tu...
+            .eq('stato', 'in_attesa')       // ...e lo stato attuale è "in_attesa"
+            .select(); // Questo comando serve per farci restituire la riga modificata
+
+        if (error) {
+            throw error; 
+        }
+
+        // Se data è vuoto (lunghezza 0), significa che Supabase non ha trovato nessuna 
+        // richiesta "in_attesa" tra voi due (forse era già stata accettata o rifiutata)
+        if (data.length === 0) {
+            return res.status(404).json({ errore: 'Nessuna richiesta in attesa trovata da questo utente.' });
+        }
+
+        // Tutto perfetto!
+        res.status(200).json({ messaggio: 'Amicizia accettata con successo! Ora siete amici.' });
+
+    } catch (err) {
+        console.error("Errore nell'accettare la richiesta:", err);
+        res.status(500).json({ errore: 'Errore interno del server.' });
+    }
+});
+// Usiamo POST (perché stiamo scrivendo nel DB) e aggiungiamo la barra prima di :id
+// POST /api/invia-richiesta/:id
+// invia un richiesta di amicizia all'utente con id specificato nell'URL (targetId)
+app.post('/api/invia-richiesta/:id', verificaToken, async (req, res) => {
+    
+    const mioId = req.utenteId;           // Arriva dal tuo fantastico middleware!
+    const targetId = req.params.id;       // Lo peschiamo dall'URL
+
+    if (!targetId) {
+        return res.status(400).json({ errore: 'Devi specificare a chi inviare la richiesta.' });
+    }
+
+    if (mioId === targetId) {
+        return res.status(400).json({ errore: 'Non puoi inviare una richiesta a te stesso!' });
+    }
+
+    try {
+        // Inserimento nel database Supabase
+        const { error } = await supabase
+            .from('Amicizia') // (Assicurati che la tabella si chiami esattamente così)
             .insert([
                 {
                     id_utente_a: mioId,
                     id_utente_b: targetId,
                     stato: 'in_attesa'
-                    // data_creazione verrà generata in automatico da Supabase (se l'hai impostata come default now())
                 }
             ]);
 
-        // Gestione degli errori del Database
+        // codice unicità di supabase è 23505, se viene violata la constraint di unicità (cioè stiamo cercando di inserire una richiesta già esistente)
         if (error) {
-            console.error("Errore DB durante l'invio della richiesta:", error);
-            
-            // 23505 è il codice standard PostgreSQL per "Violazione di unicità"
-            // Scatta se i due utenti hanno già una riga nella tabella (es. richiesta già inviata)
             if (error.code === '23505') {
-                return res.status(400).json({ errore: 'Esiste già una richiesta o un\'amicizia con questo utente.' });
+                return res.status(400).json({ errore: 'Hai già inviato una richiesta a questo utente.' });
             }
-            
-            throw error; // Passa l'errore al blocco catch generale
+            throw error; 
         }
 
-        // --- 5. SUCCESSO! ---
+        // Se arriviamo qui, tutto è andato bene!
         res.status(200).json({ messaggio: 'Richiesta di amicizia inviata con successo!' });
 
     } catch (err) {
-        console.error("Errore critico in /api/invia-richiesta:", err);
+        console.error("Errore nell'invio della richiesta:", err);
         res.status(500).json({ errore: 'Errore interno del server.' });
     }
 });
