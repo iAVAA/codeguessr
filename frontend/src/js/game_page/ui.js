@@ -104,9 +104,9 @@ async function caricaRelazioni() {
         relazioniUtente = {};
 
         // Riempiamo l'oggetto di lookup (controlliamo prima che gli array esistano)
-        if (data.amici) data.amici.forEach(u => relazioniUtente[u.user] = 'amici');
-        if (data.inviate) data.inviate.forEach(u => relazioniUtente[u.user] = 'inviata');
-        if (data.ricevute) data.ricevute.forEach(u => relazioniUtente[u.user] = 'ricevuta');
+        if (data.amici) data.amici.forEach(u => relazioniUtente[u.user] = {stato: 'amici', userid: u.userid});
+        if (data.inviate) data.inviate.forEach(u => relazioniUtente[u.user] = {stato: 'inviata', userid: u.userid});
+        if (data.ricevute) data.ricevute.forEach(u => relazioniUtente[u.user] = {stato: 'ricevuta', userid: u.userid});
 
         console.log("I MIEI DATI REALI SONO:", relazioniUtente);
     } catch (err) {
@@ -136,7 +136,8 @@ function buildResultItem(player) {
     const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
 
     // Controlliamo lo stato dalla nostra memoria
-    const stato = relazioniUtente[idCercato] || 'nessuno';
+    const stato = relazioniUtente[idCercato]?.stato || 'nessuno';
+    const userid = relazioniUtente[idCercato]?.userid || null;
 
     let buttonHTML = '';
 
@@ -156,14 +157,14 @@ function buildResultItem(player) {
         `;
     } else if (stato === 'ricevuta') {
         buttonHTML = `
-            <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${idCercato}">
+            <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${userid}">
                 <i class="bi bi-check-circle"></i>
                 Accetta
             </button>
         `;
     } else {
         buttonHTML = `
-            <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${idCercato}">
+            <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${userid}">
                 <i class="bi bi-person-plus"></i>
                 Aggiungi
             </button>
@@ -176,7 +177,7 @@ function buildResultItem(player) {
                 <img class="cg-search-result-avatar" src="${avatar}" alt="Avatar di ${safeName}">
                 <div class="cg-search-result-text">
                     <span class="cg-search-result-name">${safeName}</span>
-                    <span class="cg-search-result-username">@${safeUsername}</span>
+                    <span class="cg-search-result-username">@${userid}</span>
                 </div>
             </div>
             ${buttonHTML}
@@ -275,15 +276,17 @@ function initAddFriendSearch() {
         const addButton = event.target.closest('.cg-search-add-btn');
         // Se si clicca fuori dal tasto o se il tasto è già disabilitato, non fare niente
         if (!addButton || addButton.disabled) return;
+        // se su html data-username o data-userid è mancante, non fare niente (per sicurezza)
+        // data-username diveta dataset.username in js, stessa cosa per data-userid -> dataset.userid
 
         const username = addButton.dataset.username;
         const userid = addButton.dataset.userid; 
         
-        if (!username) return;
+        if (!username || !userid) return;
 
         // Feedback per l'utente
         if (typeof showToast === 'function') {
-            showToast(`Richiesta inviata a @${username}`, 'green');
+            showToast(`Richiesta inviata a @${userid}`, 'green');
         } else {
             alert(`Richiesta inviata a @${username}`);
         }
