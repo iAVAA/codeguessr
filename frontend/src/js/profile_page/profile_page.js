@@ -403,15 +403,22 @@ async function initProfilePage() {
         updateProfileUI(playerData);
         initFriendActions();
 
+        // Gestione bottone Aggiungi Amico
         if (typeof initProfileAddFriendButton === 'function') {
-            console.log(`➕ 9. Inizializzo bottone 'Aggiungi Amico' (Dati passati -> ID: ${playerData.id}, Nome: ${playerData.name})`);
             initProfileAddFriendButton(playerData.id, playerData.name);
         }
-        
-        console.log("🏁 10. initProfilePage terminata con successo!");
 
+        // 🔒 GESTIONE BOTTONE "MODIFICA PROFILO"
+        const btnEditProfile = document.getElementById('btn-edit-profile');
+        if (btnEditProfile) {
+            // Se l'ID del profilo visualizzato NON è il mio, elimino il bottone
+            if (targetUserId !== session.idGiocatore) {
+                btnEditProfile.remove(); 
+            }
+        }
+        
     } catch (error) {
-        console.error('🚨 [Profile Page] Errore critico durante il caricamento dati:', error);
+        console.error('[Profile Page] Errore caricamento dati:', error);
     }
 }
 initProfilePage();
