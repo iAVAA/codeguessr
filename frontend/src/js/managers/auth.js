@@ -32,6 +32,74 @@ export function getSession() {
 export function clearSession() {
   localStorage.removeItem('isLoggedIn');
   localStorage.removeItem('id_giocatore');
+  localStorage.removeItem('supabaseToken');
+  localStorage.removeItem('supabaseRefreshToken');
+}
+
+// ─── Token Refresh ────────────────────────────────────────────────────────────
+
+/**
+ * Rinnova l'access_token usando il refresh_token salvato.
+ * @returns {string|null} Il nuovo access_token, o null se il refresh fallisce.
+ */
+export async function refreshToken() {
+  const refreshToken = localStorage.getItem('supabaseRefreshToken');
+  if (!refreshToken) return null;
+
+  try {
+    const res = await fetch('/api/refresh-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+
+    if (!res.ok) {
+      // Refresh fallito: sessione definitivamente scaduta, forza logout
+      clearSession();
+      window.location.href = '/index.html';
+      return null;
+    }
+
+    const data = await res.json();
+    localStorage.setItem('supabaseToken', data.token);
+    localStorage.setItem('supabaseRefreshToken', data.refresh_token);
+    return data.token;
+
+  } catch (err) {
+    console.error('[Auth] Errore refresh token:', err);
+    return null;
+  }
+}
+
+/**
+ * Wrapper di fetch che aggiunge automaticamente il Bearer token
+ * e lo rinnova trasparentemente se è scaduto (risposta 401).
+ *
+ * Uso: await fetchAuth('/api/profilo', { method: 'PUT', body: ... })
+ */
+export async function fetchAuth(url, options = {}) {
+  let token = localStorage.getItem('supabaseToken');
+
+  const makeRequest = (t) => fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+      'Authorization': `Bearer ${t}`
+    }
+  });
+
+  let res = await makeRequest(token);
+
+  // Se il token è scaduto, prova a rinnovarlo e riprova la richiesta
+  if (res.status === 401) {
+    console.warn('[Auth] Token scaduto, tentativo di refresh...');
+    const newToken = await refreshToken();
+    if (!newToken) return res; // Refresh fallito, ritorna la risposta 401
+    res = await makeRequest(newToken);
+  }
+
+  return res;
 }
 
 // ─── Test Helper (console) ───────────────────────────────────────────────────

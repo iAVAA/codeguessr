@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('id_giocatore', risultato.user); // Salvo l'ID utente per sessioni future
             localStorage.setItem('isLoggedIn', 'true'); // Flag per indicare che l'utente è loggato 
             localStorage.setItem('supabaseToken', risultato.token);
+            localStorage.setItem('supabaseRefreshToken', risultato.refresh_token); // Per rinnovare il token scaduto
             window.location.href = '/home';
             form.reset()
         }
