@@ -138,6 +138,39 @@ app.get('/match', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'match_page.html'));
 });
 
+// Rotta per servire la pagina del profilo di qualsiasi utente
+app.get('/profilo/:username', (req, res) => {
+    // Invia il file HTML del profilo. 
+    // ATTENZIONE: adatta il percorso 'public/profile.html' alla tua vera cartella!
+    res.sendFile(path.join(ROOT, 'src', 'pages', 'profile_page.html'));
+});
+
+app.get('/api/profilo/nickname/:username', verificaToken, async (req, res) => {
+    const nicknameCercato = req.params.username;
+
+    try {
+        const { data: profilo, error } = await supabase
+            .from('giocatore')
+            .select('id_giocatore') // Aggiungi qui gli altri campi che ti servono
+            .eq('nickname', nicknameCercato)
+            .single(); // Ne aspettiamo solo uno
+
+        if (error || !profilo) {
+            return res.status(404).json({ errore: 'Profilo non trovato' });
+        }
+
+        // Lo formattiamo per il frontend
+        res.status(200).json({
+            userid: profilo.id_giocatore,
+            user: profilo.nickname,
+        });
+
+    } catch (err) {
+        console.error("Errore ricerca profilo:", err);
+        res.status(500).json({ errore: 'Errore interno' });
+    }
+});
+
 // Usiamo DELETE perché stiamo eliminando una riga esistente
 app.delete('/api/rifiuta-richiesta/:id', verificaToken, async (req, res) => {
     // Stessa logica di ruoli:
@@ -263,6 +296,59 @@ app.post('/api/invia-richiesta/:id', verificaToken, async (req, res) => {
         res.status(500).json({ errore: 'Errore interno del server.' });
     }
 });
+
+
+app.get('/api/amicizie-confermate/:id', verificaToken, async (req, res) => {
+    
+    const targetId = req.params.id; // L'ID del giocatore che stiamo guardando
+
+    try {
+        // 1. Chiediamo a Supabase SOLO le relazioni dove lo stato è 'accettata'
+        const { data: relazioni, error: relError } = await supabase
+            .from('amicizia')
+            .select('id_utente_a, id_utente_b')
+            .eq('stato', 'accettata') // <-- Filtro direttamente nel database!
+            .or(`id_utente_a.eq.${targetId},id_utente_b.eq.${targetId}`);
+
+        if (relError) throw relError;
+
+        // Se non ha amici, restituiamo subito gli array vuoti
+        if (!relazioni || relazioni.length === 0) {
+            return res.status(200).json({ amici: [], inviate: [], ricevute: [] });
+        }
+
+        // 2. Estraiamo la lista degli ID dei suoi amici
+        const idAmici = relazioni.map(riga => 
+            riga.id_utente_a === targetId ? riga.id_utente_b : riga.id_utente_a
+        );
+
+        // 3. Recuperiamo i loro nickname
+        const { data: profili, error: profiliError } = await supabase
+            .from('giocatore')
+            .select('id_giocatore, nickname')
+            .in('id_giocatore', idAmici);
+
+        if (profiliError) throw profiliError;
+
+        // 4. Formattiamo i risultati
+        const amiciConfermati = profili.map(p => ({
+            userid: p.id_giocatore,
+            user: p.nickname
+        }));
+
+        // Restituiamo l'oggetto con le richieste in attesa vuote per non far arrabbiare il frontend
+        res.status(200).json({ 
+            amici: amiciConfermati, 
+            inviate: [], 
+            ricevute: [] 
+        });
+
+    } catch (err) {
+        console.error("Errore recupero amicizie confermate:", err.message);
+        res.status(500).json({ errore: 'Errore server interno' });
+    }
+});
+
 // ==========================================
 // API AMICI (GET)
 // ==========================================
@@ -282,8 +368,6 @@ app.post('/api/invia-richiesta/:id', verificaToken, async (req, res) => {
  * }
  */
 // La rotta non ha più ":id". Diventa fissa!
-
-
 app.get('/api/mie-amicizie', verificaToken, async (req, res) => {
 
     const mioId = req.utenteId; // ← arriva già verificato dal middleware

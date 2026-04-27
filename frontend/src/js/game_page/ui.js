@@ -402,4 +402,21 @@ function initAddFriendSearch() {
 }
 
 // L'inizio di tutto!
+// ─── GESTIONE CLICK SUL NOME DELL'AMICO ───────────────────────────────────────
+
+document.addEventListener('click', (event) => {
+    // Verifica se l'elemento cliccato (o un suo genitore) ha la classe 'friend-name'
+    // NOTA: Se nell'altro file hai usato 'profile-friend-name', aggiungilo qui nel closest!
+    const nameElement = event.target.closest('.friend-name') || event.target.closest('.profile-friend-name');
+    
+    if (nameElement) {
+        // Estraiamo il testo pulito ignorando eventuali spazi vuoti
+        const friendName = nameElement.textContent.trim();
+        
+        if (friendName) {
+            // Reindirizza l'utente alla pagina del profilo dell'amico!
+            window.location.href = `/profilo/${encodeURIComponent(friendName)}`;
+        }
+    }
+});
 document.addEventListener('DOMContentLoaded', initAddFriendSearch);

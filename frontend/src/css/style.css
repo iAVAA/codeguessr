@@ -1229,3 +1229,13 @@ body.loader-open { overflow: hidden !important; }
   font-size: 1.1rem;
   line-height: 1;
 }
+
+.friend-name, .profile-friend-name {
+    cursor: pointer;
+    transition: color 0.2s ease-in-out;
+}
+
+.friend-name:hover, .profile-friend-name:hover {
+    text-decoration: underline;
+    color: #4a90e2; /* O usa il colore primario del tuo tema! */
+}
