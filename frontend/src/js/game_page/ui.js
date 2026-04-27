@@ -154,20 +154,25 @@ function buildResultItem(player) {
             </button>
         `;
     } else if (stato === 'ricevuta') {
+    // Se abbiamo ricevuto la richiesta, mostriamo DUE bottoni con azioni diverse!
         buttonHTML = `
-            <button class="cg-search-add-btn" data-username="${safeName}" data-userid="${safeUserId}">
-                <i class="bi bi-check-circle"></i>
-                Accetta
+        <div style="display: flex; gap: 8px;">
+            <button class="cg-search-add-btn" data-action="accetta" data-username="${safeName}" data-userid="${safeUserId}" style="background-color: #198754; color: white; border-color: #198754;">
+                <i class="bi bi-check-circle"></i> Accetta
             </button>
+            <button class="cg-search-add-btn" data-action="rifiuta" data-username="${safeName}" data-userid="${safeUserId}" style="background-color: #dc3545; color: white; border-color: #dc3545;">
+                <i class="bi bi-x-circle"></i> Rifiuta
+            </button>
+        </div>
         `;
-    } else {
+  } else {
+        // Bottone "Aggiungi" standard
         buttonHTML = `
-            <button class="cg-search-add-btn" data-username="${safeName}" data-userid="${safeUserId}">
-                <i class="bi bi-person-plus"></i>
-                Aggiungi
-            </button>
+        <button class="cg-search-add-btn" data-action="aggiungi" data-username="${safeName}" data-userid="${safeUserId}">
+            <i class="bi bi-person-plus"></i> Aggiungi
+        </button>
         `;
-    }
+  }
 
     return `
         <div class="cg-search-result-item">
@@ -200,7 +205,7 @@ async function renderFriendSearchResults(resultsNode, query) {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-        
+
         const filtered = await response.json();
 
         if (!filtered || !filtered.length) {
@@ -270,31 +275,84 @@ function initAddFriendSearch() {
     });
 
     // Gestione dei click sui tasti "Aggiungi" o "Accetta"
-    results.addEventListener('click', (event) => {
-        const addButton = event.target.closest('.cg-search-add-btn');
-        // Se si clicca fuori dal tasto o se il tasto è già disabilitato, non fare niente
-        if (!addButton || addButton.disabled) return;
-        // se su html data-username o data-userid è mancante, non fare niente (per sicurezza)
-        // data-username diveta dataset.username in js, stessa cosa per data-userid -> dataset.userid
+    // Gestione dei click sui tasti Aggiungi, Accetta o Rifiuta
+    results.addEventListener('click', async (event) => {
+      // Ora cerchiamo qualsiasi bottone che abbia la classe o un data-action
+      const actionButton = event.target.closest('button[data-action]');
+      
+      if (!actionButton || actionButton.disabled) return;
 
-        const username = addButton.dataset.username;
-        const userid = addButton.dataset.userid; 
-        
-        if (!username || !userid) return;
+      const action = actionButton.dataset.action; // 'aggiungi', 'accetta' o 'rifiuta'
+      const username = actionButton.dataset.username;
+      const userid = actionButton.dataset.userid; 
+      
+      if (!username || !userid) return;
 
-        // Feedback per l'utente
-        if (typeof showToast === 'function') {
-            showToast(`Richiesta inviata a @${userid}`, 'green');
-        } else {
-            alert(`Richiesta inviata a @${username}`);
-        }
-        
-        // Cambiamo il bottone
-        addButton.disabled = true;
-        addButton.innerHTML = '<i class="bi bi-check-lg"></i> Inviata';
+      const originalHTML = actionButton.innerHTML;
+      actionButton.disabled = true;
 
-        // Qui, in futuro, andrà la vera chiamata fetch (POST) verso il tuo server
-        // per salvare l'amicizia nel database! Es: inviaRichiestaDb(userid);
+      try {
+            const token = localStorage.getItem('supabaseToken');
+            if (!token) throw new Error("Devi essere loggato per gestire le amicizie.");
+
+            // Scegliamo l'URL giusto per il server in base all'azione
+            // Scegliamo l'URL e il METODO giusti in base all'azione
+            let apiUrl = '';
+            let apiMethod = 'POST'; // Metodo di default
+
+            if (action === 'aggiungi') {
+                apiUrl = `/api/invia-richiesta/${userid}`;
+                apiMethod = 'POST';
+            } else if (action === 'accetta') {
+                apiUrl = `/api/accetta-richiesta/${userid}`;
+                // Controlla nel tuo server: se hai usato app.put usa 'PUT', se hai usato app.post lascia 'POST'
+                apiMethod = 'PUT'; 
+            } else if (action === 'rifiuta') {
+                apiUrl = `/api/rifiuta-richiesta/${userid}`;
+                apiMethod = 'DELETE'; // <-- Ecco la magia che fa combaciare frontend e backend!
+            }
+
+            // Cambiamo il testo visivo mentre carichiamo
+            actionButton.innerHTML = action === 'aggiungi' ? '<i class="bi bi-hourglass"></i> Invio...' : '<i class="bi bi-hourglass"></i>...';
+
+            // CHIAMATA AL SERVER
+            const response = await fetch(apiUrl, {
+                method: apiMethod, // <-- Usiamo la variabile dinamica invece di scriverlo fisso!
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                }
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.errore || "Errore durante l'operazione");
+
+            // SUCCESS! Cambiamo il bottone e la memoria in base a cosa abbiamo fatto
+            if (action === 'aggiungi') {
+                if (typeof showToast === 'function') showToast(`Richiesta inviata a @${username}`, 'green');
+                actionButton.innerHTML = '<i class="bi bi-check-lg"></i> Inviata';
+                relazioniUtente[userid] = 'inviata';
+            } 
+            else if (action === 'accetta') {
+                if (typeof showToast === 'function') showToast(`Ora sei amico con @${username}!`, 'green');
+                // Aggiorniamo l'interfaccia: togliamo i due bottoni e mettiamo "Amici"
+                const container = actionButton.closest('div');
+                container.innerHTML = '<button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="bi bi-person-check"></i> Amici</button>';
+                relazioniUtente[userid] = 'amici';
+            } 
+            else if (action === 'rifiuta') {
+                if (typeof showToast === 'function') showToast(`Richiesta rifiutata.`, 'gray');
+                // Se rifiutiamo, riportiamo il bottone allo stato "Aggiungi" normale
+                const container = actionButton.closest('div');
+                container.innerHTML = `<button class="cg-search-add-btn" data-action="aggiungi" data-username="${username}" data-userid="${userid}"><i class="bi bi-person-plus"></i> Aggiungi</button>`;
+                relazioniUtente[userid] = 'nessuno';
+            }
+
+      } catch (err) {
+          console.error(`Errore nell'azione ${action}:`, err);
+          if (typeof showToast === 'function') showToast(err.message, 'red');
+          actionButton.disabled = false;
+          actionButton.innerHTML = originalHTML; // Ripristina il bottone originale
+      }
     });
 }
 
