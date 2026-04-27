@@ -175,17 +175,7 @@ function renderFriends(friends) {
 function updateProfileUI(playerData) {
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? ''; };
 
-    // --- Navbar Profile ---
-    setText('player-name', playerData.name);
-    setText('player-level', playerData.level);
-    setText('player-cups', playerData.xp.toLocaleString('it-IT'));
-
-    const navAvatar = document.getElementById('player-avatar');
-    if (navAvatar) navAvatar.src = playerData.avatar;
-
-    const xpPercent = Math.min(100, (playerData.xp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
-    setXpProgress(xpPercent);
-
+    
     // --- Profilo Principale ---
     setText('page-name', playerData.name);
     setText('page-userid', playerData.id.slice(0, 8) + '…');
@@ -229,27 +219,32 @@ function updateProfileUI(playerData) {
 // ─── API / Data Fetching ─────────────────────────────────────────────────────
 
 async function fetchFullProfileData(userId) {
+    const session = getSession();
+    
+    // Scegliamo la rotta giusta per le amicizie! Se sei tu, vedi tutto. Se è un altro, solo le confermate.
+    const amiciUrl = (userId === session.idGiocatore) 
+        ? `/api/mie-amicizie` 
+        : `/api/amicizie-confermate/${userId}`;
+
     // Fetch paralleli per ottimizzare i tempi di caricamento
     const [resProf, resStats, resStorico, resAmici] = await Promise.all([
         fetch(`/api/profilo/${userId}`),
         fetch(`/api/statistiche/${userId}`),
         fetch(`/api/storico/${userId}`),
-        fetchAuth('/api/mie-amicizie')
+        fetchAuth(amiciUrl) // Usiamo l'URL dinamico calcolato sopra
     ]);
 
     if (!resProf.ok) throw new Error(`Profilo non trovato (${resProf.status})`);
     const dataProfilo = await resProf.json();
 
-    const dataStats   = resStats.ok   ? await resStats.json()   : { played: 0, won: 0, lost: 0, win_rate: 0 };
+    const dataStats   = resStats.ok  ? await resStats.json()  : { played: 0, won: 0, lost: 0, win_rate: 0 };
     const dataStorico = resStorico.ok ? await resStorico.json() : [];
-    const amiciData   = resAmici.ok   ? await resAmici.json()   : { amici: [], inviate: [], ricevute: [] };
+    const amiciData   = resAmici.ok  ? await resAmici.json()  : { amici: [], inviate: [], ricevute: [] };
 
-    // Calcolo avatar: usa avatar_url dal DB se presente, altrimenti DiceBear
     const avatar = dataProfilo.avatar_url
         ? dataProfilo.avatar_url
         : `${AVATAR_BASE}?seed=${userId}&backgroundColor=1e1f21`;
 
-    // Formattazione amici
     const amiciFormattati = amiciData.amici.map(a => ({
         userid: a.userid, name: a.user,
         avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
@@ -266,6 +261,11 @@ async function fetchFullProfileData(userId) {
         online: false, type: 'ricevuta'
     }));
 
+    // Formattazione data_registrazione (se la usi)
+    const joinDate = typeof formatJoinDate === 'function' && dataProfilo.data_registrazione 
+        ? formatJoinDate(dataProfilo.data_registrazione) 
+        : '';
+
     return {
         id:       dataProfilo.userid,
         name:     dataProfilo.user,
@@ -274,7 +274,7 @@ async function fetchFullProfileData(userId) {
         bio:      dataProfilo.bio || '',
         avatar,
         banner_url: dataProfilo.banner_url || null,
-        joinDate: formatJoinDate(dataProfilo.data_registrazione),
+        joinDate: joinDate,
 
         stats: {
             played:   dataStats.played   ?? 0,
@@ -284,8 +284,6 @@ async function fetchFullProfileData(userId) {
         },
 
         history: dataStorico,
-
-        // Le ricevute appaiono per prime così l'utente le nota subito!
         friends: [...ricevute, ...amiciFormattati, ...inviate]
     };
 }
@@ -332,22 +330,104 @@ function initFriendActions() {
 }
 
 // ─── Init ────────────────────────────────────────────────────────────────────
+async function updateNavbar(playerData){
+    // --- Navbar Profile ---
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
+    setText('player-name', playerData.user);
+    setText('player-level', playerData.livello);
+    setText('player-cups', playerData.exp.toLocaleString('it-IT'));
+
+    const navAvatar = document.getElementById('player-avatar');
+    if (navAvatar) navAvatar.src = `${AVATAR_BASE}?seed=${playerData.userid}&backgroundColor=1e1f21`;
+
+    const xpPercent = Math.min(100, (playerData.exp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
+    setXpProgress(xpPercent);
+
+}
 async function initProfilePage() {
+    console.log("🟢 1. Avvio initProfilePage...");
     const session = getSession();
 
     if (!session.isLoggedIn || !session.idGiocatore) {
+        console.warn("⚠️ Nessuna sessione valida, reindirizzamento alla home.");
         window.location.href = '/index.html';
         return;
     }
 
+    console.log(`👤 2. Sessione attiva. Mio ID: ${session.idGiocatore}`);
+
+    const risposta = await fetch(`/api/profilo/${session.idGiocatore}`);
+    
+    // 2. Apri il pacchetto estraendo i dati veri (AWAIT e PARENTESI!)
+    const playerData = await risposta.json();
+    updateNavbar(playerData); // Aggiorna la navbar con i dati del giocatore
+
     try {
-        const playerData = await fetchFullProfileData(session.idGiocatore);
+        const urlPath = window.location.pathname; 
+        const pathParts = urlPath.split('/'); 
+        console.log(`🔗 3. URL Letto: ${urlPath} | Parti:`, pathParts);
+        
+        let targetUserId = session.idGiocatore; // Di base, supponiamo di guardare il NOSTRO profilo
+
+        // Se l'URL ha un nome (es: /profile/iavaaaaa), ALLORA e SOLO ALLORA facciamo la risoluzione
+        if (pathParts.length >= 3 && pathParts[1] === 'profilo' && pathParts[2] !== '') {
+            const targetNickname = decodeURIComponent(pathParts[2]); 
+            console.log(`🔎 4. Trovato nickname nell'URL: "${targetNickname}". Inizio risoluzione...`);
+            
+            try {
+                const res = await fetchAuth(`/api/profilo/nickname/${targetNickname}`);
+                if (!res.ok) throw new Error('Utente non trovato nel DB');
+                
+                const data = await res.json();
+                targetUserId = data.userid; 
+                console.log(`✅ 5. Risoluzione completata! "${targetNickname}" corrisponde all'ID: ${targetUserId}`);
+
+            } catch (err) {
+                console.error(`❌ 5b. Errore risoluzione per "${targetNickname}":`, err);
+                console.log("🔄 Reindirizzamento al mio profilo base per evitare loop...");
+                // 👇 MODIFICATO QUI: ti rimanda a /profilo in caso di errore
+                window.location.href = '/profilo'; 
+                return; // Ferma tutto per evitare loop!
+            }
+        } else {
+            console.log("🏠 4. Nessun nickname nell'URL. Carico il mio profilo personale.");
+        }
+        
+
+        console.log(`📥 6. Chiamata a fetchFullProfileData per l'ID: ${targetUserId}`);
+        const playerData = await fetchFullProfileData(targetUserId);
+        console.log("📊 7. Dati profilo scaricati con successo:", playerData);
+
+        console.log("🎨 8. Aggiornamento interfaccia...");
         updateProfileUI(playerData);
         initFriendActions();
+
+        if (typeof initProfileAddFriendButton === 'function') {
+            console.log(`➕ 9. Inizializzo bottone 'Aggiungi Amico' (Dati passati -> ID: ${playerData.id}, Nome: ${playerData.name})`);
+            initProfileAddFriendButton(playerData.id, playerData.name);
+        }
+        
+        console.log("🏁 10. initProfilePage terminata con successo!");
+
     } catch (error) {
-        console.error('[Profile Page] Errore caricamento dati:', error);
+        console.error('🚨 [Profile Page] Errore critico durante il caricamento dati:', error);
     }
 }
-
 initProfilePage();
+
+document.addEventListener('click', (event) => {
+    // Verifica se l'elemento cliccato (o un suo genitore) ha la classe 'friend-name'
+    // NOTA: Se nell'altro file hai usato 'profile-friend-name', aggiungilo qui nel closest!
+    const nameElement = event.target.closest('.friend-name') || event.target.closest('.profile-friend-name');
+    
+    if (nameElement) {
+        // Estraiamo il testo pulito ignorando eventuali spazi vuoti
+        const friendName = nameElement.textContent.trim();
+        
+        if (friendName) {
+            // Reindirizza l'utente alla pagina del profilo dell'amico!
+            window.location.href = `/profilo/${encodeURIComponent(friendName)}`;
+        }
+    }
+});
