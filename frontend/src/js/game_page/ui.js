@@ -130,14 +130,12 @@ function buildResultItem(player) {
     const safeName = player.user;
     const safeUserId = player.userid;
     
-    // Recuperiamo l'ID del giocatore (assicurati che il backend lo mandi come 'userid' o 'id_giocatore')
-    const idCercato = player.userid; 
     
     const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
 
     // Controlliamo lo stato dalla nostra memoria
-    const stato = relazioniUtente[idCercato]?.stato || 'nessuno';
-    const userid = relazioniUtente[idCercato]?.userid || null;
+    const stato = relazioniUtente[safeName]?.stato || 'nessuno';
+    const userid = relazioniUtente[safeName]?.userid || null;
 
     let buttonHTML = '';
 
@@ -202,7 +200,7 @@ async function renderFriendSearchResults(resultsNode, query) {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-
+        
         const filtered = await response.json();
 
         if (!filtered || !filtered.length) {
