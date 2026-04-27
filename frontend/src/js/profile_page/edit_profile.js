@@ -61,6 +61,15 @@ function showSaveStatus(message, isError = false) {
 // ─── Apertura/Chiusura modale ─────────────────────────────────────────────────
 
 function openModal() {
+    const session = getSession();
+    const currentProfileId = document.getElementById('page-userid')?.textContent;
+
+    // 🔒 CONTROLLO DI SICUREZZA: Sei loggato ed è il TUO profilo?
+    if (!session.isLoggedIn || session.idGiocatore !== currentProfileId) {
+        console.warn("Azione bloccata: non puoi modificare il profilo di un altro utente.");
+        return; // Ferma tutto, il modale non si apre!
+    }
+
     const overlay = document.getElementById('edit-profile-overlay');
     if (!overlay) return;
     overlay.classList.add('open');
