@@ -1,4 +1,4 @@
-import { getSession } from '../managers/auth.js';
+import { getSession, fetchAuth } from '../managers/auth.js';
 
 const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
 
@@ -7,6 +7,9 @@ let timeRemaining = 30;
 
 let myHealth = 100;
 let oppHealth = 100;
+
+// Flag per tracciare se la partita è già stata salvata (evita doppi salvataggi)
+let matchSaved = false;
 
 // Snippet di fallback usato solo se il fetch dal nostro backend fallisce
 const fallbackSnippet = {
@@ -91,7 +94,7 @@ function initMonacoEditor(snippet) {
 async function loadMatchData() {
   const { isLoggedIn, idGiocatore } = getSession();
 
-  let myProfile = { user: "Giocatore", livello: 1, exp: 0, userid: "guest" };
+  let myProfile = { user: "Giocatore", livello: 1, exp: 0, userid: "guest", avatar_url: null };
   const oppSeed = "opponent_boss_42";
 
   document.getElementById('match-p1-name').textContent = myProfile.user;
@@ -162,6 +165,7 @@ async function loadMatchData() {
     startCountdown();
   }
 
+  // Carica il profilo reale del giocatore (con avatar dal DB)
   if (isLoggedIn && idGiocatore) {
     try {
       const res = await fetch(`/api/profilo/${idGiocatore}`);
@@ -170,7 +174,11 @@ async function loadMatchData() {
         document.getElementById('match-p1-name').textContent = myProfile.user;
         document.getElementById('match-p1-lvl').textContent  = myProfile.livello || 1;
         document.getElementById('match-p1-cups').textContent = myProfile.exp || 0;
-        document.getElementById('match-p1-avatar').src = `${AVATAR_BASE}?seed=${myProfile.userid}&backgroundColor=1e1f21`;
+        // Usa avatar_url dal DB se presente, altrimenti DiceBear
+        const avatarSrc = myProfile.avatar_url
+          ? myProfile.avatar_url
+          : `${AVATAR_BASE}?seed=${myProfile.userid}&backgroundColor=1e1f21`;
+        document.getElementById('match-p1-avatar').src = avatarSrc;
       }
     } catch (e) {
       console.error("[Match] Profile fetch error:", e);
@@ -214,6 +222,47 @@ function reduceHealth(player, amount) {
   }
 }
 
+// ─── Salvataggio Partita nel DB ─────────────────────────────────────────────
+
+/**
+ * Salva il risultato della partita corrente nel database.
+ * Chiama POST /api/salva-partita con modalita, risultato, exp_guadagnata.
+ * @param {string} risultato - 'vittoria' o 'sconfitta'
+ * @param {number} expGuadagnata - EXP ottenuta in questa partita
+ */
+async function saveMatchResult(risultato, expGuadagnata) {
+  if (matchSaved) return;
+  matchSaved = true;
+
+  const token = localStorage.getItem('supabaseToken');
+  if (!token) {
+    console.warn('[Match] Utente non autenticato, partita non salvata.');
+    return;
+  }
+
+  try {
+    const res = await fetchAuth('/api/salva-partita', {
+      method: 'POST',
+      body: JSON.stringify({
+        modalita: 'singleplayer',
+        risultato,
+        exp_guadagnata: expGuadagnata
+      })
+    });
+
+    if (res.ok) {
+      const saved = await res.json();
+      console.log(`[Match] Partita salvata! EXP totale: ${saved.nuova_exp}, LV: ${saved.nuovo_livello}`);
+    } else {
+      console.warn('[Match] Errore salvataggio partita:', res.status);
+      matchSaved = false; // Permetti retry
+    }
+  } catch (err) {
+    console.error('[Match] Impossibile salvare la partita:', err);
+    matchSaved = false;
+  }
+}
+
 function handleTimeOut() {
   const feedback = document.getElementById('guess-feedback');
   const danno_giocatore_2 = Math.floor(Math.random() * 41) + 40;
@@ -225,6 +274,9 @@ function handleTimeOut() {
   reduceHealth('p1', danno_giocatore_2);
   document.getElementById('guess-input').disabled = true;
   document.querySelector('.guess-btn').disabled = true;
+
+  // Salva come sconfitta con 0 EXP
+  saveMatchResult('sconfitta', 0);
 }
 
 const guessForm = document.getElementById('guess-form');
@@ -269,13 +321,21 @@ if (guessForm) {
         feedback.innerHTML = `<i class="bi bi-check-circle-fill"></i> Spiegazione superiore! (Tu: ${danno_giocatore_1}, Avversario: ${danno_giocatore_2})<br>L'avversario perde <b>${danno_finale} HP</b>.`;
         feedback.className = 'mt-2 text-center text-success';
         reduceHealth('p2', danno_finale);
+        // Vittoria: EXP basata sul punteggio (max 50 per round)
+        const expVittoria = Math.round(danno_giocatore_1 / 2);
+        saveMatchResult('vittoria', expVittoria);
       } else if (differenza < 0) {
         feedback.innerHTML = `<i class="bi bi-exclamation-circle-fill"></i> L'avversario ha spiegato meglio! (Tu: ${danno_giocatore_1}, Avversario: ${danno_giocatore_2})<br>Perdi <b>${danno_finale} HP</b>.`;
         feedback.className = 'mt-2 text-center text-danger';
         reduceHealth('p1', danno_finale);
+        // Sconfitta: EXP di consolazione
+        const expSconfitta = Math.round(danno_giocatore_1 / 5);
+        saveMatchResult('sconfitta', expSconfitta);
       } else {
         feedback.innerHTML = `<i class="bi bi-dash-circle-fill"></i> Pareggio! Entrambi <b>${danno_giocatore_1}</b>. Nessun danno.`;
         feedback.className = 'mt-2 text-center text-warning';
+        // Pareggio: EXP ridotta
+        saveMatchResult('sconfitta', Math.round(danno_giocatore_1 / 4));
       }
 
     } catch (err) {

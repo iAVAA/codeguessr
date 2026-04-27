@@ -1,9 +1,10 @@
 /**
  * CodeGuessr - profile_page.js
- * Gestisce la logica della pagina Profilo: caricamento statistiche, storico e amici.
+ * Gestisce la logica della pagina Profilo: caricamento statistiche reali,
+ * storico partite dal DB, amici e aggiornamento UI completo.
  */
 
-import { getSession } from '../managers/auth.js'; // Assicurati che il percorso sia corretto
+import { getSession, fetchAuth } from '../managers/auth.js';
 
 const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
 const XP_PER_LEVEL = 1000;
@@ -20,26 +21,67 @@ function setXpProgress(pct, ringId = 'xp-ring-progress') {
     }, 400);
 }
 
+// ─── Utility: formatta data relativa ────────────────────────────────────────
+
+function formatRelativeTime(isoString) {
+    if (!isoString) return 'Data sconosciuta';
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMinutes = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMinutes < 1) return 'Adesso';
+    if (diffMinutes < 60) return `${diffMinutes} min fa`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'ora' : 'ore'} fa`;
+    if (diffDays === 1) return 'Ieri';
+    if (diffDays < 7) return `${diffDays} giorni fa`;
+    return date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatJoinDate(isoString) {
+    if (!isoString) return 'Data sconosciuta';
+    return new Date(isoString).toLocaleDateString('it-IT', {
+        day: '2-digit', month: 'long', year: 'numeric'
+    });
+}
+
+// ─── Utility: label modalità ─────────────────────────────────────────────────
+
+function formatModalita(modalita) {
+    const map = {
+        'singleplayer': 'Single Player',
+        'multiplayer': 'Multiplayer',
+        'ranked': 'Classificata',
+        'amichevole': 'Amichevole'
+    };
+    return map[modalita] || modalita || 'Partita';
+}
+
 // ─── Template Builders ───────────────────────────────────────────────────────
 
 function buildHistoryHTML(match) {
-    const isWin = match.result === 'win';
+    const isWin = match.risultato === 'vittoria';
     const icon = isWin ? 'bi-arrow-up-right' : 'bi-arrow-down-right';
+    const resultClass = isWin ? 'win' : 'loss';
     const xpColor = isWin ? 'text-darcula-green' : 'text-darcula-red';
     const xpPrefix = isWin ? '+' : '';
+    const timeAgo = formatRelativeTime(match.data_fine || match.data_inizio);
+    const modeLabel = formatModalita(match.modalita);
 
     return `
     <div class="profile-side-item history-item d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-3">
-            <div class="history-result ${match.result}"><i class="bi ${icon}"></i></div>
+            <div class="history-result ${resultClass}"><i class="bi ${icon}"></i></div>
             <div>
-                <div class="history-lang text-darcula-fg fw-bold">${match.language}</div>
-                <div class="history-meta text-darcula-comment" style="font-size: 0.75rem;">${match.details}</div>
+                <div class="history-lang text-darcula-fg fw-bold">${isWin ? 'Vittoria' : 'Sconfitta'}</div>
+                <div class="history-meta text-darcula-comment" style="font-size: 0.75rem;">${modeLabel}</div>
             </div>
         </div>
         <div class="text-end">
-            <div class="history-xp ${xpColor} fw-bold">${xpPrefix}${match.xpChange} XP</div>
-            <div class="history-time text-darcula-comment" style="font-size: 0.7rem;">${match.time}</div>
+            <div class="history-xp ${xpColor} fw-bold">${xpPrefix}${match.exp_guadagnata} XP</div>
+            <div class="history-time text-darcula-comment" style="font-size: 0.7rem;">${timeAgo}</div>
         </div>
     </div>`;
 }
@@ -58,9 +100,11 @@ function buildFriendHTML(friend) {
         statusClass = online ? 'online' : 'offline';
         textClass = online ? 'text-darcula-green' : 'text-darcula-comment';
         statusText = online ? 'Online' : 'Offline';
-        rightContent = online ? `<button class="profile-btn-challenge" aria-label="Sfida ${name}"><i class="bi bi-swords"></i> Sfida</button>` : '';
-    } 
-    else if (type === 'ricevuta') {
+        rightContent = online
+            ? `<button class="profile-btn-challenge" aria-label="Sfida ${name}"><i class="bi bi-swords"></i> Sfida</button>`
+            : '';
+    } else if (type === 'ricevuta') {
+        statusClass = 'online';
         textClass = 'text-warning';
         statusText = 'Nuova richiesta';
         rightContent = `
@@ -69,10 +113,9 @@ function buildFriendHTML(friend) {
                 <button class="cg-search-add-btn" data-action="rifiuta" data-username="${name}" data-userid="${userid}" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 2px 8px;" title="Rifiuta"><i class="bi bi-x-lg"></i></button>
             </div>
         `;
-    } 
-    else if (type === 'inviata') {
+    } else if (type === 'inviata') {
         statusText = 'In attesa...';
-        rightContent = `<button disabled style="opacity: 0.6; cursor: not-allowed; padding: 2px 8px; border: 1px solid #555; background: transparent; color: #888; border-radius: 4px;"><i class="bi bi-clock"></i></button>`;
+        rightContent = `<button disabled style="opacity:0.6;cursor:not-allowed;padding:2px 8px;border:1px solid #555;background:transparent;color:#888;border-radius:4px;"><i class="bi bi-clock"></i></button>`;
     }
 
     return `
@@ -98,7 +141,12 @@ function renderHistory(history) {
     if (!container) return;
 
     if (!history || history.length === 0) {
-        container.innerHTML = `<div class="text-center text-darcula-comment py-4">Nessuna partita giocata di recente.</div>`;
+        container.innerHTML = `
+            <div class="text-center text-darcula-comment py-4">
+                <i class="bi bi-controller" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>
+                Nessuna partita giocata ancora.<br>
+                <small>Gioca la tua prima partita!</small>
+            </div>`;
         return;
     }
 
@@ -110,7 +158,12 @@ function renderFriends(friends) {
     if (!container) return;
 
     if (!friends || friends.length === 0) {
-        container.innerHTML = `<div class="text-center text-darcula-comment py-4">Non ho amici per pensare a te.</div>`;
+        container.innerHTML = `
+            <div class="text-center text-darcula-comment py-4">
+                <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>
+                Nessun amico ancora.<br>
+                <small>Aggiungi qualcuno con il bottone +</small>
+            </div>`;
         return;
     }
 
@@ -120,9 +173,9 @@ function renderFriends(friends) {
 // ─── UI State Updaters ───────────────────────────────────────────────────────
 
 function updateProfileUI(playerData) {
-    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? ''; };
 
-    // Navbar Profile (se presenti in questa pagina)
+    // --- Navbar Profile ---
     setText('player-name', playerData.name);
     setText('player-level', playerData.level);
     setText('player-cups', playerData.xp.toLocaleString('it-IT'));
@@ -130,25 +183,45 @@ function updateProfileUI(playerData) {
     const navAvatar = document.getElementById('player-avatar');
     if (navAvatar) navAvatar.src = playerData.avatar;
 
-    // Profilo Principale
-    setText('page-name', playerData.name);
-    setText('page-userid', playerData.id);
+    const xpPercent = Math.min(100, (playerData.xp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
+    setXpProgress(xpPercent);
 
+    // --- Profilo Principale ---
+    setText('page-name', playerData.name);
+    setText('page-userid', playerData.id.slice(0, 8) + '…');
+
+    const joinDateEl = document.getElementById('page-joindate');
+    if (joinDateEl) joinDateEl.textContent = playerData.joinDate;
+
+    // Bio
+    const bioEl = document.getElementById('page-bio');
+    if (bioEl) {
+        bioEl.textContent = playerData.bio && playerData.bio.trim()
+            ? `"${playerData.bio}"`
+            : 'Nessuna bio impostata.';
+    }
+
+    // Avatar
     const mainAvatar = document.getElementById('page-avatar');
     if (mainAvatar) mainAvatar.src = playerData.avatar;
 
+    // Banner
+    const bannerEl = document.querySelector('.profile-banner');
+    if (bannerEl && playerData.banner_url) {
+        bannerEl.style.backgroundImage = `url('${playerData.banner_url}')`;
+    }
+
+    // --- Statistiche ---
     const stats = playerData.stats;
     const statBoxes = document.querySelectorAll('.stat-box-val');
     if (statBoxes.length >= 4) {
         statBoxes[0].textContent = stats.played;
         statBoxes[1].textContent = stats.won;
         statBoxes[2].textContent = stats.lost;
-        statBoxes[3].textContent = `${stats.winRate}%`;
+        statBoxes[3].textContent = `${stats.win_rate}%`;
     }
 
-    const xpPercent = Math.min(100, (playerData.xp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
-    setXpProgress(xpPercent);
-
+    // --- Storico & Amici ---
     renderHistory(playerData.history);
     renderFriends(playerData.friends);
 }
@@ -156,63 +229,64 @@ function updateProfileUI(playerData) {
 // ─── API / Data Fetching ─────────────────────────────────────────────────────
 
 async function fetchFullProfileData(userId) {
-    const token = localStorage.getItem('supabaseToken');
-    
-    const res = await fetch(`/api/profilo/${userId}`);
-    if (!res.ok) throw new Error(`Profilo non trovato (${res.status})`);
-    const dataProfilo = await res.json();
+    // Fetch paralleli per ottimizzare i tempi di caricamento
+    const [resProf, resStats, resStorico, resAmici] = await Promise.all([
+        fetch(`/api/profilo/${userId}`),
+        fetch(`/api/statistiche/${userId}`),
+        fetch(`/api/storico/${userId}`),
+        fetchAuth('/api/mie-amicizie')
+    ]);
 
-    const res1 = await fetch('/api/mie-amicizie', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
-    });
-    if (!res1.ok) throw new Error(`Amici non trovati (${res1.status})`);
-    const amiciData = await res1.json();
+    if (!resProf.ok) throw new Error(`Profilo non trovato (${resProf.status})`);
+    const dataProfilo = await resProf.json();
 
-    const amiciFormattati = amiciData.amici.map(amico => ({
-        userid: amico.userid,
-        name: amico.user,
-        avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
-        online: "online", 
-        type: 'amico'
+    const dataStats   = resStats.ok   ? await resStats.json()   : { played: 0, won: 0, lost: 0, win_rate: 0 };
+    const dataStorico = resStorico.ok ? await resStorico.json() : [];
+    const amiciData   = resAmici.ok   ? await resAmici.json()   : { amici: [], inviate: [], ricevute: [] };
+
+    // Calcolo avatar: usa avatar_url dal DB se presente, altrimenti DiceBear
+    const avatar = dataProfilo.avatar_url
+        ? dataProfilo.avatar_url
+        : `${AVATAR_BASE}?seed=${userId}&backgroundColor=1e1f21`;
+
+    // Formattazione amici
+    const amiciFormattati = amiciData.amici.map(a => ({
+        userid: a.userid, name: a.user,
+        avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        online: false, type: 'amico'
     }));
-
-    const amiciInviatiFormattati = amiciData.inviate.map(amico => ({
-        userid: amico.userid,
-        name: amico.user,
-        avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
-        online: false,
-        type: 'inviata'
+    const inviate = amiciData.inviate.map(a => ({
+        userid: a.userid, name: a.user,
+        avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        online: false, type: 'inviata'
     }));
-
-    const amiciRicevutiFormattati = amiciData.ricevute.map(amico => ({
-        userid: amico.userid,
-        name: amico.user,
-        avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
-        online: false,
-        type: 'ricevuta'
+    const ricevute = amiciData.ricevute.map(a => ({
+        userid: a.userid, name: a.user,
+        avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        online: false, type: 'ricevuta'
     }));
-    // Per ora non abbiamo dati reali sulle partite, quindi mettiamo valori fittizi
-    // In futuro, potresti voler fare un'altra chiamata API per ottenere queste statistiche reali
-    // Ad esempio, potresti avere un endpoint come /api/statistiche che restituisce queste info basate sui dati reali del giocatore
-    // Per ora, mettiamo valori fittizi per dimostrare la funzionalità
-    
-
-    const totalePartite = 0;
-   
 
     return {
-        id: dataProfilo.userid,
-        name: dataProfilo.user,
-        level: dataProfilo.livello,
-        xp: dataProfilo.exp,
-        avatar: `${AVATAR_BASE}?seed=${dataProfilo.userid}&backgroundColor=1e1f21`,
+        id:       dataProfilo.userid,
+        name:     dataProfilo.user,
+        level:    dataProfilo.livello,
+        xp:       dataProfilo.exp,
+        bio:      dataProfilo.bio || '',
+        avatar,
+        banner_url: dataProfilo.banner_url || null,
+        joinDate: formatJoinDate(dataProfilo.data_registrazione),
 
-        // Le richieste ricevute appaiono per prime!
-        friends: [...amiciRicevutiFormattati, ...amiciFormattati, ...amiciInviatiFormattati],
+        stats: {
+            played:   dataStats.played   ?? 0,
+            won:      dataStats.won      ?? 0,
+            lost:     dataStats.lost     ?? 0,
+            win_rate: dataStats.win_rate ?? 0
+        },
 
-        stats: { played: totalePartite, won: 0, lost: 0, winRate: 0 },
-        history: []
+        history: dataStorico,
+
+        // Le ricevute appaiono per prime così l'utente le nota subito!
+        friends: [...ricevute, ...amiciFormattati, ...inviate]
     };
 }
 
@@ -230,30 +304,24 @@ function initFriendActions() {
         const actionButton = event.target.closest('.cg-search-add-btn');
         if (!actionButton || actionButton.disabled) return;
 
-        const action = actionButton.dataset.action; 
+        const action = actionButton.dataset.action;
         const userid = actionButton.dataset.userid;
         if (!action || !userid) return;
 
         const originalHTML = actionButton.innerHTML;
         actionButton.disabled = true;
-        actionButton.innerHTML = '...'; 
+        actionButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
         try {
-            const token = localStorage.getItem('supabaseToken');
             const apiUrl = action === 'accetta' ? `/api/accetta-richiesta/${userid}` : `/api/rifiuta-richiesta/${userid}`;
-            
-            // Attenzione al metodo: PUT per accetta, DELETE per rifiuta
-            const apiMethod = action === 'accetta' ? 'PUT' : 'DELETE'; 
+            const apiMethod = action === 'accetta' ? 'PUT' : 'DELETE';
 
-            const res = await fetch(apiUrl, {
-                method: apiMethod,
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetchAuth(apiUrl, { method: apiMethod });
 
-            if (!res.ok) throw new Error("Errore operazione");
+            if (!res.ok) throw new Error('Errore operazione');
 
             // Ricaricamento per aggiornare le UI
-            initProfilePage(); 
+            initProfilePage();
 
         } catch (err) {
             console.error("Errore nell'azione amico:", err);
@@ -276,13 +344,10 @@ async function initProfilePage() {
     try {
         const playerData = await fetchFullProfileData(session.idGiocatore);
         updateProfileUI(playerData);
-        
-        // Attiviamo i listener sui bottoni!
         initFriendActions();
     } catch (error) {
         console.error('[Profile Page] Errore caricamento dati:', error);
     }
 }
 
-// L'avvio base, in caso serva triggerarlo direttamente
 initProfilePage();

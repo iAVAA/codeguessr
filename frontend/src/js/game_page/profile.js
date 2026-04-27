@@ -1,15 +1,15 @@
 /**
- * CodeGuessr - profile.js
- * Caricamento profilo giocatore, XP ring, missioni, amici
+ * CodeGuessr - profile.js (game_page)
+ * Caricamento profilo giocatore, XP ring, missioni dinamiche da DB, amici.
  */
 
-import { getSession } from '../managers/auth.js';
+import { getSession, fetchAuth } from '../managers/auth.js';
 
 const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
 const XP_PER_LEVEL = 1000;
 
 // ─── XP Ring ─────────────────────────────────────────────────────────────────
-// TODO: fix setXpProgress to be dynamic with XP from DB
+
 function setXpProgress(pct) {
   const ring = document.getElementById('xp-ring-progress');
   if (!ring) return;
@@ -18,6 +18,52 @@ function setXpProgress(pct) {
   setTimeout(() => {
     ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
   }, 400);
+}
+
+// ─── Missioni Dinamiche ───────────────────────────────────────────────────────
+
+/**
+ * Genera le missioni attive basandosi sulle statistiche reali del giocatore.
+ * Non richiede tabella DB separata: i target sono fissi, i progressi sono reali.
+ */
+function buildDynamicMissions(stats) {
+  return [
+    {
+      title: 'Gioca 5 partite',
+      current: Math.min(stats.played, 5),
+      target: 5,
+      reward: '+50 XP',
+      completed: stats.played >= 5
+    },
+    {
+      title: 'Vinci la tua prima partita',
+      current: Math.min(stats.won, 1),
+      target: 1,
+      reward: '+30 XP',
+      completed: stats.won >= 1
+    },
+    {
+      title: 'Vinci 3 partite',
+      current: Math.min(stats.won, 3),
+      target: 3,
+      reward: '+100 XP',
+      completed: stats.won >= 3
+    },
+    {
+      title: 'Gioca 10 partite',
+      current: Math.min(stats.played, 10),
+      target: 10,
+      reward: '+150 XP',
+      completed: stats.played >= 10
+    },
+    {
+      title: 'Raggiungi il 50% di win rate',
+      current: stats.win_rate >= 50 ? 1 : 0,
+      target: 1,
+      reward: 'Badge Pro',
+      completed: stats.win_rate >= 50
+    }
+  ];
 }
 
 // ─── Template Builders ───────────────────────────────────────────────────────
@@ -35,7 +81,9 @@ function buildMissionHTML(mission) {
         </div>
         <div class="mission-info">
           <span class="mission-status">
-            ${completed ? `<span class="text-success">${current}/${target}</span>` : `<span>${current}/${target}</span>`}
+            ${completed
+              ? `<span class="text-success">${current}/${target}</span>`
+              : `<span>${current}/${target}</span>`}
           </span>
           <span class="mission-reward">
             ${completed ? `<i class="bi bi-check-circle-fill"></i> ${reward}` : reward}
@@ -45,8 +93,6 @@ function buildMissionHTML(mission) {
     </div>`;
 }
 
-
-// ─── Costruzione HTML ────────────────────────────────────────────────────────
 function buildFriendHTML(friend) {
   const { userid, name, avatar, online, type } = friend;
   
@@ -56,7 +102,6 @@ function buildFriendHTML(friend) {
   let statusText = '';
   let rightContent = '';
 
-  // 1. SE È GIÀ AMICO
   if (type === 'amico') {
     filterStyle = online ? '' : 'style="filter:grayscale(100%);opacity:0.7;"';
     statusDotClass = online ? 'online' : 'offline';
@@ -65,13 +110,12 @@ function buildFriendHTML(friend) {
     rightContent = online
       ? `<button class="btn-challenge" aria-label="Sfida ${name}"><i class="bi bi-swords"></i> Sfida</button>`
       : '';
-  } 
-  // 2. SE È UNA RICHIESTA RICEVUTA
-  else if (type === 'ricevuta') {
-    statusColor = 'text-warning'; // Colore per farla risaltare
+  } else if (type === 'ricevuta') {
+    statusDotClass = 'online';
+    statusColor = 'text-warning';
     statusText = 'Nuova richiesta';
     rightContent = `
-      <div class="d-flex gap-1" bis_skin_checked="1">
+      <div class="d-flex gap-1">
         <button class="cg-search-add-btn" data-action="accetta" data-username="${name}" data-userid="${userid}" style="background-color: #198754; color: white; border: none; border-radius: 4px; padding: 2px 8px;" title="Accetta">
           <i class="bi bi-check-lg"></i>
         </button>
@@ -80,9 +124,7 @@ function buildFriendHTML(friend) {
         </button>
       </div>
     `;
-  } 
-  // 3. SE È UNA RICHIESTA INVIATA
-  else if (type === 'inviata') {
+  } else if (type === 'inviata') {
     statusText = 'In attesa...';
     rightContent = `
       <button disabled style="opacity: 0.6; cursor: not-allowed; padding: 2px 8px; border: 1px solid #555; background: transparent; color: #888; border-radius: 4px;">
@@ -92,13 +134,13 @@ function buildFriendHTML(friend) {
   }
 
   return `
-    <div class="side-item friend-item ${type === 'amico' && !online ? 'offline-item' : ''}" id="sidebar-rel-${userid}" bis_skin_checked="1">
-      <div class="friend-info" bis_skin_checked="1">
-        <div class="friend-avatar-wrapper" bis_skin_checked="1">
+    <div class="side-item friend-item ${type === 'amico' && !online ? 'offline-item' : ''}" id="sidebar-rel-${userid}">
+      <div class="friend-info">
+        <div class="friend-avatar-wrapper">
           <img src="${avatar}" alt="${name}" class="friend-avatar" ${filterStyle}>
-          <div class="status-dot ${statusDotClass}" bis_skin_checked="1"></div>
+          <div class="status-dot ${statusDotClass}"></div>
         </div>
-        <div class="friend-details" bis_skin_checked="1">
+        <div class="friend-details">
           <span class="friend-name">${name}</span>
           <span class="friend-status-text ${statusColor}">${statusText}</span>
         </div>
@@ -108,6 +150,7 @@ function buildFriendHTML(friend) {
 }
 
 // ─── Render Functions ────────────────────────────────────────────────────────
+
 function renderList(selector, items, buildFn, emptyMessage) {
   const container = document.querySelector(selector);
   if (!container) return;
@@ -125,16 +168,15 @@ function renderMissions(missions) {
 }
 
 function renderFriends(friends) {
-  // Calcoliamo quanti "veri amici" sono online (ignorando le richieste)
-  const onlineCount = friends?.filter((f) => f.type === 'amico' && f.online).length ?? 0;
+  const onlineCount = friends?.filter(f => f.type === 'amico' && f.online).length ?? 0;
   const badge = document.getElementById('friends-online-badge');
   if (badge) badge.textContent = `${onlineCount} Online`;
 
-  // Renderizziamo tutto nel div .friends-list
   renderList('.friends-list', friends, buildFriendHTML, 'Nessun amico o richiesta al momento.');
 }
 
-// ─── UI State Helpers ────────────────────────────────────────────────────────
+// ─── UI State ────────────────────────────────────────────────────────────────
+
 function showProfile() {
   document.getElementById('profile-dropdown-wrapper')?.classList.remove('d-none');
 }
@@ -150,146 +192,113 @@ function updateProfileUI({ name, level, cups, xpPercent, avatar, missions, frien
   const avatarEl = document.getElementById('player-avatar');
   if (avatarEl) avatarEl.src = avatar;
 
-  // Presumo tu abbia una funzione setXpProgress altrove nel tuo codice
-  if (typeof setXpProgress === 'function') setXpProgress(xpPercent);
-  
-  // Se hai una logica per le missioni, la chiamo qui
-  if (typeof buildMissionHTML === 'function') renderMissions(missions);
-
+  setXpProgress(xpPercent);
+  renderMissions(missions);
   renderFriends(friends);
 }
 
 // ─── Data Fetching ────────────────────────────────────────────────────────────
+
 async function fetchPlayerData(idGiocatore) {
   const res = await fetch(`/api/profilo/${idGiocatore}`);
   if (!res.ok) throw new Error(`Profilo non trovato (${res.status})`);
   return res.json();
 }
 
+async function fetchPlayerStats(idGiocatore) {
+  const res = await fetch(`/api/statistiche/${idGiocatore}`);
+  if (!res.ok) return { played: 0, won: 0, lost: 0, win_rate: 0 };
+  return res.json();
+}
+
 async function fetchPlayerAmici(idGiocatore) {
   const token = localStorage.getItem('supabaseToken');
-  if (!token) throw new Error("Utente non autenticato.");
+  if (!token) return { amici: [], inviate: [], ricevute: [] };
 
-  const res1 = await fetch('/api/mie-amicizie', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` 
-    }
-  });
-  
-  if (!res1.ok) throw new Error(`Amici non trovati (${res1.status})`);
-  const amiciData = await res1.json();
+  const res = await fetchAuth('/api/mie-amicizie');
 
-  // Aggiungiamo i tipi per permettere all'HTML di differenziarli
-  const amiciFormattati = amiciData.amici.map(amico => ({
+  if (!res.ok) return { amici: [], inviate: [], ricevute: [] };
+  const amiciData = await res.json();
+
+  const makeEntry = (amico, type) => ({
     userid: amico.userid,
-    name: amico.user,
-    avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
-    online: amico.online,
-    type: 'amico'
-  }));
-
-  const amiciInviatiFormattati = amiciData.inviate.map(amico => ({
-    userid: amico.userid,
-    name: amico.user,
-    avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
-    online: false, // Meglio nascondere lo stato di chi non ha ancora accettato
-    type: 'inviata'
-  }));
-
-  const amiciRicevutiFormattati = amiciData.ricevute.map(amico => ({
-    userid: amico.userid,
-    name: amico.user,
+    name:   amico.user,
     avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
     online: false,
-    type: 'ricevuta'
-  }));
+    type
+  });
 
   return {
-    amici: amiciFormattati,
-    inviate: amiciInviatiFormattati,
-    ricevute: amiciRicevutiFormattati
+    amici:    amiciData.amici.map(a => makeEntry(a, 'amico')),
+    inviate:  amiciData.inviate.map(a => makeEntry(a, 'inviata')),
+    ricevute: amiciData.ricevute.map(a => makeEntry(a, 'ricevuta'))
   };
 }
 
-function buildPlayerFromAPI(data, idGiocatore, amiciData) {
-  // Nota: XP_PER_LEVEL deve essere definita altrove (es. costanti globali)
-  const xpBase = typeof XP_PER_LEVEL !== 'undefined' ? XP_PER_LEVEL : 1000;
+function buildPlayerFromAPI(data, idGiocatore, amiciData, stats) {
+  const xpBase = XP_PER_LEVEL;
+
+  // Avatar: usa avatar_url dal DB se disponibile, altrimenti DiceBear
+  const avatar = data.avatar_url
+    ? data.avatar_url
+    : `${AVATAR_BASE}?seed=${idGiocatore}&backgroundColor=1e1f21`;
 
   return {
-    name: data.user,
-    level: data.livello,
-    cups: data.exp,
-    xpPercent: Math.min(100, (data.exp % xpBase) / (xpBase / 100)),
-    avatar: `${AVATAR_BASE}?seed=${idGiocatore}&backgroundColor=1e1f21`,
-    missions: [
-      { title: 'Gioca 5 partite', current: 2, target: 5, reward: '+50 XP', completed: false },
-    ],
-    // Mettiamo le ricevute per prime così l'utente le nota subito!
-    friends: [...amiciData.ricevute, ...amiciData.amici, ...amiciData.inviate]
+    name:       data.user,
+    level:      data.livello,
+    cups:       data.exp,
+    xpPercent:  Math.min(100, (data.exp % xpBase) / (xpBase / 100)),
+    avatar,
+    missions:   buildDynamicMissions(stats),
+    friends:    [...amiciData.ricevute, ...amiciData.amici, ...amiciData.inviate]
   };
 }
 
-// ─── GESTIONE CLICK NELLA SIDEBAR (Accetta/Rifiuta) ───────────────────────────
+// ─── GESTIONE CLICK SIDEBAR (Accetta/Rifiuta) ─────────────────────────────────
+
 function initSidebarActions() {
   const friendsListContainer = document.querySelector('.friends-list');
   if (!friendsListContainer) return;
 
   friendsListContainer.addEventListener('click', async (event) => {
-      // Cerca il bottone cliccato
-      const actionButton = event.target.closest('.cg-search-add-btn');
-      if (!actionButton || actionButton.disabled) return;
+    const actionButton = event.target.closest('.cg-search-add-btn');
+    if (!actionButton || actionButton.disabled) return;
 
-      const action = actionButton.dataset.action; // 'accetta' o 'rifiuta'
-      const userid = actionButton.dataset.userid;
-      if (!action || !userid) return;
+    const action = actionButton.dataset.action;
+    const userid = actionButton.dataset.userid;
+    if (!action || !userid) return;
 
-      const originalHTML = actionButton.innerHTML;
-      actionButton.disabled = true;
-      actionButton.innerHTML = '...';
+    const originalHTML = actionButton.innerHTML;
+    actionButton.disabled = true;
+    actionButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
-      try {
-          const token = localStorage.getItem('supabaseToken');
-          
-          // Costruiamo la chiamata dinamica
-          const apiUrl = action === 'accetta' ? `/api/accetta-richiesta/${userid}` : `/api/rifiuta-richiesta/${userid}`;
-          
-          // Se la tua rotta di accettazione è POST o PUT, modificalo qui:
-          const apiMethod = action === 'accetta' ? 'PUT' : 'DELETE'; 
+    try {
+      const apiUrl = action === 'accetta' ? `/api/accetta-richiesta/${userid}` : `/api/rifiuta-richiesta/${userid}`;
+      const apiMethod = action === 'accetta' ? 'PUT' : 'DELETE';
 
-          const res = await fetch(apiUrl, {
-              method: apiMethod,
-              headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}` 
-              }
-          });
+      const res = await fetchAuth(apiUrl, { method: apiMethod });
 
-          if (!res.ok) throw new Error("Errore durante l'operazione al database.");
+      if (!res.ok) throw new Error("Errore durante l'operazione al database.");
 
-          // SUCCESSO! Ricarichiamo semplicemente i dati, aggiornerà tutto visivamente
-          await loadPlayerData();
+      // Ricaricamento dati
+      await loadPlayerData();
 
-          // Notifica opzionale
-          if (typeof showToast === 'function') {
-            showToast(action === 'accetta' ? "Richiesta accettata!" : "Richiesta rifiutata", "green");
-          }
-
-      } catch (err) {
-          console.error("Errore:", err);
-          if (typeof showToast === 'function') showToast("Impossibile completare l'operazione.", "red");
-          actionButton.disabled = false;
-          actionButton.innerHTML = originalHTML;
+      if (typeof showToast === 'function') {
+        showToast(action === 'accetta' ? "Richiesta accettata!" : "Richiesta rifiutata", action === 'accetta' ? "green" : "red");
       }
+
+    } catch (err) {
+      console.error("Errore:", err);
+      if (typeof showToast === 'function') showToast("Impossibile completare l'operazione.", "red");
+      actionButton.disabled = false;
+      actionButton.innerHTML = originalHTML;
+    }
   });
 }
 
-// ─── Inizializzazione Globale ──────────────────────────────────────────────────
+// ─── Inizializzazione ─────────────────────────────────────────────────────────
+
 async function loadPlayerData() {
-  // Presumo tu abbia una funzione getSession altrove (auth.js)
-  if (typeof getSession !== 'function') return; 
-  
   const { isLoggedIn, idGiocatore } = getSession();
 
   if (!isLoggedIn || !idGiocatore) {
@@ -300,18 +309,21 @@ async function loadPlayerData() {
   showProfile();
 
   try {
-    const apiData = await fetchPlayerData(idGiocatore);
-    const amiciData = await fetchPlayerAmici(idGiocatore);
-    
-    const player = buildPlayerFromAPI(apiData, idGiocatore, amiciData);
+    // Fetch parallelo: profilo + statistiche + amici
+    const [apiData, stats, amiciData] = await Promise.all([
+      fetchPlayerData(idGiocatore),
+      fetchPlayerStats(idGiocatore),
+      fetchPlayerAmici(idGiocatore)
+    ]);
+
+    const player = buildPlayerFromAPI(apiData, idGiocatore, amiciData, stats);
     updateProfileUI(player);
   } catch (err) {
     console.error('[Profile] Errore caricamento profilo:', err);
   }
 }
 
-// Quando la pagina ha finito di caricare tutto l'HTML, facciamo partire i motori
 document.addEventListener('DOMContentLoaded', () => {
   loadPlayerData();
-  initSidebarActions(); // Ascoltiamo i click sui bottoni della sidebar
+  initSidebarActions();
 });

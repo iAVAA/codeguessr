@@ -13,6 +13,8 @@ CREATE TABLE users (
     
     -- Personalizzazione
     avatar_url TEXT,  -- Foto profilo
+    banner_url TEXT,  -- Banner profilo
+    biography TEXT,  -- Biografia
     
     -- Metadati
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

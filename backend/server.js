@@ -66,6 +66,9 @@ async function getOpenRouter() {
     * @property {number} livello - (Int4) Livello attuale raggiunto dal giocatore.
     * @property {string} data_registrazione - (Timestamptz) Data e ora in cui l'account è stato creato.
     * @property {boolean} attivo - (Bool) Flag che indica se l'account/giocatore è attivo.
+    * @property {string} bio - (Text) Descrizione personale del giocatore.
+    * @property {string} avatar_url - (Text) Immagine profilo in formato Base64 o URL esterno.
+    * @property {string} banner_url - (Text) Immagine banner profilo in formato Base64 o URL esterno.
  */
 
 /**
@@ -137,52 +140,52 @@ app.get('/match', (req, res) => {
 
 // Usiamo DELETE perché stiamo eliminando una riga esistente
 app.delete('/api/rifiuta-richiesta/:id', verificaToken, async (req, res) => {
-  // Stessa logica di ruoli:
-  // 1. Tu (mioId) sei la persona che RIFIUTA, quindi nel DB sei "id_utente_b" (il destinatario).
-  const mioId = req.utenteId;
-  // 2. L'ID nell'URL è la persona che te l'aveva INVIATA, quindi nel DB è "id_utente_a" (il mittente).
-  const mittenteId = req.params.id;
+    // Stessa logica di ruoli:
+    // 1. Tu (mioId) sei la persona che RIFIUTA, quindi nel DB sei "id_utente_b" (il destinatario).
+    const mioId = req.utenteId;
+    // 2. L'ID nell'URL è la persona che te l'aveva INVIATA, quindi nel DB è "id_utente_a" (il mittente).
+    const mittenteId = req.params.id;
 
-  if (!mittenteId) {
-    return res.status(400).json({ errore: 'Devi specificare la richiesta di chi vuoi rifiutare.' });
-  }
-
-  try {
-    // Chiediamo a Supabase di eliminare la riga specifica
-    const { data, error } = await supabase
-      .from('amicizia')
-      .delete()
-      .eq('id_utente_a', mittenteId) // Il mittente è lui...
-      .eq('id_utente_b', mioId)      // ...il destinatario sei tu...
-      .eq('stato', 'in_attesa')      // ...e lo stato attuale deve essere "in_attesa"
-      .select(); // Ci fa restituire la riga eliminata, così sappiamo se esisteva
-
-    if (error) {
-      throw error;
+    if (!mittenteId) {
+        return res.status(400).json({ errore: 'Devi specificare la richiesta di chi vuoi rifiutare.' });
     }
 
-    // Se data è vuoto, non c'era nessuna richiesta "in_attesa" da eliminare
-    if (data.length === 0) {
-      return res.status(404).json({ errore: 'Nessuna richiesta in attesa trovata da questo utente.' });
+    try {
+        // Chiediamo a Supabase di eliminare la riga specifica
+        const { data, error } = await supabase
+            .from('amicizia')
+            .delete()
+            .eq('id_utente_a', mittenteId) // Il mittente è lui...
+            .eq('id_utente_b', mioId)      // ...il destinatario sei tu...
+            .eq('stato', 'in_attesa')      // ...e lo stato attuale deve essere "in_attesa"
+            .select(); // Ci fa restituire la riga eliminata, così sappiamo se esisteva
+
+        if (error) {
+            throw error;
+        }
+
+        // Se data è vuoto, non c'era nessuna richiesta "in_attesa" da eliminare
+        if (data.length === 0) {
+            return res.status(404).json({ errore: 'Nessuna richiesta in attesa trovata da questo utente.' });
+        }
+
+        // Tutto perfetto!
+        res.status(200).json({ messaggio: 'Richiesta rifiutata e rimossa con successo.' });
+
+    } catch (err) {
+        console.error("Errore nel rifiutare la richiesta:", err);
+        res.status(500).json({ errore: 'Errore interno del server.' });
     }
-
-    // Tutto perfetto!
-    res.status(200).json({ messaggio: 'Richiesta rifiutata e rimossa con successo.' });
-
-  } catch (err) {
-    console.error("Errore nel rifiutare la richiesta:", err);
-    res.status(500).json({ errore: 'Errore interno del server.' });
-  }
 });
 // Usiamo PUT perché stiamo aggiornando un dato esistente
 app.put('/api/accetta-richiesta/:id', verificaToken, async (req, res) => {
-    
+
     // Attenzione a chi è chi!
     // 1. Tu (mioId) sei la persona che ACCETTA, quindi nel DB sei "id_utente_b" (il destinatario).
-    const mioId = req.utenteId;           
-    
+    const mioId = req.utenteId;
+
     // 2. L'ID nell'URL è la persona che te l'aveva INVIATA, quindi nel DB è "id_utente_a" (il mittente).
-    const mittenteId = req.params.id;     
+    const mittenteId = req.params.id;
 
     if (!mittenteId) {
         return res.status(400).json({ errore: 'Devi specificare la richiesta di chi vuoi accettare.' });
@@ -199,7 +202,7 @@ app.put('/api/accetta-richiesta/:id', verificaToken, async (req, res) => {
             .select(); // Questo comando serve per farci restituire la riga modificata
 
         if (error) {
-            throw error; 
+            throw error;
         }
 
         // Se data è vuoto (lunghezza 0), significa che Supabase non ha trovato nessuna 
@@ -220,7 +223,7 @@ app.put('/api/accetta-richiesta/:id', verificaToken, async (req, res) => {
 // POST /api/invia-richiesta/:id
 // invia un richiesta di amicizia all'utente con id specificato nell'URL (targetId)
 app.post('/api/invia-richiesta/:id', verificaToken, async (req, res) => {
-    
+
     const mioId = req.utenteId;           // Arriva dal tuo fantastico middleware!
     const targetId = req.params.id;       // Lo peschiamo dall'URL
 
@@ -249,7 +252,7 @@ app.post('/api/invia-richiesta/:id', verificaToken, async (req, res) => {
             if (error.code === '23505') {
                 return res.status(400).json({ errore: 'Hai già inviato una richiesta a questo utente.' });
             }
-            throw error; 
+            throw error;
         }
 
         // Se arriviamo qui, tutto è andato bene!
@@ -282,7 +285,7 @@ app.post('/api/invia-richiesta/:id', verificaToken, async (req, res) => {
 
 
 app.get('/api/mie-amicizie', verificaToken, async (req, res) => {
-    
+
     const mioId = req.utenteId; // ← arriva già verificato dal middleware
 
     try {
@@ -365,7 +368,7 @@ app.get('/api/profilo/:id', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('giocatore')
-            .select('nickname, livello, exp')
+            .select('nickname, livello, exp, bio, avatar_url, banner_url, data_registrazione')
             .eq('id_giocatore', idDaCercare)
             .single();
 
@@ -375,12 +378,232 @@ app.get('/api/profilo/:id', async (req, res) => {
             userid: idDaCercare,
             user: data.nickname,
             livello: data.livello,
-            exp: data.exp
+            exp: data.exp,
+            bio: data.bio || '',
+            avatar_url: data.avatar_url || null,
+            banner_url: data.banner_url || null,
+            data_registrazione: data.data_registrazione || null
         });
 
     } catch (err) {
         console.error("Errore recupero profilo:", err.message);
-        res.status(500).json({ errore: 'Impossibile recuperare il profilo' });
+        res.status(500).json({ errore: 'Impossibile recuperare il profilo', details: err.message });
+    }
+});
+
+// ==========================================
+// API STORICO PARTITE (GET)
+// ==========================================
+
+/**
+ * GET /api/storico/:id
+ * Recupera lo storico delle partite di un giocatore.
+ * Risposta: array di partite con modalita, risultato, exp_guadagnata, data.
+ */
+app.get('/api/storico/:id', async (req, res) => {
+    const idGiocatore = req.params.id;
+
+    try {
+        // Recupera le partecipazioni con i dati della partita associata
+        const { data, error } = await supabase
+            .from('partecipazione')
+            .select(`
+                risultato,
+                exp_guadagnata,
+                partita (
+                    id_partita,
+                    modalita,
+                    stato,
+                    data_inizio,
+                    data_fine
+                )
+            `)
+            .eq('id_giocatore', idGiocatore)
+            .order('id_partita', { ascending: false })
+            .limit(20);
+
+        if (error) throw error;
+
+        // Filtriamo solo le partite completate e le formattiamo
+        const storico = (data || []).map(p => ({
+            id_partita: p.partita?.id_partita,
+            modalita: p.partita?.modalita || 'singleplayer',
+            risultato: p.risultato || 'sconfitta',
+            exp_guadagnata: p.exp_guadagnata || 0,
+            data_inizio: p.partita?.data_inizio || null,
+            data_fine: p.partita?.data_fine || null
+        }));
+
+        res.status(200).json(storico);
+
+    } catch (err) {
+        console.error("Errore recupero storico:", err.message);
+        res.status(500).json({ errore: 'Impossibile recuperare lo storico' });
+    }
+});
+
+// ==========================================
+// API STATISTICHE (GET)
+// ==========================================
+
+/**
+ * GET /api/statistiche/:id
+ * Calcola le statistiche aggregate di un giocatore.
+ * Risposta: { played, won, lost, win_rate }
+ */
+app.get('/api/statistiche/:id', async (req, res) => {
+    const idGiocatore = req.params.id;
+
+    try {
+        const { data, error } = await supabase
+            .from('partecipazione')
+            .select('risultato, exp_guadagnata')
+            .eq('id_giocatore', idGiocatore);
+
+        if (error) throw error;
+
+        const played = data.length;
+        const won = data.filter(p => p.risultato === 'vittoria').length;
+        const lost = data.filter(p => p.risultato === 'sconfitta').length;
+        const win_rate = played > 0 ? Math.round((won / played) * 100) : 0;
+        const total_exp = data.reduce((sum, p) => sum + (p.exp_guadagnata || 0), 0);
+
+        res.status(200).json({ played, won, lost, win_rate, total_exp });
+
+    } catch (err) {
+        console.error("Errore calcolo statistiche:", err.message);
+        res.status(500).json({ errore: 'Impossibile calcolare le statistiche' });
+    }
+});
+
+// ==========================================
+// API AGGIORNAMENTO PROFILO (PUT)
+// ==========================================
+
+/**
+ * PUT /api/profilo
+ * Aggiorna i dati del profilo dell'utente autenticato.
+ * Body: { nickname?, bio?, avatar_url?, banner_url? }
+ * Richiede autenticazione (Bearer token).
+ */
+app.put('/api/profilo', verificaToken, async (req, res) => {
+    const mioId = req.utenteId;
+    const { nickname, bio, avatar_url, banner_url } = req.body;
+
+    // Costruiamo l'oggetto di aggiornamento con solo i campi forniti
+    const aggiornamenti = {};
+    if (nickname !== undefined) aggiornamenti.nickname = nickname.trim();
+    if (bio !== undefined) aggiornamenti.bio = bio.trim();
+    if (avatar_url !== undefined) aggiornamenti.avatar_url = avatar_url;
+    if (banner_url !== undefined) aggiornamenti.banner_url = banner_url;
+
+    if (Object.keys(aggiornamenti).length === 0) {
+        return res.status(400).json({ errore: 'Nessun campo da aggiornare fornito.' });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('giocatore')
+            .update(aggiornamenti)
+            .eq('id_giocatore', mioId)
+            .select();
+
+        if (error) {
+            // Nickname già in uso (violazione unicità)
+            if (error.code === '23505') {
+                return res.status(400).json({ errore: 'Questo nickname è già in uso.' });
+            }
+            throw error;
+        }
+
+        res.status(200).json({ messaggio: 'Profilo aggiornato con successo!', data: data[0] });
+
+    } catch (err) {
+        console.error("Errore aggiornamento profilo:", err.message);
+        res.status(500).json({ errore: 'Impossibile aggiornare il profilo.' });
+    }
+});
+
+// ==========================================
+// API SALVA PARTITA (POST)
+// ==========================================
+
+/**
+ * POST /api/salva-partita
+ * Salva il risultato di una partita nel DB e aggiorna l'EXP del giocatore.
+ * Body: { modalita, risultato, exp_guadagnata }
+ * Richiede autenticazione (Bearer token).
+ */
+app.post('/api/salva-partita', verificaToken, async (req, res) => {
+    const mioId = req.utenteId;
+    const { modalita, risultato, exp_guadagnata } = req.body;
+
+    // Validazione campi obbligatori
+    if (!modalita || !risultato) {
+        return res.status(400).json({ errore: 'modalita e risultato sono obbligatori.' });
+    }
+
+    const expGain = Math.max(0, parseInt(exp_guadagnata, 10) || 0);
+
+    try {
+        // 1. Creiamo la riga nella tabella partita
+        const { data: partitaData, error: partitaError } = await supabase
+            .from('partita')
+            .insert([{
+                modalita,
+                stato: 'terminata',
+                data_fine: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (partitaError) throw partitaError;
+
+        const idPartita = partitaData.id_partita;
+
+        // 2. Creiamo la riga in partecipazione
+        const { error: partecError } = await supabase
+            .from('partecipazione')
+            .insert([{
+                id_partita: idPartita,
+                id_giocatore: mioId,
+                risultato,
+                exp_guadagnata: expGain
+            }]);
+
+        if (partecError) throw partecError;
+
+        // 3. Aggiorniamo exp e livello del giocatore
+        // Prima leggiamo il valore attuale
+        const { data: profiloCorrente, error: readErr } = await supabase
+            .from('giocatore')
+            .select('exp, livello')
+            .eq('id_giocatore', mioId)
+            .single();
+
+        if (readErr) throw readErr;
+
+        const EXP_PER_LEVEL = 1000;
+        const nuovaExp = (profiloCorrente.exp || 0) + expGain;
+        const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
+
+        const { error: updateErr } = await supabase
+            .from('giocatore')
+            .update({ exp: nuovaExp, livello: nuovoLivello })
+            .eq('id_giocatore', mioId);
+
+        if (updateErr) throw updateErr;
+
+        res.status(201).json({
+            messaggio: 'Partita salvata con successo!',
+            id_partita: idPartita,
+            nuova_exp: nuovaExp,
+            nuovo_livello: nuovoLivello
+        });
+
+    } catch (err) {
+        console.error("Errore salvataggio partita:", err.message);
+        res.status(500).json({ errore: 'Impossibile salvare la partita.' });
     }
 });
 
@@ -504,8 +727,44 @@ app.post('/api/login', async (req, res) => {
     return res.status(200).json({
         messaggio: 'Login completato con successo!',
         user: data.user.id,
-        token: data.session.access_token  // Utile per future richieste autenticate
+        token: data.session.access_token,
+        refresh_token: data.session.refresh_token  // Necessario per rinnovare il token scaduto
     });
+});
+
+// ==========================================
+// API REFRESH TOKEN (POST)
+// ==========================================
+
+/**
+ * POST /api/refresh-token
+ * Rinnova un access_token scaduto usando il refresh_token.
+ * Body richiesto: { refresh_token }
+ * Risposta: { token (nuovo access_token), refresh_token (nuovo refresh_token) }
+ */
+app.post('/api/refresh-token', async (req, res) => {
+    const { refresh_token } = req.body;
+
+    if (!refresh_token) {
+        return res.status(400).json({ errore: 'refresh_token obbligatorio.' });
+    }
+
+    try {
+        const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+
+        if (error || !data.session) {
+            return res.status(401).json({ errore: 'Sessione scaduta. Effettua di nuovo il login.' });
+        }
+
+        return res.status(200).json({
+            token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+        });
+
+    } catch (err) {
+        console.error("Errore refresh token:", err.message);
+        res.status(500).json({ errore: 'Errore interno durante il refresh.' });
+    }
 });
 
 // ==========================================
@@ -545,33 +804,33 @@ app.post('/api/reset_password', async (req, res) => {
 // COSTANTI GITHUB (Spostate dal Frontend)
 // ==========================================
 const EXT_TO_MONACO = {
-  js: 'javascript', ts: 'typescript', jsx: 'javascript', tsx: 'typescript',
-  py: 'python', rb: 'ruby', java: 'java', cpp: 'cpp', cc: 'cpp', cxx: 'cpp',
-  c: 'c', h: 'c', cs: 'csharp', go: 'go', rs: 'rust', kt: 'kotlin',
-  swift: 'swift', php: 'php', lua: 'lua', r: 'r', scala: 'scala',
-  sh: 'shell', bash: 'shell', sql: 'sql', html: 'html', css: 'css',
-  json: 'json', yml: 'yaml', yaml: 'yaml', xml: 'xml', md: 'markdown'
+    js: 'javascript', ts: 'typescript', jsx: 'javascript', tsx: 'typescript',
+    py: 'python', rb: 'ruby', java: 'java', cpp: 'cpp', cc: 'cpp', cxx: 'cpp',
+    c: 'c', h: 'c', cs: 'csharp', go: 'go', rs: 'rust', kt: 'kotlin',
+    swift: 'swift', php: 'php', lua: 'lua', r: 'r', scala: 'scala',
+    sh: 'shell', bash: 'shell', sql: 'sql', html: 'html', css: 'css',
+    json: 'json', yml: 'yaml', yaml: 'yaml', xml: 'xml', md: 'markdown'
 };
 
 // ==========================================
 // COSTANTI GITHUB
 // ==========================================
 const GITHUB_QUERIES = [
-  { q: 'leetcode solutions language:python',    ext: 'py'   },
-  { q: 'leetcode problems language:java',      ext: 'java' },
-  { q: 'leetcode algorithm language:cpp',       ext: 'cpp'  },
-  { q: 'leetcode daily challenge language:js',  ext: 'js'   },
-  { q: 'leetcode two sum language:python',     ext: 'py'   },
-  { q: 'leetcode linked list language:java',   ext: 'java' },
-  { q: 'leetcode binary tree language:cpp',    ext: 'cpp'  },
-  { q: 'leetcode dynamic programming language:py', ext: 'py' },
-  { q: 'leetcode reverse string language:js',  ext: 'js'   },
-  { q: 'leetcode merge sorted language:cpp',   ext: 'cpp'  },
-  { q: 'leetcode valid parentheses language:java', ext: 'java' },
-  { q: 'leetcode top interview questions language:py', ext: 'py' },
-  { q: 'leetcode blind 75 language:js',        ext: 'js'   },
-  { q: 'leetcode hash map language:cpp',       ext: 'cpp'  },
-  { q: 'leetcode depth first search language:py', ext: 'py' }
+    { q: 'leetcode solutions language:python', ext: 'py' },
+    { q: 'leetcode problems language:java', ext: 'java' },
+    { q: 'leetcode algorithm language:cpp', ext: 'cpp' },
+    { q: 'leetcode daily challenge language:js', ext: 'js' },
+    { q: 'leetcode two sum language:python', ext: 'py' },
+    { q: 'leetcode linked list language:java', ext: 'java' },
+    { q: 'leetcode binary tree language:cpp', ext: 'cpp' },
+    { q: 'leetcode dynamic programming language:py', ext: 'py' },
+    { q: 'leetcode reverse string language:js', ext: 'js' },
+    { q: 'leetcode merge sorted language:cpp', ext: 'cpp' },
+    { q: 'leetcode valid parentheses language:java', ext: 'java' },
+    { q: 'leetcode top interview questions language:py', ext: 'py' },
+    { q: 'leetcode blind 75 language:js', ext: 'js' },
+    { q: 'leetcode hash map language:cpp', ext: 'cpp' },
+    { q: 'leetcode depth first search language:py', ext: 'py' }
 ];
 // ==========================================
 // API GITHUB SNIPPET (GET)
@@ -590,7 +849,7 @@ app.get('/api/random-snippet', async (req, res) => {
         const queryObj = GITHUB_QUERIES[Math.floor(Math.random() * GITHUB_QUERIES.length)];
         const page = Math.floor(Math.random() * 3) + 1;
 
-        const headers = { 
+        const headers = {
             'Accept': 'application/vnd.github+json',
             'User-Agent': 'CodeGuessr-Server',
             'X-GitHub-Api-Version': '2022-11-28',
@@ -599,14 +858,14 @@ app.get('/api/random-snippet', async (req, res) => {
 
         // 1. Estrai solo le parole chiave (es. "sort algorithm language:python" diventa "sort algorithm")
         const keywords = queryObj.q.split('language:')[0].trim();
-        
+
         // 2. Ricerca GLOBALE direttamente nei file di codice (come nel tuo script Python)
         const codeSearchQuery = `${keywords} extension:${queryObj.ext}`;
         const codeSearchUrl = `https://api.github.com/search/code?q=${encodeURIComponent(codeSearchQuery)}&per_page=30&page=${page}`;
-        
+
         const codeRes = await fetch(codeSearchUrl, { headers });
         if (!codeRes.ok) throw new Error(`Code search failed: ${codeRes.status} - ${await codeRes.text()}`);
-        
+
         const codeData = await codeRes.json();
         if (!codeData.items || codeData.items.length === 0) {
             throw new Error(`Nessun file trovato per la query: ${codeSearchQuery}`);
@@ -647,6 +906,80 @@ app.get('/api/random-snippet', async (req, res) => {
         res.status(500).json({ errore: 'Impossibile recuperare lo snippet da GitHub' });
     }
 });
+
+// ==========================================
+// DIPENDENZE (aggiungi in cima, dopo require esistenti)
+// ==========================================
+const multer = require('multer');
+
+// multer in memory: il file arriva come Buffer, non viene salvato su disco
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // max 5MB
+    fileFilter: (req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        allowed.includes(file.mimetype)
+            ? cb(null, true)
+            : cb(new Error('Formato immagine non supportato. Usa JPEG, PNG, WEBP o GIF.'));
+    }
+});
+
+// ==========================================
+// API UPLOAD IMMAGINI PROFILO (POST)
+// ==========================================
+
+/**
+ * POST /api/upload/avatar
+ * POST /api/upload/banner
+ * Riceve un'immagine via multipart/form-data, la carica su Supabase Storage
+ * e restituisce la URL pubblica.
+ *
+ * Form field: "immagine" (file)
+ * Richiede autenticazione (Bearer token).
+ * Risposta: { url: string }
+ */
+function handleImageUpload(bucket) {
+    return [
+        verificaToken,
+        upload.single('immagine'),
+        async (req, res) => {
+            if (!req.file) {
+                return res.status(400).json({ errore: 'Nessun file ricevuto.' });
+            }
+
+            const mioId = req.utenteId;
+            const ext = req.file.mimetype.split('/')[1].replace('jpeg', 'jpg');
+            const filePath = `${mioId}.${ext}`; // es. "abc-123.jpg" — sovrascrive sempre lo stesso file
+
+            try {
+                const { error } = await supabase.storage
+                    .from(bucket)
+                    .upload(filePath, req.file.buffer, {
+                        contentType: req.file.mimetype,
+                        upsert: true, // sovrascrive se esiste già
+                    });
+
+                if (error) throw error;
+
+                // Recupera la URL pubblica (il bucket deve essere pubblico)
+                const { data } = supabase.storage
+                    .from(bucket)
+                    .getPublicUrl(filePath);
+
+                res.status(200).json({ url: data.publicUrl });
+
+            } catch (err) {
+                console.error(`[Upload ${bucket}] Errore:`, err.message);
+                res.status(500).json({ errore: 'Impossibile caricare il file.' });
+            }
+        }
+    ];
+}
+
+app.post('/api/upload/avatar', handleImageUpload('user_avatars'));
+app.post('/api/upload/banner', handleImageUpload('user_banners'));
+
+
 
 // ==========================================
 // API VALUTAZIONE RISPOSTA - OPENAI (POST)
