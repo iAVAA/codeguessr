@@ -1230,12 +1230,12 @@ body.loader-open { overflow: hidden !important; }
   line-height: 1;
 }
 
-.friend-name, .profile-friend-name {
+.friend-name, .profile-friend-name , .cg-search-result-name {
     cursor: pointer;
     transition: color 0.2s ease-in-out;
 }
 
-.friend-name:hover, .profile-friend-name:hover {
+.friend-name:hover, .profile-friend-name:hover, .cg-search-result-name:hover {
     text-decoration: underline;
     color: #4a90e2; /* O usa il colore primario del tuo tema! */
 }

@@ -189,8 +189,7 @@ app.delete('/api/rifiuta-richiesta/:id', verificaToken, async (req, res) => {
             .from('amicizia')
             .delete()
             .eq('id_utente_a', mittenteId) // Il mittente è lui...
-            .eq('id_utente_b', mioId)      // ...il destinatario sei tu...
-            .eq('stato', 'in_attesa')      // ...e lo stato attuale deve essere "in_attesa"
+            .eq('id_utente_b', mioId)      // ...il destinatario sei tu..      
             .select(); // Ci fa restituire la riga eliminata, così sappiamo se esisteva
 
         if (error) {

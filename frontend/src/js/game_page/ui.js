@@ -407,7 +407,7 @@ function initAddFriendSearch() {
 document.addEventListener('click', (event) => {
     // Verifica se l'elemento cliccato (o un suo genitore) ha la classe 'friend-name'
     // NOTA: Se nell'altro file hai usato 'profile-friend-name', aggiungilo qui nel closest!
-    const nameElement = event.target.closest('.friend-name') || event.target.closest('.profile-friend-name');
+    const nameElement = event.target.closest('.friend-name') || event.target.closest('.cg-search-result-name');
     
     if (nameElement) {
         // Estraiamo il testo pulito ignorando eventuali spazi vuoti
