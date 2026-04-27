@@ -6,6 +6,30 @@
 
 import { getSession, fetchAuth } from '../managers/auth.js';
 
+window.handleProfileFriendAction = async function(action, targetUserId) {
+    let url = '';
+    let method = 'POST'; // o PUT/DELETE a seconda di come hai fatto il backend
+
+    // Mappa le azioni sulle tue rotte backend
+    switch(action) {
+        case 'aggiungi': url = `/api/invia-richiesta/${targetUserId}`; break;
+        case 'accetta':  url = `/api/accetta-richiesta/${targetUserId}`; method = 'PUT'; break;
+        case 'rifiuta':  url = `/api/rifiuta-richiesta/${targetUserId}`; method = 'DELETE'; break;
+        case 'annulla':  url = `/api/rifiuta-richiesta/${targetUserId}`; method = 'DELETE'; break;
+        case 'rimuovi':  url = `/api/rifiuta-richiesta/${targetUserId}`;  method = 'DELETE'; break;
+    }
+
+    try {
+        const res = await fetchAuth(url, { method: method });
+        if (!res.ok) throw new Error('Errore durante l\'azione');
+        
+        // Se va tutto a buon fine, ricarichiamo la pagina per aggiornare l'interfaccia!
+        window.location.reload();
+    } catch (err) {
+        console.error('Errore azione amicizia:', err);
+        alert('C\'è stato un problema. Riprova più tardi.');
+    }
+}
 const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
 const XP_PER_LEVEL = 1000;
 
@@ -328,7 +352,58 @@ function initFriendActions() {
         }
     });
 }
+async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
+    try {
+        // 1. Scarichiamo le NOSTRE amicizie per capire in che rapporti siamo
+        const res = await fetchAuth('/api/mie-amicizie');
+        if (!res.ok) throw new Error('Errore nel recupero amicizie');
+        
+        const mieAmicizie = await res.json();
 
+        // 2. Cerchiamo il target nelle nostre tre liste
+        const isAmico = mieAmicizie.amici.find(u => u.userid === targetUserId);
+        const haInviatoLui = mieAmicizie.ricevute.find(u => u.userid === targetUserId);
+        const hoInviatoIo = mieAmicizie.inviate.find(u => u.userid === targetUserId);
+
+        // 3. Prepariamo il contenitore (cloniamo il bottone per azzerare i vecchi click)
+        const container = btnEditProfile.parentNode;
+        const newBtn = btnEditProfile.cloneNode(true);
+        container.replaceChild(newBtn, btnEditProfile);
+
+        // 4. Trasformiamo il bottone in base allo stato!
+        if (isAmico) {
+            newBtn.innerHTML = '<i class="bi bi-person-x"></i> Rimuovi Amicizia';
+            newBtn.className = 'btn btn-outline-danger'; 
+            newBtn.onclick = () => handleProfileFriendAction('rimuovi', targetUserId);
+        } 
+        else if (haInviatoLui) {
+            // Se ce l'ha inviata lui, ci servono DUE bottoni: Accetta e Rifiuta!
+            container.innerHTML = `
+                <button class="btn btn-success me-2" onclick="handleProfileFriendAction('accetta', '${targetUserId}')">
+                    <i class="bi bi-check-lg"></i> Accetta
+                </button>
+                <button class="btn btn-danger" onclick="handleProfileFriendAction('rifiuta', '${targetUserId}')">
+                    <i class="bi bi-x-lg"></i> Rifiuta
+                </button>
+            `;
+        } 
+        else if (hoInviatoIo) {
+            newBtn.innerHTML = '<i class="bi bi-clock-history"></i> Annulla Richiesta';
+            newBtn.className = 'btn btn-outline-warning';
+            newBtn.onclick = () => handleProfileFriendAction('annulla', targetUserId);
+        } 
+        else {
+            // Nessun rapporto: bottone per aggiungere
+            newBtn.innerHTML = '<i class="bi bi-person-plus"></i> Aggiungi Amico';
+            newBtn.className = 'btn btn-primary';
+            newBtn.onclick = () => handleProfileFriendAction('aggiungi', targetUserId);
+        }
+
+    } catch (err) {
+        console.error("Impossibile determinare lo stato dell'amicizia:", err);
+        btnEditProfile.remove(); // In caso di errore server, meglio nasconderlo
+    }
+}
 // ─── Init ────────────────────────────────────────────────────────────────────
 async function updateNavbar(playerData){
     // --- Navbar Profile ---
@@ -411,9 +486,12 @@ async function initProfilePage() {
         // 🔒 GESTIONE BOTTONE "MODIFICA PROFILO"
         const btnEditProfile = document.getElementById('btn-edit-profile');
         if (btnEditProfile) {
-            // Se l'ID del profilo visualizzato NON è il mio, elimino il bottone
-            if (targetUserId !== session.idGiocatore) {
-                btnEditProfile.remove(); 
+            if (targetUserId === session.idGiocatore) {
+                // È il MIO profilo: lo lascio com'è (Modifica Profilo), 
+                // e si aprirà il modale grazie all'event listener in edit_profile.js
+            } else {
+                // È il profilo di un ALTRO: trasformo il bottone in azioni amicizia!
+                await setupDynamicProfileButton(targetUserId, btnEditProfile);
             }
         }
         
