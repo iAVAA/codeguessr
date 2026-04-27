@@ -127,11 +127,11 @@ function debounce(func, delay) {
 
 // 3. Costruzione della UI del singolo giocatore trovato
 function buildResultItem(player) {
-    const safeName = player.name;
-    const safeUsername = player.username;
+    const safeName = player.user;
+    const safeUserId = player.userid;
     
     // Recuperiamo l'ID del giocatore (assicurati che il backend lo mandi come 'userid' o 'id_giocatore')
-    const idCercato = player.name; 
+    const idCercato = player.userid; 
     
     const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
 
@@ -157,14 +157,14 @@ function buildResultItem(player) {
         `;
     } else if (stato === 'ricevuta') {
         buttonHTML = `
-            <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${userid}">
+            <button class="cg-search-add-btn" data-username="${safeName}" data-userid="${safeUserId}">
                 <i class="bi bi-check-circle"></i>
                 Accetta
             </button>
         `;
     } else {
         buttonHTML = `
-            <button class="cg-search-add-btn" data-username="${safeUsername}" data-userid="${userid}">
+            <button class="cg-search-add-btn" data-username="${safeName}" data-userid="${safeUserId}">
                 <i class="bi bi-person-plus"></i>
                 Aggiungi
             </button>
@@ -177,7 +177,7 @@ function buildResultItem(player) {
                 <img class="cg-search-result-avatar" src="${avatar}" alt="Avatar di ${safeName}">
                 <div class="cg-search-result-text">
                     <span class="cg-search-result-name">${safeName}</span>
-                    <span class="cg-search-result-username">@${userid}</span>
+                    <span class="cg-search-result-username">@${safeUserId}</span>
                 </div>
             </div>
             ${buttonHTML}
