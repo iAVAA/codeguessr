@@ -150,7 +150,7 @@ app.delete('/api/rifiuta-richiesta/:id', verificaToken, async (req, res) => {
   try {
     // Chiediamo a Supabase di eliminare la riga specifica
     const { data, error } = await supabase
-      .from('Amicizia')
+      .from('amicizia')
       .delete()
       .eq('id_utente_a', mittenteId) // Il mittente è lui...
       .eq('id_utente_b', mioId)      // ...il destinatario sei tu...
@@ -191,7 +191,7 @@ app.put('/api/accetta-richiesta/:id', verificaToken, async (req, res) => {
     try {
         // Chiediamo a Supabase di aggiornare la riga specifica
         const { data, error } = await supabase
-            .from('Amicizia')
+            .from('amicizia')
             .update({ stato: 'accettata' }) // Cambiamo lo stato
             .eq('id_utente_a', mittenteId)  // Dove il mittente è lui...
             .eq('id_utente_b', mioId)       // ...il destinatario sei tu...
@@ -235,7 +235,7 @@ app.post('/api/invia-richiesta/:id', verificaToken, async (req, res) => {
     try {
         // Inserimento nel database Supabase
         const { error } = await supabase
-            .from('Amicizia') // (Assicurati che la tabella si chiami esattamente così)
+            .from('amicizia') // (Assicurati che la tabella si chiami esattamente così)
             .insert([
                 {
                     id_utente_a: mioId,
