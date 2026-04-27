@@ -323,6 +323,7 @@ function initAddFriendSearch() {
                     'Authorization': `Bearer ${token}` 
                 }
             });
+            
             const data = await response.json();
             if (!response.ok) throw new Error(data.errore || "Errore durante l'operazione");
 
@@ -333,12 +334,52 @@ function initAddFriendSearch() {
                 relazioniUtente[userid] = 'inviata';
             } 
             else if (action === 'accetta') {
-                if (typeof showToast === 'function') showToast(`Ora sei amico con @${username}!`, 'green');
-                // Aggiorniamo l'interfaccia: togliamo i due bottoni e mettiamo "Amici"
-                const container = actionButton.closest('div');
-                container.innerHTML = '<button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="bi bi-person-check"></i> Amici</button>';
-                relazioniUtente[userid] = 'amici';
-            } 
+              if (typeof showToast === 'function') showToast(`Ora sei amico con @${username}!`, 'green');
+              
+              // 1. Aggiorniamo il bottone nel popup di ricerca
+              const container = actionButton.closest('div'); 
+              if (container) {
+                  container.innerHTML = '<button class="cg-search-add-btn" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="bi bi-person-check"></i> Amici</button>';
+              }
+              relazioniUtente[userid] = 'amici';
+
+              // 2. AGGIUNGIAMO L'AMICO ALLA LISTA LATERALE (FRONTEND)
+              // Cerchiamo il contenitore esatto usando la classe che mi hai fornito
+              const listaAmiciContainer = document.querySelector('.friends-list'); 
+              
+              if (listaAmiciContainer) {
+                  // Generiamo l'avatar usando l'ID dell'utente, esattamente come nel tuo HTML originale
+                  const avatarAmico = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(userid)}&backgroundColor=1e1f21`;
+
+                  // Costruiamo il blocco HTML del nuovo amico copiando la tua struttura perfetta
+                  const nuovoAmicoHTML = `
+                    <div class="side-item friend-item" bis_skin_checked="1">
+                      <div class="friend-info" bis_skin_checked="1">
+                        <div class="friend-avatar-wrapper" bis_skin_checked="1">
+                          <img src="${avatarAmico}" alt="${username}" class="friend-avatar">
+                          <div class="status-dot online" bis_skin_checked="1"></div>
+                        </div>
+                        <div class="friend-details" bis_skin_checked="1">
+                          <span class="friend-name">${username}</span>
+                          <span class="friend-status-text text-darcula-green">Online</span>
+                        </div>
+                      </div>
+                      <button class="btn-challenge" aria-label="Sfida ${username}"><i class="bi bi-swords"></i> Sfida</button>
+                    </div>
+                  `;
+
+                  // Incolliamo l'amico in fondo alla lista!
+                  listaAmiciContainer.insertAdjacentHTML('beforeend', nuovoAmicoHTML);
+
+                  // BONUS OPZIONALE: Aggiorniamo anche il contatore numerico in alto (se vuoi)!
+                  const badgeOnline = document.getElementById('friends-online-badge');
+                  if (badgeOnline) {
+                      // Estraiamo il numero attuale, aggiungiamo 1 e aggiorniamo il testo
+                      const numeroAttuale = parseInt(badgeOnline.innerText) || 0;
+                      badgeOnline.innerText = `${numeroAttuale + 1} Online`;
+                  }
+              }
+            }
             else if (action === 'rifiuta') {
                 if (typeof showToast === 'function') showToast(`Richiesta rifiutata.`, 'gray');
                 // Se rifiutiamo, riportiamo il bottone allo stato "Aggiungi" normale
