@@ -408,8 +408,8 @@ app.get('/api/search/:nome', async (req, res) => {
 
             // Creiamo un nuovo oggetto formattato per il frontend
             const giocatoreFormattato = {
-                name: gioc.nickname,          // Puoi cambiarlo se hai il nome reale nel DB
-                username: gioc.nickname,
+                userid: gioc.id_giocatore,          // Utilizziamo l'ID del giocatore
+                user: gioc.nickname,
                 avatarSeed: gioc.nickname,    // Genera l'avatar in base al nickname
                 livello: gioc.livello         // Dati extra se ti servono in futuro
             };
