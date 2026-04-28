@@ -173,39 +173,31 @@ app.get('/api/profilo/nickname/:username', verificaToken, async (req, res) => {
 
 // Usiamo DELETE perché stiamo eliminando una riga esistente
 app.delete('/api/rifiuta-richiesta/:id', verificaToken, async (req, res) => {
-    // Stessa logica di ruoli:
-    // 1. Tu (mioId) sei la persona che RIFIUTA, quindi nel DB sei "id_utente_b" (il destinatario).
     const mioId = req.utenteId;
-    // 2. L'ID nell'URL è la persona che te l'aveva INVIATA, quindi nel DB è "id_utente_a" (il mittente).
-    const mittenteId = req.params.id;
+    const targetId = req.params.id; 
 
-    if (!mittenteId) {
-        return res.status(400).json({ errore: 'Devi specificare la richiesta di chi vuoi rifiutare.' });
+    if (!targetId) {
+        return res.status(400).json({ errore: 'ID mancante.' });
     }
 
     try {
-        // Chiediamo a Supabase di eliminare la riga specifica
+        // Usiamo "or" per dire: "Cancella la riga dove ci siamo noi due, non mi importa chi è A e chi è B"
         const { data, error } = await supabase
             .from('amicizia')
             .delete()
-            .eq('id_utente_a', mittenteId) // Il mittente è lui...
-            .eq('id_utente_b', mioId)      // ...il destinatario sei tu..      
-            .select(); // Ci fa restituire la riga eliminata, così sappiamo se esisteva
+            .or(`and(id_utente_a.eq.${targetId},id_utente_b.eq.${mioId}),and(id_utente_a.eq.${mioId},id_utente_b.eq.${targetId})`)
+            .select(); 
 
-        if (error) {
-            throw error;
-        }
+        if (error) throw error;
 
-        // Se data è vuoto, non c'era nessuna richiesta "in_attesa" da eliminare
         if (data.length === 0) {
-            return res.status(404).json({ errore: 'Nessuna richiesta in attesa trovata da questo utente.' });
+            return res.status(404).json({ errore: 'Nessuna relazione trovata da eliminare.' });
         }
 
-        // Tutto perfetto!
-        res.status(200).json({ messaggio: 'Richiesta rifiutata e rimossa con successo.' });
+        res.status(200).json({ messaggio: 'Azione completata con successo.' });
 
     } catch (err) {
-        console.error("Errore nel rifiutare la richiesta:", err);
+        console.error("Errore eliminazione amicizia:", err);
         res.status(500).json({ errore: 'Errore interno del server.' });
     }
 });
