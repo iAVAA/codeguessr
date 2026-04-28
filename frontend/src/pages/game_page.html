@@ -244,6 +244,44 @@
         </div>
         <!-- ===== END CUSTOM: ADD FRIEND SEARCH (btn-add-friend) ===== -->
 
+        <!-- ===================== MISSION DETAIL ===================== -->
+        <div class="cg-friend-search-overlay" id="mission-detail-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+            aria-labelledby="mission-detail-title">
+            <div class="cg-friend-search-modal" id="mission-detail-modal">
+                <div class="cg-friend-search-header">
+                    <div class="cg-friend-search-title-group">
+                        <div class="cg-friend-search-icon-wrap" style="color: rgb(var(--darcula-yellow)); background: rgba(var(--darcula-yellow), 0.14); border-color: rgba(var(--darcula-yellow), 0.32);">
+                            <i class="bi bi-trophy-fill"></i>
+                        </div>
+                        <h2 class="cg-friend-search-title" id="mission-detail-title">Dettaglio Missione</h2>
+                    </div>
+                    <button class="cg-friend-search-close" id="mission-detail-close" aria-label="Chiudi dettaglio missione">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="cg-friend-search-body">
+                    <h3 id="mission-detail-name" style="color: rgb(var(--darcula-fg)); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">Nome Missione</h3>
+                    <p id="mission-detail-desc" style="color: rgba(var(--darcula-comment), 0.95); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.4;">Descrizione dettagliata su come completare la missione.</p>
+                    
+                    <div style="background: rgba(var(--darcula-bg), 0.65); border: 1px solid rgba(var(--darcula-comment), 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                            <span style="color: rgb(var(--darcula-comment));">Progresso</span>
+                            <span id="mission-detail-progress-text" style="color: rgb(var(--darcula-fg));">0/1</span>
+                        </div>
+                        <div class="mission-progress-bar" style="height: 8px; margin-bottom: 0;">
+                            <div id="mission-detail-progress-fill" class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: rgb(var(--darcula-comment));">Ricompensa</span>
+                        <span id="mission-detail-reward" class="mission-reward" style="font-size: 0.95rem; font-weight: 700;">+0 XP</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===================== END MISSION DETAIL ===================== -->
+
         <!-- ===================== SETTINGS ===================== -->
         <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true"
             aria-labelledby="settings-title">

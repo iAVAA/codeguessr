@@ -22,58 +22,33 @@ function setXpProgress(pct) {
 
 // ─── Missioni Dinamiche ───────────────────────────────────────────────────────
 
+let cachedMissions = [];
+
 /**
- * Genera le missioni attive basandosi sulle statistiche reali del giocatore.
- * Non richiede tabella DB separata: i target sono fissi, i progressi sono reali.
+ * Genera le missioni attive prelevandole dal database reale e
+ * utilizzando il progresso calcolato dal backend.
  */
-function buildDynamicMissions(stats) {
-  return [
-    {
-      title: 'Gioca 5 partite',
-      current: Math.min(stats.played, 5),
-      target: 5,
-      reward: '+50 XP',
-      completed: stats.played >= 5
-    },
-    {
-      title: 'Vinci la tua prima partita',
-      current: Math.min(stats.won, 1),
-      target: 1,
-      reward: '+30 XP',
-      completed: stats.won >= 1
-    },
-    {
-      title: 'Vinci 3 partite',
-      current: Math.min(stats.won, 3),
-      target: 3,
-      reward: '+100 XP',
-      completed: stats.won >= 3
-    },
-    {
-      title: 'Gioca 10 partite',
-      current: Math.min(stats.played, 10),
-      target: 10,
-      reward: '+150 XP',
-      completed: stats.played >= 10
-    },
-    {
-      title: 'Raggiungi il 50% di win rate',
-      current: stats.win_rate >= 50 ? 1 : 0,
-      target: 1,
-      reward: 'Badge Pro',
-      completed: stats.win_rate >= 50
-    }
-  ];
+async function fetchPlayerMissions(idGiocatore) {
+  try {
+    const res = await fetch(`/api/missioni/${idGiocatore}`);
+    if (!res.ok) return [];
+    const missions = await res.json();
+    cachedMissions = missions;
+    return missions;
+  } catch (err) {
+    console.error("Errore fetch missioni:", err);
+    return [];
+  }
 }
 
 // ─── Template Builders ───────────────────────────────────────────────────────
 
 function buildMissionHTML(mission) {
-  const { title, current, target, reward, completed } = mission;
+  const { id, title, current, target, reward, completed } = mission;
   const pct = Math.min(100, (current / target) * 100);
 
   return `
-    <div class="side-item mission-item ${completed ? 'mission-completed' : ''}">
+    <div class="side-item mission-item ${completed ? 'mission-completed' : ''}" data-id="${id}" style="cursor: pointer;">
       <div class="side-item-content">
         <div class="mission-title ${completed ? 'text-decoration-line-through text-darcula-comment' : ''}">${title}</div>
         <div class="mission-progress-bar">
@@ -235,7 +210,7 @@ async function fetchPlayerAmici(idGiocatore) {
   };
 }
 
-function buildPlayerFromAPI(data, idGiocatore, amiciData, stats) {
+function buildPlayerFromAPI(data, idGiocatore, amiciData, stats, missions) {
   const xpBase = XP_PER_LEVEL;
 
   // Avatar: usa avatar_url dal DB se disponibile, altrimenti DiceBear
@@ -246,10 +221,10 @@ function buildPlayerFromAPI(data, idGiocatore, amiciData, stats) {
   return {
     name:       data.user,
     level:      data.livello,
-    cups:       data.exp,
+    cups:       data.trophies || 0,
     xpPercent:  Math.min(100, (data.exp % xpBase) / (xpBase / 100)),
     avatar,
-    missions:   buildDynamicMissions(stats),
+    missions:   missions,
     friends:    [...amiciData.ricevute, ...amiciData.amici, ...amiciData.inviate]
   };
 }
@@ -296,6 +271,57 @@ function initSidebarActions() {
   });
 }
 
+function initMissionDetailOverlay() {
+  const missionListContainer = document.querySelector('.mission-list');
+  const overlay = document.getElementById('mission-detail-overlay');
+  const closeBtn = document.getElementById('mission-detail-close');
+  
+  if (!missionListContainer || !overlay) return;
+
+  missionListContainer.addEventListener('click', (event) => {
+    const missionItem = event.target.closest('.mission-item');
+    if (!missionItem) return;
+
+    const missionId = missionItem.dataset.id;
+    if (!missionId) return;
+
+    const mission = cachedMissions.find(m => m.id === missionId);
+    if (!mission) return;
+
+    document.getElementById('mission-detail-name').textContent = mission.title;
+    document.getElementById('mission-detail-desc').textContent = mission.description || "Completa questo obiettivo per ottenere ricompense.";
+    
+    document.getElementById('mission-detail-progress-text').textContent = `${mission.current}/${mission.target}`;
+    
+    const pct = Math.min(100, (mission.current / mission.target) * 100);
+    const fillEl = document.getElementById('mission-detail-progress-fill');
+    fillEl.style.width = `${pct}%`;
+    
+    if (mission.completed) {
+      fillEl.classList.add('bg-success');
+    } else {
+      fillEl.classList.remove('bg-success');
+    }
+
+    const rewardEl = document.getElementById('mission-detail-reward');
+    rewardEl.innerHTML = mission.completed ? `<i class="bi bi-check-circle-fill" style="color: rgb(var(--darcula-green));"></i> Completata` : mission.reward;
+
+    overlay.classList.add('open');
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      overlay.classList.remove('open');
+    });
+  }
+
+  overlay.addEventListener('click', (event) => {
+    if (event.target === overlay) {
+      overlay.classList.remove('open');
+    }
+  });
+}
+
 // ─── Inizializzazione ─────────────────────────────────────────────────────────
 
 async function loadPlayerData() {
@@ -309,14 +335,15 @@ async function loadPlayerData() {
   showProfile();
 
   try {
-    // Fetch parallelo: profilo + statistiche + amici
-    const [apiData, stats, amiciData] = await Promise.all([
+    // Fetch parallelo: profilo + statistiche + amici + missioni
+    const [apiData, stats, amiciData, missionsData] = await Promise.all([
       fetchPlayerData(idGiocatore),
       fetchPlayerStats(idGiocatore),
-      fetchPlayerAmici(idGiocatore)
+      fetchPlayerAmici(idGiocatore),
+      fetchPlayerMissions(idGiocatore)
     ]);
 
-    const player = buildPlayerFromAPI(apiData, idGiocatore, amiciData, stats);
+    const player = buildPlayerFromAPI(apiData, idGiocatore, amiciData, stats, missionsData);
     updateProfileUI(player);
   } catch (err) {
     console.error('[Profile] Errore caricamento profilo:', err);
@@ -326,4 +353,5 @@ async function loadPlayerData() {
 document.addEventListener('DOMContentLoaded', () => {
   loadPlayerData();
   initSidebarActions();
+  initMissionDetailOverlay();
 });
