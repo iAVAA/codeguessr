@@ -87,19 +87,42 @@ function formatModalita(modalita) {
 
 function buildHistoryHTML(match) {
     const isWin = match.risultato === 'vittoria';
-    const icon = isWin ? 'bi-arrow-up-right' : 'bi-arrow-down-right';
-    const resultClass = isWin ? 'win' : 'loss';
-    const xpColor = isWin ? 'text-darcula-green' : 'text-darcula-red';
-    const xpPrefix = isWin ? '+' : '';
+    const isDraw = match.risultato === 'pareggio';
+    
+    let icon = 'bi-arrow-down-right';
+    let resultClass = 'loss';
+    let xpColor = 'text-darcula-red';
+    let xpPrefix = '';
+    let textResult = 'Sconfitta';
+
+    if (isWin) {
+        icon = 'bi-arrow-up-right';
+        resultClass = 'win';
+        xpColor = 'text-darcula-green';
+        xpPrefix = '+';
+        textResult = 'Vittoria';
+    } else if (isDraw) {
+        icon = 'bi-dash-lg';
+        resultClass = 'draw';
+        xpColor = 'text-warning';
+        textResult = 'Pareggio';
+    }
+
     const timeAgo = formatRelativeTime(match.data_fine || match.data_inizio);
-    const modeLabel = formatModalita(match.modalita);
+    
+    let modeLabel = formatModalita(match.modalita);
+    if (match.modalita === 'multiplayer') {
+        modeLabel = `Multiplayer vs @${match.opponent || 'Sconosciuto'}`;
+    } else {
+        modeLabel = 'Single Player';
+    }
 
     return `
     <div class="profile-side-item history-item d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-3">
             <div class="history-result ${resultClass}"><i class="bi ${icon}"></i></div>
             <div>
-                <div class="history-lang text-darcula-fg fw-bold">${isWin ? 'Vittoria' : 'Sconfitta'}</div>
+                <div class="history-lang text-darcula-fg fw-bold">${textResult}</div>
                 <div class="history-meta text-darcula-comment" style="font-size: 0.75rem;">${modeLabel}</div>
             </div>
         </div>
@@ -411,7 +434,7 @@ async function updateNavbar(playerData){
 
     setText('player-name', playerData.user);
     setText('player-level', playerData.livello);
-    setText('player-cups', playerData.exp.toLocaleString('it-IT'));
+    setText('player-cups', (playerData.trophies || 0).toLocaleString('it-IT'));
 
     const navAvatar = document.getElementById('player-avatar');
     if (navAvatar) {

@@ -442,8 +442,8 @@ app.get('/api/profilo/:id', async (req, res) => {
 
     try {
         const { data, error } = await supabase
-            .from('giocatore')
-            .select('nickname, livello, exp, bio, avatar_url, banner_url, data_registrazione')
+            .from('v_giocatore_profilo')
+            .select('nickname, livello, exp, trophies, partite_giocate, partite_vinte, partite_perse, percentuale_vittorie, bio, avatar_url, banner_url, data_registrazione')
             .eq('id_giocatore', idDaCercare)
             .single();
 
@@ -454,6 +454,11 @@ app.get('/api/profilo/:id', async (req, res) => {
             user: data.nickname,
             livello: data.livello,
             exp: data.exp,
+            trophies: data.trophies || 0,
+            partite_giocate: data.partite_giocate || 0,
+            partite_vinte: data.partite_vinte || 0,
+            partite_perse: data.partite_perse || 0,
+            percentuale_vittorie: data.percentuale_vittorie || 0,
             bio: data.bio || '',
             avatar_url: data.avatar_url || null,
             banner_url: data.banner_url || null,
@@ -490,7 +495,11 @@ app.get('/api/storico/:id', async (req, res) => {
                     modalita,
                     stato,
                     data_inizio,
-                    data_fine
+                    data_fine,
+                    id_utente_casa,
+                    id_utente_trasferta,
+                    casa:giocatore!partita_id_utente_casa_fkey(nickname),
+                    trasferta:giocatore!partita_id_utente_trasferta_fkey(nickname)
                 )
             `)
             .eq('id_giocatore', idGiocatore)
@@ -500,14 +509,28 @@ app.get('/api/storico/:id', async (req, res) => {
         if (error) throw error;
 
         // Filtriamo solo le partite completate e le formattiamo
-        const storico = (data || []).map(p => ({
-            id_partita: p.partita?.id_partita,
-            modalita: p.partita?.modalita || 'singleplayer',
-            risultato: p.risultato || 'sconfitta',
-            exp_guadagnata: p.exp_guadagnata || 0,
-            data_inizio: p.partita?.data_inizio || null,
-            data_fine: p.partita?.data_fine || null
-        }));
+        const storico = (data || []).map(p => {
+            const partita = p.partita;
+            let opponentName = null;
+            
+            if (partita && partita.modalita === 'multiplayer') {
+                if (partita.id_utente_casa === idGiocatore) {
+                    opponentName = partita.trasferta?.nickname;
+                } else {
+                    opponentName = partita.casa?.nickname;
+                }
+            }
+
+            return {
+                id_partita: partita?.id_partita,
+                modalita: partita?.modalita || 'singleplayer',
+                opponent: opponentName,
+                risultato: p.risultato || 'sconfitta',
+                exp_guadagnata: p.exp_guadagnata || 0,
+                data_inizio: partita?.data_inizio || null,
+                data_fine: partita?.data_fine || null
+            };
+        });
 
         res.status(200).json(storico);
 
@@ -531,19 +554,21 @@ app.get('/api/statistiche/:id', async (req, res) => {
 
     try {
         const { data, error } = await supabase
-            .from('partecipazione')
-            .select('risultato, exp_guadagnata')
-            .eq('id_giocatore', idGiocatore);
+            .from('v_giocatore_profilo')
+            .select('partite_giocate, partite_vinte, partite_perse, percentuale_vittorie')
+            .eq('id_giocatore', idGiocatore)
+            .single();
 
         if (error) throw error;
 
-        const played = data.length;
-        const won = data.filter(p => p.risultato === 'vittoria').length;
-        const lost = data.filter(p => p.risultato === 'sconfitta').length;
-        const win_rate = played > 0 ? Math.round((won / played) * 100) : 0;
-        const total_exp = data.reduce((sum, p) => sum + (p.exp_guadagnata || 0), 0);
-
-        res.status(200).json({ played, won, lost, win_rate, total_exp });
+        // Formattiamo per mantenere compatibilità con il frontend attuale
+        res.status(200).json({ 
+            played: data.partite_giocate || 0, 
+            won: data.partite_vinte || 0, 
+            lost: data.partite_perse || 0, 
+            win_rate: data.percentuale_vittorie || 0,
+            total_exp: 0 // deprecated
+        });
 
     } catch (err) {
         console.error("Errore calcolo statistiche:", err.message);
@@ -600,6 +625,157 @@ app.put('/api/profilo', verificaToken, async (req, res) => {
 });
 
 // ==========================================
+// API MISSIONI (GET)
+// ==========================================
+
+/**
+ * GET /api/missioni/:id
+ * Recupera le missioni e calcola il progresso dinamico del giocatore.
+ */
+app.get('/api/missioni/:id', async (req, res) => {
+    const idGiocatore = req.params.id;
+
+    try {
+        // 1. Legge gli achievement
+        const { data: achievements, error: achErr } = await supabase
+            .from('achievements')
+            .select('*');
+            
+        if (achErr) throw achErr;
+
+        // 2. Legge il profilo
+        const { data: profilo, error: profErr } = await supabase
+            .from('giocatore')
+            .select('livello, avatar_url, banner_url')
+            .eq('id_giocatore', idGiocatore)
+            .single();
+
+        if (profErr) throw profErr;
+
+        // 3. Legge le partecipazioni/partite (storico e stat)
+        const { data: partecipazioni, error: partErr } = await supabase
+            .from('partecipazione')
+            .select('risultato, exp_guadagnata, partita(modalita, data_inizio)')
+            .eq('id_giocatore', idGiocatore)
+            .order('id_partita', { ascending: false });
+
+        if (partErr) throw partErr;
+
+        // 4. Legge le amicizie confermate
+        const { data: amicizie, error: amiErr } = await supabase
+            .from('amicizia')
+            .select('id_utente_a')
+            .eq('stato', 'accettata')
+            .or(`id_utente_a.eq.${idGiocatore},id_utente_b.eq.${idGiocatore}`);
+
+        if (amiErr) throw amiErr;
+
+        // Calcoli per i traguardi
+        const played = partecipazioni.length;
+        const won = partecipazioni.filter(p => p.risultato === 'vittoria').length;
+        const amiciCount = amicizie ? amicizie.length : 0;
+        const mpPlayed = partecipazioni.filter(p => p.partita?.modalita === 'multiplayer').length;
+        const mpWon = partecipazioni.filter(p => p.partita?.modalita === 'multiplayer' && p.risultato === 'vittoria').length;
+        
+        // Calcolo Notte Bianca (giocato tra le 00 e le 05)
+        let notteBianca = 0;
+        for (const p of partecipazioni) {
+            if (p.partita && p.partita.data_inizio) {
+                const hour = new Date(p.partita.data_inizio).getHours();
+                if (hour >= 0 && hour <= 5) {
+                    notteBianca = 1;
+                    break;
+                }
+            }
+        }
+
+        // Calcolo Perfezionista (media exp > 90 nelle ultime 10)
+        let perfezionista = 0;
+        if (played >= 10) {
+            const last10 = partecipazioni.slice(0, 10);
+            const sumExp = last10.reduce((sum, p) => sum + (p.exp_guadagnata || 0), 0);
+            if (sumExp / 10 >= 90) perfezionista = 1;
+        }
+
+        let consecutiveWins = 0;
+        let maxConsecutiveWins = 0;
+        for (let i = partecipazioni.length - 1; i >= 0; i--) { // ordina cronologicamente
+            if (partecipazioni[i].risultato === 'vittoria') {
+                consecutiveWins++;
+                maxConsecutiveWins = Math.max(maxConsecutiveWins, consecutiveWins);
+            } else {
+                consecutiveWins = 0;
+            }
+        }
+
+        const genioIncompreso = partecipazioni.some(p => p.exp_guadagnata >= 100) ? 1 : 0;
+
+        // 5. Mappatura progressi dinamica
+        const progressMap = {
+            'Vanità': Math.min((profilo.avatar_url || profilo.banner_url) ? 1 : 0, 1),
+            'Leggenda del Debug': Math.min(profilo.livello, 50),
+            'Script Kiddie': 0, // Mock: Richiede tracciamento linguaggi
+            'Notte Bianca': notteBianca,
+            'Low Level Hero': 0, // Mock: Richiede tracciamento linguaggi
+            'Maestro del Codice': Math.min(profilo.livello, 20),
+            'Gladiatore': Math.min(mpWon, 25),
+            'Perfezionista': perfezionista,
+            'Maratoneta': Math.min(played, 100),
+            'Dio dei Linguaggi': Math.min(maxConsecutiveWins, 10),
+            'Apprendista Codificatore': Math.min(profilo.livello, 5),
+            'Web Wizard': 0, // Mock: Richiede tracciamento linguaggi
+            'Collezionista': 0, // Verrà calcolato alla fine
+            'Duellante': Math.min(mpPlayed, 10),
+            'Genio Incompreso': genioIncompreso,
+            'Infallibile': Math.min(maxConsecutiveWins, 5),
+            'Primo Sangue': Math.min(won, 1),
+            'Scalatore Sociale': Math.min(amiciCount, 10)
+        };
+
+        const targetMap = {
+            'Vanità': 1, 'Leggenda del Debug': 50, 'Script Kiddie': 1, 'Notte Bianca': 1, 'Low Level Hero': 1,
+            'Maestro del Codice': 20, 'Gladiatore': 25, 'Perfezionista': 1, 'Maratoneta': 100, 'Dio dei Linguaggi': 10,
+            'Apprendista Codificatore': 5, 'Web Wizard': 1, 'Collezionista': 10, 'Duellante': 10, 'Genio Incompreso': 1,
+            'Infallibile': 5, 'Primo Sangue': 1, 'Scalatore Sociale': 10
+        };
+
+        let completedMissionsCount = 0;
+        
+        // Primo passaggio per contare le completate (serve a Collezionista)
+        achievements.forEach(ach => {
+            if (ach.name !== 'Collezionista') {
+                const current = progressMap[ach.name] || 0;
+                const target = targetMap[ach.name] || 1;
+                if (current >= target) completedMissionsCount++;
+            }
+        });
+        
+        progressMap['Collezionista'] = Math.min(completedMissionsCount, 10);
+
+        // Assembla l'array finale
+        const missioniResult = achievements.map(ach => {
+            const current = progressMap[ach.name] || 0;
+            const target = targetMap[ach.name] || 1;
+            return {
+                id: ach.id,
+                title: ach.name,
+                description: ach.description,
+                current: current,
+                target: target,
+                reward: `+${ach.exp_reward} XP, +${ach.trophy_reward} 🏆`,
+                completed: current >= target
+            };
+        });
+
+        res.status(200).json(missioniResult);
+
+    } catch (err) {
+        console.error("Errore recupero missioni:", err.message);
+        res.status(500).json({ errore: 'Impossibile recuperare le missioni' });
+    }
+});
+
+// ==========================================
 // API SALVA PARTITA (POST)
 // ==========================================
 
@@ -611,7 +787,7 @@ app.put('/api/profilo', verificaToken, async (req, res) => {
  */
 app.post('/api/salva-partita', verificaToken, async (req, res) => {
     const mioId = req.utenteId;
-    const { modalita, risultato, exp_guadagnata } = req.body;
+    const { modalita, risultato, exp_guadagnata, id_utente_trasferta } = req.body;
 
     // Validazione campi obbligatori
     if (!modalita || !risultato) {
@@ -619,16 +795,23 @@ app.post('/api/salva-partita', verificaToken, async (req, res) => {
     }
 
     const expGain = Math.max(0, parseInt(exp_guadagnata, 10) || 0);
+    const isMultiplayer = modalita === 'multiplayer' && id_utente_trasferta;
 
     try {
         // 1. Creiamo la riga nella tabella partita
+        const partitaInsert = {
+            modalita,
+            stato: 'terminata',
+            data_fine: new Date().toISOString(),
+            id_utente_casa: mioId
+        };
+        if (isMultiplayer) {
+            partitaInsert.id_utente_trasferta = id_utente_trasferta;
+        }
+
         const { data: partitaData, error: partitaError } = await supabase
             .from('partita')
-            .insert([{
-                modalita,
-                stato: 'terminata',
-                data_fine: new Date().toISOString()
-            }])
+            .insert([partitaInsert])
             .select()
             .single();
 
@@ -636,44 +819,75 @@ app.post('/api/salva-partita', verificaToken, async (req, res) => {
 
         const idPartita = partitaData.id_partita;
 
-        // 2. Creiamo la riga in partecipazione
+        // 2. Creiamo le righe in partecipazione
+        const partecipazioni = [{
+            id_partita: idPartita,
+            id_giocatore: mioId,
+            risultato,
+            exp_guadagnata: expGain
+        }];
+
+        if (isMultiplayer) {
+            // Logica inversa per l'avversario
+            let risultatoAvversario = 'pareggio';
+            if (risultato === 'vittoria') risultatoAvversario = 'sconfitta';
+            else if (risultato === 'sconfitta') risultatoAvversario = 'vittoria';
+
+            partecipazioni.push({
+                id_partita: idPartita,
+                id_giocatore: id_utente_trasferta,
+                risultato: risultatoAvversario,
+                exp_guadagnata: risultatoAvversario === 'vittoria' ? 25 : 5 // Esempio fisso per avversario
+            });
+        }
+
         const { error: partecError } = await supabase
             .from('partecipazione')
-            .insert([{
-                id_partita: idPartita,
-                id_giocatore: mioId,
-                risultato,
-                exp_guadagnata: expGain
-            }]);
+            .insert(partecipazioni);
 
         if (partecError) throw partecError;
 
-        // 3. Aggiorniamo exp e livello del giocatore
-        // Prima leggiamo il valore attuale
-        const { data: profiloCorrente, error: readErr } = await supabase
-            .from('giocatore')
-            .select('exp, livello')
-            .eq('id_giocatore', mioId)
-            .single();
+        // Funzione helper per aggiornare un giocatore
+        async function updatePlayerStats(playerId, result, addedExp) {
+            const { data: prof, error: readErr } = await supabase
+                .from('giocatore')
+                .select('exp, livello, trophies')
+                .eq('id_giocatore', playerId)
+                .single();
 
-        if (readErr) throw readErr;
+            if (readErr) return null;
 
-        const EXP_PER_LEVEL = 1000;
-        const nuovaExp = (profiloCorrente.exp || 0) + expGain;
-        const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
+            const EXP_PER_LEVEL = 1000;
+            const nuovaExp = (prof.exp || 0) + addedExp;
+            const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
+            
+            let trophyChange = 0;
+            if (result === 'vittoria') trophyChange = 25;
+            else if (result === 'sconfitta') trophyChange = -15;
+            
+            const nuoviTrofei = Math.max(0, (prof.trophies || 0) + trophyChange);
 
-        const { error: updateErr } = await supabase
-            .from('giocatore')
-            .update({ exp: nuovaExp, livello: nuovoLivello })
-            .eq('id_giocatore', mioId);
+            await supabase
+                .from('giocatore')
+                .update({ exp: nuovaExp, livello: nuovoLivello, trophies: nuoviTrofei })
+                .eq('id_giocatore', playerId);
 
-        if (updateErr) throw updateErr;
+            return { nuovaExp, nuovoLivello, nuoviTrofei };
+        }
+
+        // 3. Aggiorniamo le statistiche del/dei giocatore/i
+        const statsCasa = await updatePlayerStats(mioId, risultato, expGain);
+        if (isMultiplayer) {
+            const risultatoAvversario = risultato === 'vittoria' ? 'sconfitta' : (risultato === 'sconfitta' ? 'vittoria' : 'pareggio');
+            await updatePlayerStats(id_utente_trasferta, risultatoAvversario, risultatoAvversario === 'vittoria' ? 25 : 5);
+        }
 
         res.status(201).json({
             messaggio: 'Partita salvata con successo!',
             id_partita: idPartita,
-            nuova_exp: nuovaExp,
-            nuovo_livello: nuovoLivello
+            nuova_exp: statsCasa?.nuovaExp || 0,
+            nuovo_livello: statsCasa?.nuovoLivello || 1,
+            nuovi_trofei: statsCasa?.nuoviTrofei || 0
         });
 
     } catch (err) {
