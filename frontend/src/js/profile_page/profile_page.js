@@ -414,7 +414,11 @@ async function updateNavbar(playerData){
     setText('player-cups', playerData.exp.toLocaleString('it-IT'));
 
     const navAvatar = document.getElementById('player-avatar');
-    if (navAvatar) navAvatar.src = `${AVATAR_BASE}?seed=${playerData.userid}&backgroundColor=1e1f21`;
+    if (navAvatar) {
+        navAvatar.src = playerData.avatar_url 
+            ? playerData.avatar_url 
+            : `${AVATAR_BASE}?seed=${playerData.userid}&backgroundColor=1e1f21`;
+    }
 
     const xpPercent = Math.min(100, (playerData.exp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
     setXpProgress(xpPercent);
