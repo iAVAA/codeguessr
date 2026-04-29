@@ -6,18 +6,29 @@
 import { getSession, fetchAuth } from '../managers/auth.js';
 
 const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
-const XP_PER_LEVEL = 1000;
+const XP_PER_LEVEL = 500;
 
 // ─── XP Ring ─────────────────────────────────────────────────────────────────
 
+let lastPct = 0;
 function setXpProgress(pct) {
   const ring = document.getElementById('xp-ring-progress');
   if (!ring) return;
   const r = 17;
   const circumference = 2 * Math.PI * r;
+
+  if (pct < lastPct) {
+    // Evitiamo che l'animazione torni indietro in senso antiorario al level up
+    ring.style.transition = 'none';
+    ring.style.strokeDashoffset = circumference;
+    ring.getBoundingClientRect(); // Forza il reflow
+    ring.style.transition = ''; // Ripristina la transizione dal CSS
+  }
+  lastPct = pct;
+
   setTimeout(() => {
     ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
-  }, 400);
+  }, 2000);
 }
 
 // ─── Missioni Dinamiche ───────────────────────────────────────────────────────
@@ -57,8 +68,8 @@ function buildMissionHTML(mission) {
         <div class="mission-info">
           <span class="mission-status">
             ${completed
-              ? `<span class="text-success">${current}/${target}</span>`
-              : `<span>${current}/${target}</span>`}
+      ? `<span class="text-success">${current}/${target}</span>`
+      : `<span>${current}/${target}</span>`}
           </span>
           <span class="mission-reward">
             ${completed ? `<i class="bi bi-check-circle-fill"></i> ${reward}` : reward}
@@ -70,7 +81,7 @@ function buildMissionHTML(mission) {
 
 function buildFriendHTML(friend) {
   const { userid, name, avatar, online, type } = friend;
-  
+
   let filterStyle = '';
   let statusDotClass = 'offline';
   let statusColor = 'text-darcula-comment';
@@ -197,15 +208,15 @@ async function fetchPlayerAmici(idGiocatore) {
 
   const makeEntry = (amico, type) => ({
     userid: amico.userid,
-    name:   amico.user,
+    name: amico.user,
     avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
-    online: false,
+    online: amico.online || false,
     type
   });
 
   return {
-    amici:    amiciData.amici.map(a => makeEntry(a, 'amico')),
-    inviate:  amiciData.inviate.map(a => makeEntry(a, 'inviata')),
+    amici: amiciData.amici.map(a => makeEntry(a, 'amico')),
+    inviate: amiciData.inviate.map(a => makeEntry(a, 'inviata')),
     ricevute: amiciData.ricevute.map(a => makeEntry(a, 'ricevuta'))
   };
 }
@@ -219,13 +230,13 @@ function buildPlayerFromAPI(data, idGiocatore, amiciData, stats, missions) {
     : `${AVATAR_BASE}?seed=${idGiocatore}&backgroundColor=1e1f21`;
 
   return {
-    name:       data.user,
-    level:      data.livello,
-    cups:       data.trophies || 0,
-    xpPercent:  Math.min(100, (data.exp % xpBase) / (xpBase / 100)),
+    name: data.user,
+    level: data.livello,
+    cups: data.trophies || 0,
+    xpPercent: Math.min(100, (data.exp % xpBase) / (xpBase / 100)),
     avatar,
-    missions:   missions,
-    friends:    [...amiciData.ricevute, ...amiciData.amici, ...amiciData.inviate]
+    missions: missions,
+    friends: [...amiciData.ricevute, ...amiciData.amici, ...amiciData.inviate]
   };
 }
 
@@ -236,6 +247,22 @@ function initSidebarActions() {
   if (!friendsListContainer) return;
 
   friendsListContainer.addEventListener('click', async (event) => {
+    // Gestione bottone Sfida
+    const challengeBtn = event.target.closest('.btn-challenge');
+    if (challengeBtn) {
+      const friendItem = challengeBtn.closest('.friend-item');
+      if (friendItem) {
+        const friendName = friendItem.querySelector('.friend-name')?.textContent || 'Avversario';
+        const friendId = friendItem.id.replace('sidebar-rel-', '');
+        if (typeof showToast === 'function') {
+          showToast(`Sfida avviata contro ${friendName}!`, 'blue');
+        }
+        // Reindirizza al match passandogli l'avversario
+        window.location.href = `/match?opponent=${friendId}`;
+      }
+      return;
+    }
+
     const actionButton = event.target.closest('.cg-search-add-btn');
     if (!actionButton || actionButton.disabled) return;
 
@@ -275,7 +302,7 @@ function initMissionDetailOverlay() {
   const missionListContainer = document.querySelector('.mission-list');
   const overlay = document.getElementById('mission-detail-overlay');
   const closeBtn = document.getElementById('mission-detail-close');
-  
+
   if (!missionListContainer || !overlay) return;
 
   missionListContainer.addEventListener('click', (event) => {
@@ -290,13 +317,13 @@ function initMissionDetailOverlay() {
 
     document.getElementById('mission-detail-name').textContent = mission.title;
     document.getElementById('mission-detail-desc').textContent = mission.description || "Completa questo obiettivo per ottenere ricompense.";
-    
+
     document.getElementById('mission-detail-progress-text').textContent = `${mission.current}/${mission.target}`;
-    
+
     const pct = Math.min(100, (mission.current / mission.target) * 100);
     const fillEl = document.getElementById('mission-detail-progress-fill');
     fillEl.style.width = `${pct}%`;
-    
+
     if (mission.completed) {
       fillEl.classList.add('bg-success');
     } else {
@@ -345,6 +372,29 @@ async function loadPlayerData() {
 
     const player = buildPlayerFromAPI(apiData, idGiocatore, amiciData, stats, missionsData);
     updateProfileUI(player);
+
+    // Auto-refresh silenzioso degli amici ogni 15 secondi
+    setInterval(async () => {
+      try {
+        const newAmiciData = await fetchPlayerAmici(idGiocatore);
+        const newFriendsList = [...newAmiciData.ricevute, ...newAmiciData.amici, ...newAmiciData.inviate];
+        renderFriends(newFriendsList);
+      } catch (e) {
+        console.error('Silently failed to fetch friends for auto-refresh', e);
+      }
+    }, 15000);
+
+    // Heartbeat: segnala al server che siamo online ogni 10 secondi
+    setInterval(async () => {
+      try {
+        await fetchAuth('/api/heartbeat', { method: 'POST' });
+      } catch (e) {
+        console.error('Heartbeat fallito', e);
+      }
+    }, 10000);
+    // Prima chiamata immediata per registrarsi subito come online
+    fetchAuth('/api/heartbeat', { method: 'POST' }).catch(e => console.error(e));
+
   } catch (err) {
     console.error('[Profile] Errore caricamento profilo:', err);
   }
