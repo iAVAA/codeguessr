@@ -31,18 +31,29 @@ window.handleProfileFriendAction = async function(action, targetUserId) {
     }
 }
 const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
-const XP_PER_LEVEL = 1000;
+const XP_PER_LEVEL = 500;
 
 // ─── Utility XP Ring ─────────────────────────────────────────────────────────
 
+const lastPctMap = new Map();
 function setXpProgress(pct, ringId = 'xp-ring-progress') {
     const ring = document.getElementById(ringId);
     if (!ring) return;
     const r = 17;
     const circumference = 2 * Math.PI * r;
+    const lastPct = lastPctMap.get(ringId) || 0;
+    
+    if (pct < lastPct) {
+        ring.style.transition = 'none';
+        ring.style.strokeDashoffset = circumference;
+        ring.getBoundingClientRect(); // Forza il reflow
+        ring.style.transition = '';
+    }
+    lastPctMap.set(ringId, pct);
+    
     setTimeout(() => {
         ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
-    }, 400);
+    }, 50);
 }
 
 // ─── Utility: formatta data relativa ────────────────────────────────────────
@@ -295,7 +306,7 @@ async function fetchFullProfileData(userId) {
     const amiciFormattati = amiciData.amici.map(a => ({
         userid: a.userid, name: a.user,
         avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
-        online: false, type: 'amico'
+        online: a.online || false, type: 'amico'
     }));
     const inviate = amiciData.inviate.map(a => ({
         userid: a.userid, name: a.user,
@@ -346,6 +357,19 @@ function initFriendActions() {
     container.parentNode.replaceChild(newContainer, container);
 
     newContainer.addEventListener('click', async (event) => {
+        // Gestione bottone Sfida
+        const challengeBtn = event.target.closest('.profile-btn-challenge');
+        if (challengeBtn) {
+            const friendItem = challengeBtn.closest('.profile-friend-item');
+            if (friendItem) {
+                const friendName = friendItem.querySelector('.profile-friend-name')?.textContent || 'Avversario';
+                const friendId = friendItem.id.replace('sidebar-rel-', '');
+                alert(`Sfida avviata contro ${friendName}!`); // Fallback if showToast doesn't exist here
+                window.location.href = `/match?opponent=${friendId}`;
+            }
+            return;
+        }
+
         const actionButton = event.target.closest('.cg-search-add-btn');
         if (!actionButton || actionButton.disabled) return;
 
@@ -522,6 +546,16 @@ async function initProfilePage() {
             }
         }
         
+        // Heartbeat: segnala al server che siamo online ogni 10 secondi
+        setInterval(async () => {
+            try {
+                await fetchAuth('/api/heartbeat', { method: 'POST' });
+            } catch (e) {
+                console.error('Heartbeat fallito', e);
+            }
+        }, 10000);
+        fetchAuth('/api/heartbeat', { method: 'POST' }).catch(e => console.error(e));
+
     } catch (error) {
         console.error('[Profile Page] Errore caricamento dati:', error);
     }

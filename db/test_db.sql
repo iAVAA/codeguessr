@@ -17,7 +17,7 @@ CREATE TABLE public.giocatore (
   livello integer DEFAULT 1,
   trophies integer DEFAULT 0,  -- Aggiunti i trofei!
   data_registrazione timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-  attivo boolean DEFAULT true,
+  attivo boolean DEFAULT false,
   bio text DEFAULT ''::text,
   avatar_url text,
   banner_url text,
@@ -97,3 +97,21 @@ LEFT JOIN
     public.partecipazione p ON g.id_giocatore = p.id_giocatore
 GROUP BY 
     g.id_giocatore;
+
+-- Funzione Trigger: Controlla se exp >= 500 e gestisce il level up
+CREATE OR REPLACE FUNCTION handle_giocatore_level_up()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.exp >= 500 THEN
+        NEW.livello := NEW.livello + FLOOR(NEW.exp / 500);
+        NEW.exp := NEW.exp % 500;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger: Prima di aggiornare o inserire un giocatore
+CREATE TRIGGER trigger_level_up
+BEFORE INSERT OR UPDATE OF exp ON public.giocatore
+FOR EACH ROW
+EXECUTE FUNCTION handle_giocatore_level_up();

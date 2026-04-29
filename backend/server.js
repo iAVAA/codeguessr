@@ -14,6 +14,11 @@ app.use(cors({
 // ==========================================
 // CONFIGURAZIONE AMBIENTE
 // ==========================================
+// Mappa in-memory per tracciare lo stato online degli utenti
+const activeUsers = new Map();
+const HEARTBEAT_TIMEOUT = 20000; // 20 secondi prima di considerare offline
+
+// ==========================================
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 const ROOT = path.join(__dirname, '..', 'frontend');
@@ -341,6 +346,46 @@ app.get('/api/amicizie-confermate/:id', verificaToken, async (req, res) => {
 });
 
 // ==========================================
+// API HEARTBEAT E AMICI
+// ==========================================
+
+/**
+ * POST /api/heartbeat
+ * Aggiorna lo stato online dell'utente corrente.
+ */
+app.post('/api/heartbeat', verificaToken, async (req, res) => {
+    const mioId = req.utenteId;
+    
+    // Se non era già nella mappa (o è scaduto), lo impostiamo come attivo nel database
+    if (!activeUsers.has(mioId)) {
+        try {
+            await supabase.from('giocatore').update({ attivo: true }).eq('id_giocatore', mioId);
+        } catch (e) {
+            console.error("Impossibile aggiornare stato online nel DB", e);
+        }
+    }
+    
+    activeUsers.set(mioId, Date.now());
+    res.status(200).json({ success: true });
+});
+
+// Pulizia periodica utenti offline e aggiornamento DB
+setInterval(async () => {
+    const now = Date.now();
+    for (const [userId, lastSeen] of activeUsers.entries()) {
+        if (now - lastSeen > HEARTBEAT_TIMEOUT) {
+            activeUsers.delete(userId);
+            try {
+                // Imposta come offline nel DB
+                await supabase.from('giocatore').update({ attivo: false }).eq('id_giocatore', userId);
+            } catch (e) {
+                console.error("Impossibile aggiornare stato offline nel DB", e);
+            }
+        }
+    }
+}, 15000);
+
+// ==========================================
 // API AMICI (GET)
 // ==========================================
 
@@ -402,7 +447,12 @@ app.get('/api/mie-amicizie', verificaToken, async (req, res) => {
             const sonoIoIlMittente = riga.id_utente_a === mioId;
             const idAltro = sonoIoIlMittente ? riga.id_utente_b : riga.id_utente_a;
             const nickname = mappaProfili[idAltro] || "Utente Sconosciuto";
-            const utente = { userid: idAltro, user: nickname };
+            
+            // Calcola lo stato online
+            const lastSeen = activeUsers.get(idAltro);
+            const isOnline = lastSeen ? (Date.now() - lastSeen < HEARTBEAT_TIMEOUT) : false;
+
+            const utente = { userid: idAltro, user: nickname, online: isOnline };
 
             if (riga.stato === 'accettata') {
                 risultato.amici.push(utente);

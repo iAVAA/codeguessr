@@ -38,10 +38,28 @@ CREATE TABLE IF NOT EXISTS public.giocatore (
         CASE WHEN partite_giocate > 0 THEN (partite_vinte::NUMERIC / partite_giocate::NUMERIC) * 100 ELSE 0 END
     ) STORED,
 
-    attivo BOOLEAN DEFAULT true,
+    attivo BOOLEAN DEFAULT false,
     data_registrazione TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     ultimo_accesso TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Funzione Trigger: Controlla se exp >= 500 e gestisce il level up
+CREATE OR REPLACE FUNCTION handle_giocatore_level_up()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.exp >= 500 THEN
+        NEW.livello := NEW.livello + FLOOR(NEW.exp / 500);
+        NEW.exp := NEW.exp % 500;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger: Prima di aggiornare o inserire un giocatore
+CREATE TRIGGER trigger_level_up
+BEFORE INSERT OR UPDATE OF exp ON public.giocatore
+FOR EACH ROW
+EXECUTE FUNCTION handle_giocatore_level_up();
 
 -- ==========================================
 -- 3. TABELLA AMICIZIA
