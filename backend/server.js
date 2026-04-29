@@ -720,6 +720,15 @@ app.get('/api/missioni/:id', async (req, res) => {
 
         if (amiErr) throw amiErr;
 
+        // 5. Legge i traguardi già sbloccati
+        const { data: sbloccati, error: sblocErr } = await supabase
+            .from('user_achievements')
+            .select('achievement_id')
+            .eq('user_id', idGiocatore);
+
+        if (sblocErr) throw sblocErr;
+        const sbloccatiSet = new Set(sbloccati.map(a => a.achievement_id));
+
         // Calcoli per i traguardi
         const played = partecipazioni.length;
         const won = partecipazioni.filter(p => p.risultato === 'vittoria').length;
@@ -802,10 +811,19 @@ app.get('/api/missioni/:id', async (req, res) => {
         
         progressMap['Collezionista'] = Math.min(completedMissionsCount, 10);
 
+        const daRiscatto = [];
+
         // Assembla l'array finale
         const missioniResult = achievements.map(ach => {
             const current = progressMap[ach.name] || 0;
             const target = targetMap[ach.name] || 1;
+            const isCompleted = current >= target;
+            
+            // Se la missione è appena stata completata e non è ancora salvata nel DB
+            if (isCompleted && !sbloccatiSet.has(ach.id)) {
+                daRiscatto.push(ach);
+            }
+
             return {
                 id: ach.id,
                 title: ach.name,
@@ -813,9 +831,37 @@ app.get('/api/missioni/:id', async (req, res) => {
                 current: current,
                 target: target,
                 reward: `+${ach.exp_reward} XP, +${ach.trophy_reward} 🏆`,
-                completed: current >= target
+                completed: isCompleted
             };
         });
+
+        // Riscatta automaticamente i premi in background
+        if (daRiscatto.length > 0) {
+            (async () => {
+                try {
+                    // Inserisci in user_achievements
+                    const insertData = daRiscatto.map(ach => ({ user_id: idGiocatore, achievement_id: ach.id }));
+                    const { error: insErr } = await supabase.from('user_achievements').insert(insertData);
+                    
+                    if (!insErr) {
+                        // Somma i premi
+                        const expTot = daRiscatto.reduce((sum, ach) => sum + ach.exp_reward, 0);
+                        const trophyTot = daRiscatto.reduce((sum, ach) => sum + ach.trophy_reward, 0);
+                        
+                        // Aggiorna giocatore (il Trigger PostgreSQL gestirà il Level Up se exp supera 500!)
+                        const { data: prof } = await supabase.from('giocatore').select('exp, trophies').eq('id_giocatore', idGiocatore).single();
+                        if (prof) {
+                            await supabase.from('giocatore').update({
+                                exp: (prof.exp || 0) + expTot,
+                                trophies: (prof.trophies || 0) + trophyTot
+                            }).eq('id_giocatore', idGiocatore);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Errore nell'auto-riscatto missioni:", e);
+                }
+            })();
+        }
 
         res.status(200).json(missioniResult);
 
