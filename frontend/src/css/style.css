@@ -1202,7 +1202,8 @@ body.loader-open { overflow: hidden !important; }
 /* ===========================
    ADD FRIEND BUTTON
    =========================== */
-.btn-add-friend {
+.btn-add-friend,
+.btn-panel-action {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1218,14 +1219,16 @@ body.loader-open { overflow: hidden !important; }
   flex-shrink: 0;
 }
 
-.btn-add-friend:hover {
+.btn-add-friend:hover,
+.btn-panel-action:hover {
   background: rgb(var(--darcula-blue));
   color: #fff;
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(var(--darcula-blue), 0.3);
 }
 
-.btn-add-friend i {
+.btn-add-friend i,
+.btn-panel-action i {
   font-size: 1.1rem;
   line-height: 1;
 }

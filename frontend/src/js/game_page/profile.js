@@ -149,8 +149,17 @@ function renderList(selector, items, buildFn, emptyMessage) {
   container.innerHTML = items.map(buildFn).join('');
 }
 
+let showingCompletedMissions = false;
+
 function renderMissions(missions) {
-  renderList('.mission-list', missions, buildMissionHTML, 'Nessuna missione disponibile.');
+  const active = missions.filter(m => !m.completed);
+  const completed = missions.filter(m => m.completed);
+
+  if (showingCompletedMissions) {
+    renderList('.mission-list', completed, buildMissionHTML, 'Nessuna missione completata.');
+  } else {
+    renderList('.mission-list', active, buildMissionHTML, 'Nessuna missione attiva.');
+  }
 }
 
 function renderFriends(friends) {
@@ -400,8 +409,33 @@ async function loadPlayerData() {
   }
 }
 
+function initMissionToggle() {
+  const btn = document.getElementById('btn-toggle-missions');
+  if (!btn) return;
+  const icon = btn.querySelector('i');
+  btn.addEventListener('click', () => {
+    showingCompletedMissions = !showingCompletedMissions;
+
+    // Cambia icona per far capire lo stato
+    if (showingCompletedMissions) {
+      icon.classList.remove('bi-archive');
+      icon.classList.add('bi-archive-fill');
+      btn.style.background = 'rgb(var(--darcula-blue))';
+      btn.style.color = '#fff';
+    } else {
+      icon.classList.remove('bi-archive-fill');
+      icon.classList.add('bi-archive');
+      btn.style.background = '';
+      btn.style.color = '';
+    }
+
+    renderMissions(cachedMissions);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadPlayerData();
   initSidebarActions();
   initMissionDetailOverlay();
+  initMissionToggle();
 });
