@@ -102,29 +102,6 @@ export async function fetchAuth(url, options = {}) {
   return res;
 }
 
-// ─── Test Helper (console) ───────────────────────────────────────────────────
-
-window.simulateLogin = function () {
-  const mockUser = {
-    name: 'Signor S',
-    level: 42,
-    cups: 1240,
-    xpPercent: 75,
-    avatar: `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21`,
-    missions: [
-      { title: 'Gioca 5 partite',           current: 2, target: 5, reward: '+50 XP',   completed: false },
-      { title: 'Vinci 1 partita multiplayer', current: 0, target: 1, reward: '+100 XP', completed: false },
-      { title: 'Aggiungi un amico',           current: 1, target: 1, reward: 'Fatto',   completed: true  },
-    ],
-    friends: [
-      { name: 'Marco99',  avatar: 'https://api.dicebear.com/8.x/bottts-neutral/svg?seed=Marco99&backgroundColor=1e1f21',  online: true  },
-      { name: 'DevGirl',  avatar: 'https://api.dicebear.com/8.x/bottts-neutral/svg?seed=DevGirl&backgroundColor=1e1f21',  online: true  },
-      { name: 'AlexWeb',  avatar: 'https://api.dicebear.com/8.x/bottts-neutral/svg?seed=AlexWeb&backgroundColor=2d2d2d',  online: false },
-    ],
-  };
-  setCookie('codeguessr_user', JSON.stringify(mockUser), 7);
-  window.location.reload();
-};
 
 // ─── UI Binding ──────────────────────────────────────────────────────────────
 

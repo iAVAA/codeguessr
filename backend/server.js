@@ -318,10 +318,10 @@ app.get('/api/amicizie-confermate/:id', verificaToken, async (req, res) => {
             riga.id_utente_a === targetId ? riga.id_utente_b : riga.id_utente_a
         );
 
-        // 3. Recuperiamo i loro nickname
+        // 3. Recuperiamo i loro nickname e avatar
         const { data: profili, error: profiliError } = await supabase
             .from('giocatore')
-            .select('id_giocatore, nickname')
+            .select('id_giocatore, nickname, avatar_url')
             .in('id_giocatore', idAmici);
 
         if (profiliError) throw profiliError;
@@ -329,7 +329,8 @@ app.get('/api/amicizie-confermate/:id', verificaToken, async (req, res) => {
         // 4. Formattiamo i risultati
         const amiciConfermati = profili.map(p => ({
             userid: p.id_giocatore,
-            user: p.nickname
+            user: p.nickname,
+            avatar_url: p.avatar_url
         }));
 
         // Restituiamo l'oggetto con le richieste in attesa vuote per non far arrabbiare il frontend
@@ -431,14 +432,14 @@ app.get('/api/mie-amicizie', verificaToken, async (req, res) => {
 
         const { data: profili, error: profiliError } = await supabase
             .from('giocatore')
-            .select('id_giocatore, nickname')
+            .select('id_giocatore, nickname, avatar_url')
             .in('id_giocatore', idAltriUtenti);
 
         if (profiliError) throw profiliError;
 
         const mappaProfili = {};
         for (const p of profili) {
-            mappaProfili[p.id_giocatore] = p.nickname;
+            mappaProfili[p.id_giocatore] = { nickname: p.nickname, avatar_url: p.avatar_url };
         }
 
         const risultato = { amici: [], inviate: [], ricevute: [] };
@@ -446,13 +447,18 @@ app.get('/api/mie-amicizie', verificaToken, async (req, res) => {
         for (const riga of relazioni) {
             const sonoIoIlMittente = riga.id_utente_a === mioId;
             const idAltro = sonoIoIlMittente ? riga.id_utente_b : riga.id_utente_a;
-            const nickname = mappaProfili[idAltro] || "Utente Sconosciuto";
+            const datiAltro = mappaProfili[idAltro] || { nickname: "Utente Sconosciuto", avatar_url: null };
             
             // Calcola lo stato online
             const lastSeen = activeUsers.get(idAltro);
             const isOnline = lastSeen ? (Date.now() - lastSeen < HEARTBEAT_TIMEOUT) : false;
 
-            const utente = { userid: idAltro, user: nickname, online: isOnline };
+            const utente = { 
+                userid: idAltro, 
+                user: datiAltro.nickname, 
+                avatar_url: datiAltro.avatar_url,
+                online: isOnline 
+            };
 
             if (riga.stato === 'accettata') {
                 risultato.amici.push(utente);
@@ -675,6 +681,33 @@ app.put('/api/profilo', verificaToken, async (req, res) => {
 });
 
 // ==========================================
+// API ELIMINAZIONE PROFILO (DELETE)
+// ==========================================
+
+/**
+ * DELETE /api/profilo
+ * Elimina definitivamente l'account dell'utente loggato.
+ * Richiede autenticazione (Bearer token).
+ */
+app.delete('/api/profilo', verificaToken, async (req, res) => {
+    const mioId = req.utenteId;
+
+    try {
+        // Elimina l'utente tramite Supabase Admin API
+        // Questo attiverà la cancellazione a cascata sul db grazie a ON DELETE CASCADE
+        const { error } = await supabase.auth.admin.deleteUser(mioId);
+
+        if (error) throw error;
+
+        res.status(200).json({ messaggio: 'Profilo eliminato con successo.' });
+
+    } catch (err) {
+        console.error("Errore eliminazione profilo:", err.message);
+        res.status(500).json({ errore: 'Impossibile eliminare il profilo.' });
+    }
+});
+
+// ==========================================
 // API MISSIONI (GET)
 // ==========================================
 
@@ -773,16 +806,16 @@ app.get('/api/missioni/:id', async (req, res) => {
         const progressMap = {
             'Vanità': Math.min((profilo.avatar_url || profilo.banner_url) ? 1 : 0, 1),
             'Leggenda del Debug': Math.min(profilo.livello, 50),
-            'Script Kiddie': 0, // Mock: Richiede tracciamento linguaggi
+            'Script Kiddie': 0,
             'Notte Bianca': notteBianca,
-            'Low Level Hero': 0, // Mock: Richiede tracciamento linguaggi
+            'Low Level Hero': 0,
             'Maestro del Codice': Math.min(profilo.livello, 20),
             'Gladiatore': Math.min(mpWon, 25),
             'Perfezionista': perfezionista,
             'Maratoneta': Math.min(played, 100),
             'Dio dei Linguaggi': Math.min(maxConsecutiveWins, 10),
             'Apprendista Codificatore': Math.min(profilo.livello, 5),
-            'Web Wizard': 0, // Mock: Richiede tracciamento linguaggi
+            'Web Wizard': 0,
             'Collezionista': 0, // Verrà calcolato alla fine
             'Duellante': Math.min(mpPlayed, 10),
             'Genio Incompreso': genioIncompreso,
@@ -1000,7 +1033,7 @@ app.get('/api/search/:nome', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('giocatore')
-            .select('id_giocatore, nickname, livello, exp') // Prendi i campi che ti servono
+            .select('id_giocatore, nickname, livello, exp, avatar_url') // Prendi i campi che ti servono
             .ilike('nickname', `${testoRicerca}%`) // Cerca i nickname che INIZIANO con il testo cercato
             .limit(10); // Consiglio: metti un limite per non scaricare troppi dati se l'utente digita solo "A"
 
@@ -1018,6 +1051,7 @@ app.get('/api/search/:nome', async (req, res) => {
             const giocatoreFormattato = {
                 userid: gioc.id_giocatore,          // Utilizziamo l'ID del giocatore
                 user: gioc.nickname,
+                avatar_url: gioc.avatar_url,
                 avatarSeed: gioc.nickname,    // Genera l'avatar in base al nickname
                 livello: gioc.livello         // Dati extra se ti servono in futuro
             };

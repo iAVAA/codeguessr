@@ -218,7 +218,7 @@ async function fetchPlayerAmici(idGiocatore) {
   const makeEntry = (amico, type) => ({
     userid: amico.userid,
     name: amico.user,
-    avatar: `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
+    avatar: amico.avatar_url || `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
     online: amico.online || false,
     type
   });

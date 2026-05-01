@@ -62,7 +62,8 @@ function showSaveStatus(message, isError = false) {
 
 function openModal() {
     const session = getSession();
-    const currentProfileId = document.getElementById('page-userid')?.textContent;
+    const userIdEl = document.getElementById('page-userid');
+    const currentProfileId = userIdEl?.dataset.fullId || userIdEl?.textContent;
 
     // 🔒 CONTROLLO DI SICUREZZA: Sei loggato ed è il TUO profilo?
     if (!session.isLoggedIn || session.idGiocatore !== currentProfileId) {

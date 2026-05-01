@@ -18,9 +18,9 @@ async function fetchPlayerAmici() {
     const amiciData = await res.json();
 
     return {
-        amici: amiciData.amici.map(a => ({ userid: a.userid, name: a.user, avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`, online: a.online, type: 'amico' })),
-        inviate: amiciData.inviate.map(a => ({ userid: a.userid, name: a.user, avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`, online: false, type: 'inviata' })),
-        ricevute: amiciData.ricevute.map(a => ({ userid: a.userid, name: a.user, avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`, online: false, type: 'ricevuta' }))
+        amici: amiciData.amici.map(a => ({ userid: a.userid, name: a.user, avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`, online: a.online, type: 'amico' })),
+        inviate: amiciData.inviate.map(a => ({ userid: a.userid, name: a.user, avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`, online: false, type: 'inviata' })),
+        ricevute: amiciData.ricevute.map(a => ({ userid: a.userid, name: a.user, avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`, online: false, type: 'ricevuta' }))
     };
 }
 

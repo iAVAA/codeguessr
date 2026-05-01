@@ -265,11 +265,28 @@ function initSettings() {
   });
 
   // Delete Profile button
-  el('btn-delete-profile')?.addEventListener('click', () => {
+  el('btn-delete-profile')?.addEventListener('click', async () => {
     if (confirm("Sei sicuro di voler eliminare definitivamente il tuo profilo? Questa azione non può essere annullata.")) {
-      alert("Il profilo è stato eliminato con successo. (Mockup)");
-      localStorage.removeItem('isLoggedIn');
-      window.location.replace('/index.html');
+      try {
+        const { fetchAuth, clearSession } = await import('./auth.js');
+        const res = await fetchAuth('/api/profilo', { method: 'DELETE' });
+
+        if (res.ok) {
+          if (typeof showToast === 'function') {
+            showToast('Profilo eliminato con successo.', 'green');
+          } else {
+            alert('Profilo eliminato con successo.');
+          }
+          clearSession();
+          window.location.replace('/index.html');
+        } else {
+          const data = await res.json();
+          alert('Errore: ' + (data.errore || 'Impossibile eliminare il profilo.'));
+        }
+      } catch (err) {
+        console.error('Errore eliminazione profilo:', err);
+        alert('Si è verificato un errore durante l\'eliminazione del profilo.');
+      }
     }
   });
 }
