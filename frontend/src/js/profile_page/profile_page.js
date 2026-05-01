@@ -6,23 +6,23 @@
 
 import { getSession, fetchAuth } from '../managers/auth.js';
 
-window.handleProfileFriendAction = async function(action, targetUserId) {
+window.handleProfileFriendAction = async function (action, targetUserId) {
     let url = '';
     let method = 'POST'; // o PUT/DELETE a seconda di come hai fatto il backend
 
     // Mappa le azioni sulle tue rotte backend
-    switch(action) {
+    switch (action) {
         case 'aggiungi': url = `/api/invia-richiesta/${targetUserId}`; break;
-        case 'accetta':  url = `/api/accetta-richiesta/${targetUserId}`; method = 'PUT'; break;
-        case 'rifiuta':  url = `/api/rifiuta-richiesta/${targetUserId}`; method = 'DELETE'; break;
-        case 'annulla':  url = `/api/rifiuta-richiesta/${targetUserId}`; method = 'DELETE'; break;
-        case 'rimuovi':  url = `/api/rifiuta-richiesta/${targetUserId}`;  method = 'DELETE'; break;
+        case 'accetta': url = `/api/accetta-richiesta/${targetUserId}`; method = 'PUT'; break;
+        case 'rifiuta': url = `/api/rifiuta-richiesta/${targetUserId}`; method = 'DELETE'; break;
+        case 'annulla': url = `/api/rifiuta-richiesta/${targetUserId}`; method = 'DELETE'; break;
+        case 'rimuovi': url = `/api/rifiuta-richiesta/${targetUserId}`; method = 'DELETE'; break;
     }
 
     try {
         const res = await fetchAuth(url, { method: method });
         if (!res.ok) throw new Error('Errore durante l\'azione');
-        
+
         // Se va tutto a buon fine, ricarichiamo la pagina per aggiornare l'interfaccia!
         window.location.reload();
     } catch (err) {
@@ -42,7 +42,7 @@ function setXpProgress(pct, ringId = 'xp-ring-progress') {
     const r = 17;
     const circumference = 2 * Math.PI * r;
     const lastPct = lastPctMap.get(ringId) || 0;
-    
+
     if (pct < lastPct) {
         ring.style.transition = 'none';
         ring.style.strokeDashoffset = circumference;
@@ -50,7 +50,7 @@ function setXpProgress(pct, ringId = 'xp-ring-progress') {
         ring.style.transition = '';
     }
     lastPctMap.set(ringId, pct);
-    
+
     setTimeout(() => {
         ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
     }, 50);
@@ -99,7 +99,7 @@ function formatModalita(modalita) {
 function buildHistoryHTML(match) {
     const isWin = match.risultato === 'vittoria';
     const isDraw = match.risultato === 'pareggio';
-    
+
     let icon = 'bi-arrow-down-right';
     let resultClass = 'loss';
     let xpColor = 'text-darcula-red';
@@ -120,12 +120,17 @@ function buildHistoryHTML(match) {
     }
 
     const timeAgo = formatRelativeTime(match.data_fine || match.data_inizio);
-    
-    let modeLabel = formatModalita(match.modalita);
-    if (match.modalita === 'multiplayer') {
-        modeLabel = `Multiplayer vs @${match.opponent || 'Sconosciuto'}`;
-    } else {
-        modeLabel = 'Single Player';
+
+    let modeLabel = match.modalita === 'multiplayer' ? 'Multiplayer' : 'Single Player';
+    let opponentDisplay = match.modalita === 'multiplayer'
+        ? `<span class="history-opponent text-darcula-comment">vs <strong>@${match.opponent || 'Sconosciuto'}</strong></span>`
+        : '';
+
+    let trophiesHTML = '';
+    if (match.trofei_cambiati !== 0) {
+        const tColor = match.trofei_cambiati > 0 ? 'text-darcula-yellow' : 'text-darcula-red';
+        const tPrefix = match.trofei_cambiati > 0 ? '+' : '';
+        trophiesHTML = `<span class="${tColor} ms-2" style="font-size: 0.8rem;"><i class="bi bi-trophy-fill"></i> ${tPrefix}${match.trofei_cambiati}</span>`;
     }
 
     return `
@@ -133,8 +138,13 @@ function buildHistoryHTML(match) {
         <div class="d-flex align-items-center gap-3">
             <div class="history-result ${resultClass}"><i class="bi ${icon}"></i></div>
             <div>
-                <div class="history-lang text-darcula-fg fw-bold">${textResult}</div>
-                <div class="history-meta text-darcula-comment" style="font-size: 0.75rem;">${modeLabel}</div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="history-lang text-darcula-fg fw-bold">${textResult}</span>
+                    ${trophiesHTML}
+                </div>
+                <div class="history-meta text-darcula-comment" style="font-size: 0.75rem;">
+                    ${modeLabel} ${opponentDisplay}
+                </div>
             </div>
         </div>
         <div class="text-end">
@@ -146,7 +156,7 @@ function buildHistoryHTML(match) {
 
 function buildFriendHTML(friend) {
     const { userid, name, avatar, online, type } = friend;
-    
+
     let filterStyle = '';
     let statusClass = 'offline';
     let textClass = 'text-darcula-comment';
@@ -233,10 +243,10 @@ function renderFriends(friends) {
 function updateProfileUI(playerData) {
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? ''; };
 
-    
+
     // --- Profilo Principale ---
     setText('page-name', playerData.name);
-    
+
     const userIdEl = document.getElementById('page-userid');
     if (userIdEl) {
         userIdEl.textContent = playerData.id.slice(0, 8) + '…';
@@ -283,10 +293,10 @@ function updateProfileUI(playerData) {
 
 async function fetchFullProfileData(userId) {
     const session = getSession();
-    
+
     // Scegliamo la rotta giusta per le amicizie! Se sei tu, vedi tutto. Se è un altro, solo le confermate.
-    const amiciUrl = (userId === session.idGiocatore) 
-        ? `/api/mie-amicizie` 
+    const amiciUrl = (userId === session.idGiocatore)
+        ? `/api/mie-amicizie`
         : `/api/amicizie-confermate/${userId}`;
 
     // Fetch paralleli per ottimizzare i tempi di caricamento
@@ -300,9 +310,9 @@ async function fetchFullProfileData(userId) {
     if (!resProf.ok) throw new Error(`Profilo non trovato (${resProf.status})`);
     const dataProfilo = await resProf.json();
 
-    const dataStats   = resStats.ok  ? await resStats.json()  : { played: 0, won: 0, lost: 0, win_rate: 0 };
+    const dataStats = resStats.ok ? await resStats.json() : { played: 0, won: 0, lost: 0, win_rate: 0 };
     const dataStorico = resStorico.ok ? await resStorico.json() : [];
-    const amiciData   = resAmici.ok  ? await resAmici.json()  : { amici: [], inviate: [], ricevute: [] };
+    const amiciData = resAmici.ok ? await resAmici.json() : { amici: [], inviate: [], ricevute: [] };
 
     const avatar = dataProfilo.avatar_url
         ? dataProfilo.avatar_url
@@ -325,24 +335,24 @@ async function fetchFullProfileData(userId) {
     }));
 
     // Formattazione data_registrazione (se la usi)
-    const joinDate = typeof formatJoinDate === 'function' && dataProfilo.data_registrazione 
-        ? formatJoinDate(dataProfilo.data_registrazione) 
+    const joinDate = typeof formatJoinDate === 'function' && dataProfilo.data_registrazione
+        ? formatJoinDate(dataProfilo.data_registrazione)
         : '';
 
     return {
-        id:       dataProfilo.userid,
-        name:     dataProfilo.user,
-        level:    dataProfilo.livello,
-        xp:       dataProfilo.exp,
-        bio:      dataProfilo.bio || '',
+        id: dataProfilo.userid,
+        name: dataProfilo.user,
+        level: dataProfilo.livello,
+        xp: dataProfilo.exp,
+        bio: dataProfilo.bio || '',
         avatar,
         banner_url: dataProfilo.banner_url || null,
         joinDate: joinDate,
 
         stats: {
-            played:   dataStats.played   ?? 0,
-            won:      dataStats.won      ?? 0,
-            lost:     dataStats.lost     ?? 0,
+            played: dataStats.played ?? 0,
+            won: dataStats.won ?? 0,
+            lost: dataStats.lost ?? 0,
             win_rate: dataStats.win_rate ?? 0
         },
 
@@ -409,7 +419,7 @@ async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
         // 1. Scarichiamo le NOSTRE amicizie per capire in che rapporti siamo
         const res = await fetchAuth('/api/mie-amicizie');
         if (!res.ok) throw new Error('Errore nel recupero amicizie');
-        
+
         const mieAmicizie = await res.json();
 
         // 2. Cerchiamo il target nelle nostre tre liste
@@ -425,9 +435,9 @@ async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
         // 4. Trasformiamo il bottone in base allo stato!
         if (isAmico) {
             newBtn.innerHTML = '<i class="bi bi-person-x"></i> Rimuovi Amicizia';
-            newBtn.className = 'btn btn-outline-danger'; 
+            newBtn.className = 'btn btn-outline-danger';
             newBtn.onclick = () => handleProfileFriendAction('rimuovi', targetUserId);
-        } 
+        }
         else if (haInviatoLui) {
             // Se ce l'ha inviata lui, ci servono DUE bottoni: Accetta e Rifiuta!
             container.innerHTML = `
@@ -438,12 +448,12 @@ async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
                     <i class="bi bi-x-lg"></i> Rifiuta
                 </button>
             `;
-        } 
+        }
         else if (hoInviatoIo) {
             newBtn.innerHTML = '<i class="bi bi-clock-history"></i> Annulla Richiesta';
             newBtn.className = 'btn btn-outline-warning';
             newBtn.onclick = () => handleProfileFriendAction('annulla', targetUserId);
-        } 
+        }
         else {
             // Nessun rapporto: bottone per aggiungere
             newBtn.innerHTML = '<i class="bi bi-person-plus"></i> Aggiungi Amico';
@@ -457,7 +467,7 @@ async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
     }
 }
 // ─── Init ────────────────────────────────────────────────────────────────────
-async function updateNavbar(playerData){
+async function updateNavbar(playerData) {
     // --- Navbar Profile ---
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
@@ -467,8 +477,8 @@ async function updateNavbar(playerData){
 
     const navAvatar = document.getElementById('player-avatar');
     if (navAvatar) {
-        navAvatar.src = playerData.avatar_url 
-            ? playerData.avatar_url 
+        navAvatar.src = playerData.avatar_url
+            ? playerData.avatar_url
             : `${AVATAR_BASE}?seed=${playerData.userid}&backgroundColor=1e1f21`;
     }
 
@@ -489,42 +499,42 @@ async function initProfilePage() {
     console.log(`👤 2. Sessione attiva. Mio ID: ${session.idGiocatore}`);
 
     const risposta = await fetch(`/api/profilo/${session.idGiocatore}`);
-    
+
     // 2. Apri il pacchetto estraendo i dati veri (AWAIT e PARENTESI!)
     const playerData = await risposta.json();
     updateNavbar(playerData); // Aggiorna la navbar con i dati del giocatore
 
     try {
-        const urlPath = window.location.pathname; 
-        const pathParts = urlPath.split('/'); 
+        const urlPath = window.location.pathname;
+        const pathParts = urlPath.split('/');
         console.log(`🔗 3. URL Letto: ${urlPath} | Parti:`, pathParts);
-        
+
         let targetUserId = session.idGiocatore; // Di base, supponiamo di guardare il NOSTRO profilo
 
         // Se l'URL ha un nome (es: /profile/iavaaaaa), ALLORA e SOLO ALLORA facciamo la risoluzione
         if (pathParts.length >= 3 && pathParts[1] === 'profilo' && pathParts[2] !== '') {
-            const targetNickname = decodeURIComponent(pathParts[2]); 
+            const targetNickname = decodeURIComponent(pathParts[2]);
             console.log(`🔎 4. Trovato nickname nell'URL: "${targetNickname}". Inizio risoluzione...`);
-            
+
             try {
                 const res = await fetchAuth(`/api/profilo/nickname/${targetNickname}`);
                 if (!res.ok) throw new Error('Utente non trovato nel DB');
-                
+
                 const data = await res.json();
-                targetUserId = data.userid; 
+                targetUserId = data.userid;
                 console.log(`✅ 5. Risoluzione completata! "${targetNickname}" corrisponde all'ID: ${targetUserId}`);
 
             } catch (err) {
                 console.error(`❌ 5b. Errore risoluzione per "${targetNickname}":`, err);
                 console.log("🔄 Reindirizzamento al mio profilo base per evitare loop...");
                 // 👇 MODIFICATO QUI: ti rimanda a /profilo in caso di errore
-                window.location.href = '/profilo'; 
+                window.location.href = '/profilo';
                 return; // Ferma tutto per evitare loop!
             }
         } else {
             console.log("🏠 4. Nessun nickname nell'URL. Carico il mio profilo personale.");
         }
-        
+
 
         console.log(`📥 6. Chiamata a fetchFullProfileData per l'ID: ${targetUserId}`);
         const playerData = await fetchFullProfileData(targetUserId);
@@ -550,7 +560,7 @@ async function initProfilePage() {
                 await setupDynamicProfileButton(targetUserId, btnEditProfile);
             }
         }
-        
+
         // Heartbeat: segnala al server che siamo online ogni 10 secondi
         setInterval(async () => {
             try {
@@ -571,11 +581,11 @@ document.addEventListener('click', (event) => {
     // Verifica se l'elemento cliccato (o un suo genitore) ha la classe 'friend-name'
     // NOTA: Se nell'altro file hai usato 'profile-friend-name', aggiungilo qui nel closest!
     const nameElement = event.target.closest('.friend-name') || event.target.closest('.profile-friend-name');
-    
+
     if (nameElement) {
         // Estraiamo il testo pulito ignorando eventuali spazi vuoti
         const friendName = nameElement.textContent.trim();
-        
+
         if (friendName) {
             // Reindirizza l'utente alla pagina del profilo dell'amico!
             window.location.href = `/profilo/${encodeURIComponent(friendName)}`;

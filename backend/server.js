@@ -577,12 +577,19 @@ app.get('/api/storico/:id', async (req, res) => {
                 }
             }
 
+            let trophyChange = 0;
+            if (partita && partita.modalita === 'multiplayer') {
+                if (p.risultato === 'vittoria') trophyChange = 25;
+                else if (p.risultato === 'sconfitta') trophyChange = -15;
+            }
+
             return {
                 id_partita: partita?.id_partita,
                 modalita: partita?.modalita || 'singleplayer',
                 opponent: opponentName,
                 risultato: p.risultato || 'sconfitta',
                 exp_guadagnata: p.exp_guadagnata || 0,
+                trofei_cambiati: trophyChange,
                 data_inizio: partita?.data_inizio || null,
                 data_fine: partita?.data_fine || null
             };
@@ -977,7 +984,7 @@ app.post('/api/salva-partita', verificaToken, async (req, res) => {
         if (partecError) throw partecError;
 
         // Funzione helper per aggiornare un giocatore
-        async function updatePlayerStats(playerId, result, addedExp) {
+        async function updatePlayerStats(playerId, result, addedExp, awardTrophies = false) {
             const { data: prof, error: readErr } = await supabase
                 .from('giocatore')
                 .select('exp, livello, trophies')
@@ -991,8 +998,10 @@ app.post('/api/salva-partita', verificaToken, async (req, res) => {
             const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
             
             let trophyChange = 0;
-            if (result === 'vittoria') trophyChange = 25;
-            else if (result === 'sconfitta') trophyChange = -15;
+            if (awardTrophies) {
+                if (result === 'vittoria') trophyChange = 25;
+                else if (result === 'sconfitta') trophyChange = -15;
+            }
             
             const nuoviTrofei = Math.max(0, (prof.trophies || 0) + trophyChange);
 
@@ -1005,10 +1014,10 @@ app.post('/api/salva-partita', verificaToken, async (req, res) => {
         }
 
         // 3. Aggiorniamo le statistiche del/dei giocatore/i
-        const statsCasa = await updatePlayerStats(mioId, risultato, expGain);
+        const statsCasa = await updatePlayerStats(mioId, risultato, expGain, isMultiplayer);
         if (isMultiplayer) {
             const risultatoAvversario = risultato === 'vittoria' ? 'sconfitta' : (risultato === 'sconfitta' ? 'vittoria' : 'pareggio');
-            await updatePlayerStats(id_utente_trasferta, risultatoAvversario, risultatoAvversario === 'vittoria' ? 25 : 5);
+            await updatePlayerStats(id_utente_trasferta, risultatoAvversario, risultatoAvversario === 'vittoria' ? 25 : 5, true);
         }
 
         res.status(201).json({
