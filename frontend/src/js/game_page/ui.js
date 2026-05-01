@@ -131,7 +131,7 @@ function buildResultItem(player) {
     const safeUserId = player.userid;
     
     
-    const avatar = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
+    const avatar = player.avatar_url || `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
 
     // Controlliamo lo stato dalla nostra memoria
     const stato = relazioniUtente[safeName]?.stato || 'nessuno';
@@ -349,20 +349,22 @@ function initAddFriendSearch() {
                 if (listaAmiciContainer) {
                     // 🚀 NOVITÀ 1: Cerchiamo la vecchia richiesta in attesa nella sidebar ed eliminiamola!
                     const vecchiaRichiesta = document.getElementById(`sidebar-rel-${userid}`);
+                    let avatarAmico = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(userid)}&backgroundColor=1e1f21`;
+                    
                     if (vecchiaRichiesta) {
+                        const img = vecchiaRichiesta.querySelector('img');
+                        if (img && img.src) avatarAmico = img.src;
                         vecchiaRichiesta.remove();
                     }
-
-                    const avatarAmico = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(userid)}&backgroundColor=1e1f21`;
 
                     // Costruiamo il blocco HTML 
                     // 🚀 NOVITÀ 2: Ho aggiunto id="sidebar-rel-${userid}" al div principale per mantenere la coerenza
                     const nuovoAmicoHTML = `
-                        <div class="side-item friend-item" id="sidebar-rel-${userid}" bis_skin_checked="1">
-                        <div class="friend-info" bis_skin_checked="1">
-                            <div class="friend-avatar-wrapper" bis_skin_checked="1">
+                        <div class="side-item friend-item" id="sidebar-rel-${userid}">
+                        <div class="friend-info">
+                            <div class="friend-avatar-wrapper">
                             <img src="${avatarAmico}" alt="${username}" class="friend-avatar">
-                            <div class="status-dot online" bis_skin_checked="1"></div>
+                            <div class="status-dot online"></div>
                             </div>
                             <div class="friend-details" bis_skin_checked="1">
                             <span class="friend-name">${username}</span>

@@ -236,7 +236,12 @@ function updateProfileUI(playerData) {
     
     // --- Profilo Principale ---
     setText('page-name', playerData.name);
-    setText('page-userid', playerData.id.slice(0, 8) + '…');
+    
+    const userIdEl = document.getElementById('page-userid');
+    if (userIdEl) {
+        userIdEl.textContent = playerData.id.slice(0, 8) + '…';
+        userIdEl.dataset.fullId = playerData.id; // Salviamo l'ID intero per controlli di sicurezza (es: modifica profilo)
+    }
 
     const joinDateEl = document.getElementById('page-joindate');
     if (joinDateEl) joinDateEl.textContent = playerData.joinDate;
@@ -305,17 +310,17 @@ async function fetchFullProfileData(userId) {
 
     const amiciFormattati = amiciData.amici.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
         online: a.online || false, type: 'amico'
     }));
     const inviate = amiciData.inviate.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
         online: false, type: 'inviata'
     }));
     const ricevute = amiciData.ricevute.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
         online: false, type: 'ricevuta'
     }));
 
