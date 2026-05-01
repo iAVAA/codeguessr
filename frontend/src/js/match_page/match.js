@@ -16,6 +16,10 @@ let matchSaved = false;
 let currentSnippet = null;
 let monacoEditorInstance = null;
 let roundActive = false;   // Previene submit multipli nello stesso round
+let isMultiplayer = false;
+let roomCode = null;
+let socket = null;
+let opponentData = null;
 
 // ─── Bot Difficulty ─────────────────────────────────────────────────────────
 /**
@@ -423,6 +427,14 @@ async function handleSubmit(val) {
   setFormEnabled(false);
   setFeedback('<span class="spinner-border spinner-border-sm me-2" role="status"></span>Valutazione in corso...');
 
+  if (isMultiplayer) {
+    // In multiplayer, inviamo la risposta al server e aspettiamo l'evento roundResult
+    socket.emit('submitMultiplayerAnswer', { roomCode, answer: val });
+    setFeedback('<i class="bi bi-hourglass-split me-1"></i>In attesa dell\'altro giocatore...');
+    return;
+  }
+
+  // LOGICA SINGLE PLAYER (esistente)
   try {
     const res = await fetch('/api/valuta-risposta', {
       method: 'POST',
@@ -458,7 +470,6 @@ async function handleSubmit(val) {
     }
   } catch (err) {
     console.error('[Match] Errore valutazione:', err);
-    // In caso di errore rete, trattiamo come timeout
     const botScore = rollBotScore();
     setFeedback(
       `<i class="bi bi-wifi-off me-1"></i>Errore di connessione. Il bot segna ${botScore}. Perdi <b>${botScore} HP</b>.`,
@@ -467,19 +478,16 @@ async function handleSubmit(val) {
     reduceHealth('p1', botScore);
   }
 
-  // Controlla se qualcuno è morto (KO anticipato)
   if (myHealth <= 0 || oppHealth <= 0) {
     setTimeout(showEndGame, 1800);
     return;
   }
 
-  // Fine partita dopo l'ultimo round
   if (currentRound >= TOTAL_ROUNDS) {
     setTimeout(showEndGame, 1800);
     return;
   }
 
-  // Prossimo round
   currentRound++;
   setTimeout(startRound, 2200);
 }
@@ -488,6 +496,17 @@ function handleTimeOut() {
   if (!roundActive) return;
   roundActive = false;
 
+  stopTimer();
+  setFormEnabled(false);
+
+  if (isMultiplayer) {
+    // In multiplayer, inviamo risposta vuota per timeout
+    socket.emit('submitMultiplayerAnswer', { roomCode, answer: "" });
+    setFeedback('<i class="bi bi-alarm-fill me-1"></i>Tempo Scaduto! Valutazione in corso...');
+    return;
+  }
+
+  // LOGICA SINGLE PLAYER (esistente)
   const botScore = rollBotScore();
   setFeedback(
     `<i class="bi bi-alarm-fill me-1"></i>Tempo Scaduto! (Tu: 0, Bot: ${botScore})<br>Perdi <b>${botScore} HP</b>.`,
@@ -533,19 +552,28 @@ async function loadProfiles() {
   document.getElementById('match-p1-cups').textContent = 0;
   document.getElementById('match-p1-avatar').src = `${AVATAR_BASE}?seed=guest&backgroundColor=1e1f21`;
 
-  // Bot avversario con nome basato sulla difficoltà
-  const { difficulty } = (() => {
-    try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { return {}; }
-  })();
-  const botNames = { easy: 'EasyBot 🤖', normal: 'CodeBot 🤖', hard: 'HardCore 🤖' };
-  const botLvls = { easy: 5, normal: 25, hard: 99 };
-  const botCups = { easy: 400, normal: 2800, hard: 9999 };
-  const diff = difficulty ?? 'normal';
+  // Bot avversario o giocatore reale in multiplayer
+  if (isMultiplayer && opponentData) {
+    document.getElementById('match-p2-name').textContent = opponentData.nickname;
+    document.getElementById('match-p2-lvl').textContent = opponentData.livello || '--';
+    document.getElementById('match-p2-cups').textContent = opponentData.trophies || '--';
+    document.getElementById('match-p2-avatar').src = opponentData.avatar_url 
+        ? opponentData.avatar_url 
+        : `${AVATAR_BASE}?seed=${opponentData.id}&backgroundColor=1e1f21`;
+  } else {
+    const { difficulty } = (() => {
+      try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { return {}; }
+    })();
+    const botNames = { easy: 'EasyBot 🤖', normal: 'CodeBot 🤖', hard: 'HardCore 🤖' };
+    const botLvls = { easy: 5, normal: 25, hard: 99 };
+    const botCups = { easy: 400, normal: 2800, hard: 9999 };
+    const diff = difficulty ?? 'normal';
 
-  document.getElementById('match-p2-name').textContent = botNames[diff] || 'CodeBot 🤖';
-  document.getElementById('match-p2-lvl').textContent = botLvls[diff] || 25;
-  document.getElementById('match-p2-cups').textContent = botCups[diff] || 2800;
-  document.getElementById('match-p2-avatar').src = `${AVATAR_BASE}?seed=${oppSeed}&backgroundColor=1e1f21`;
+    document.getElementById('match-p2-name').textContent = botNames[diff] || 'CodeBot 🤖';
+    document.getElementById('match-p2-lvl').textContent = botLvls[diff] || 25;
+    document.getElementById('match-p2-cups').textContent = botCups[diff] || 2800;
+    document.getElementById('match-p2-avatar').src = `${AVATAR_BASE}?seed=${oppSeed}&backgroundColor=1e1f21`;
+  }
 
   // Carica profilo reale dal DB
   if (isLoggedIn && idGiocatore) {
@@ -571,12 +599,153 @@ async function loadProfiles() {
 
 async function init() {
   console.log('[Match] Inizializzazione partita...');
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  roomCode = urlParams.get('room');
+  isMultiplayer = !!roomCode;
+
+  if (isMultiplayer) {
+    const session = getSession();
+    socket = io({
+        auth: { token: session.token }
+    });
+
+    socket.on('connect', () => {
+        console.log("✅ Connesso al server multiplayer per la stanza:", roomCode);
+        socket.emit('joinRoom', roomCode);
+    });
+
+    socket.on('matchInfo', (data) => {
+        opponentData = data.players.find(p => p.id !== session.idGiocatore);
+        loadProfiles();
+        setFeedback("In attesa dell'altro giocatore...");
+    });
+
+    socket.on('startRound', async (data) => {
+        console.log("🚀 Inizio Round Multiplayer:", data.round);
+        currentRound = data.round;
+        currentSnippet = data.snippet;
+        updateRoundLabel();
+        
+        // Reset UI per il nuovo round
+        setFeedback(''); // Rimuoviamo il testo di stato precedente
+        setFormEnabled(false);
+        const input = document.getElementById('guess-input');
+        if (input) input.value = '';
+
+        // Aspettiamo che il loader del sito sia chiuso prima di inizializzare Monaco
+        await waitForLoader();
+
+        if (!monacoEditorInstance) {
+            await initMonacoEditor(currentSnippet);
+        } else {
+            setEditorContent(currentSnippet);
+        }
+        
+        await runCountdown();
+        
+        roundActive = true;
+        setFormEnabled(true);
+        startTimer();
+    });
+
+    socket.on('roundResult', (data) => {
+        const session = getSession();
+        const myScore = data.scores[session.idGiocatore];
+        const oppId = opponentData?.id;
+        const oppScore = data.scores[oppId];
+        const damage = data.damage;
+
+        stopTimer();
+        setFormEnabled(false);
+
+        // Aggiorna vite
+        myHealth = data.healths[session.idGiocatore];
+        oppHealth = data.healths[oppId];
+        updateHealthBars();
+
+        if (data.winnerId === session.idGiocatore) {
+            setFeedback(
+                `<i class="bi bi-check-circle-fill me-1"></i>Spiegazione superiore! (Tu: <b>${myScore}</b>, Avversario: ${oppScore})<br>L'avversario perde <b>${damage} HP</b>.`,
+                'text-success'
+            );
+        } else if (data.winnerId === oppId) {
+            setFeedback(
+                `<i class="bi bi-exclamation-circle-fill me-1"></i>L'avversario ha spiegato meglio! (Tu: <b>${myScore}</b>, Avversario: ${oppScore})<br>Perdi <b>${damage} HP</b>.`,
+                'text-danger'
+            );
+        } else {
+            setFeedback(
+                `<i class="bi bi-dash-circle-fill me-1"></i>Pareggio! Entrambi <b>${myScore}</b>. Nessun danno.`,
+                'text-warning'
+            );
+        }
+    });
+
+    socket.on('matchFinished', (data) => {
+        showEndGameMultiplayer(data);
+    });
+
+    socket.on('error', (data) => {
+        if (typeof showToast === 'function') showToast(data.message, "red");
+    });
+  }
+
   try {
     await loadProfiles();
-    await startRound();
+    if (!isMultiplayer) {
+      await startRound();
+    }
   } catch (e) {
     console.error('[Match] Errore durante init:', e);
   }
+}
+
+function updateHealthBars() {
+    const p1Bar = document.getElementById(`match-p1-health`);
+    const p1Text = document.getElementById(`match-p1-hp`);
+    const p2Bar = document.getElementById(`match-p2-health`);
+    const p2Text = document.getElementById(`match-p2-hp`);
+
+    if (p1Bar && p1Text) {
+        p1Bar.style.width = `${myHealth}%`;
+        p1Text.textContent = myHealth;
+    }
+    if (p2Bar && p2Text) {
+        p2Bar.style.width = `${oppHealth}%`;
+        p2Text.textContent = oppHealth;
+    }
+}
+
+function showEndGameMultiplayer(data) {
+    const session = getSession();
+    const isWinner = data.winner === session.idGiocatore;
+    const isDraw = data.winner === null;
+
+    stopTimer();
+    setFormEnabled(false);
+
+    let title = isWinner ? 'VITTORIA!' : (isDraw ? 'PAREGGIO!' : 'SCONFITTA');
+    let icon = isWinner ? 'bi-trophy-fill' : (isDraw ? 'bi-shield-fill-check' : 'bi-x-octagon-fill');
+    let badgeClass = isWinner ? 'end-result--win' : (isDraw ? 'end-result--draw' : 'end-result--lose');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'end-game-overlay';
+    overlay.className = 'end-game-overlay d-flex flex-column align-items-center justify-content-center';
+    overlay.innerHTML = `
+      <div class="end-game-card ${badgeClass} p-4 p-lg-5 text-center d-flex flex-column align-items-center gap-3">
+        <i class="bi ${icon} end-game-icon"></i>
+        <h1 class="end-game-title">${title}</h1>
+        <p class="end-game-subtitle">${isWinner ? 'Hai dominato la sfida!' : 'Sarà per la prossima volta!'}</p>
+        <div class="d-flex gap-3 mt-2 flex-wrap justify-content-center">
+          <a href="/home" class="btn btn-outline-light rounded-pill px-4 py-2">
+            <i class="bi bi-house-fill me-2"></i>Home
+          </a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('visible'));
 }
 
 init();

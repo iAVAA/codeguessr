@@ -1,11 +1,20 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
 const path = require('path');
 const { createClient } = require("@supabase/supabase-js");
 const cors = require('cors');
 
 // non so se serve ma è meglio metterlo subito per evitare problemi di CORS con il frontend in sviluppo 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: '*', // In produzione specifica l'URL esatto
+        methods: ['GET', 'POST']
+    }
+});
 app.use(cors({
     origin: 'http://localhost:3000', // ← l'URL del tuo frontend
     allowedHeaders: ['Authorization', 'Content-Type'] // ← fondamentale
@@ -921,115 +930,118 @@ app.get('/api/missioni/:id', async (req, res) => {
  * Body: { modalita, risultato, exp_guadagnata }
  * Richiede autenticazione (Bearer token).
  */
-app.post('/api/salva-partita', verificaToken, async (req, res) => {
-    const mioId = req.utenteId;
-    const { modalita, risultato, exp_guadagnata, id_utente_trasferta } = req.body;
-
-    // Validazione campi obbligatori
-    if (!modalita || !risultato) {
-        return res.status(400).json({ errore: 'modalita e risultato sono obbligatori.' });
-    }
-
-    const expGain = Math.max(0, parseInt(exp_guadagnata, 10) || 0);
-    const isMultiplayer = modalita === 'multiplayer' && id_utente_trasferta;
-
+// Helper per salvare la partita nel database
+// Helper per salvare la partita nel database
+async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_utente_trasferta = null) {
     try {
-        // 1. Creiamo la riga nella tabella partita
-        const partitaInsert = {
-            modalita,
-            stato: 'terminata',
-            data_fine: new Date().toISOString(),
-            id_utente_casa: mioId
-        };
-        if (isMultiplayer) {
-            partitaInsert.id_utente_trasferta = id_utente_trasferta;
-        }
+        const isMultiplayer = modalita === 'multiplayer' && id_utente_trasferta;
 
+        // 1. Creiamo la riga nella tabella partita (una sola per match)
         const { data: partitaData, error: partitaError } = await supabase
             .from('partita')
-            .insert([partitaInsert])
+            .insert([{
+                modalita,
+                stato: 'terminata',
+                data_fine: new Date().toISOString(),
+                id_utente_casa: mioId,
+                id_utente_trasferta: id_utente_trasferta
+            }])
             .select()
             .single();
 
         if (partitaError) throw partitaError;
-
         const idPartita = partitaData.id_partita;
 
-        // 2. Creiamo le righe in partecipazione
+        // 2. Creiamo le partecipazioni
         const partecipazioni = [{
             id_partita: idPartita,
             id_giocatore: mioId,
-            risultato,
-            exp_guadagnata: expGain
+            risultato: risultato,
+            exp_guadagnata: exp_guadagnata
         }];
 
         if (isMultiplayer) {
-            // Logica inversa per l'avversario
-            let risultatoAvversario = 'pareggio';
-            if (risultato === 'vittoria') risultatoAvversario = 'sconfitta';
-            else if (risultato === 'sconfitta') risultatoAvversario = 'vittoria';
-
+            const risultatoAvv = risultato === 'vittoria' ? 'sconfitta' : (risultato === 'sconfitta' ? 'vittoria' : 'pareggio');
+            const expAvv = risultatoAvv === 'vittoria' ? 100 : (risultatoAvv === 'pareggio' ? 50 : 20);
             partecipazioni.push({
                 id_partita: idPartita,
                 id_giocatore: id_utente_trasferta,
-                risultato: risultatoAvversario,
-                exp_guadagnata: risultatoAvversario === 'vittoria' ? 25 : 5 // Esempio fisso per avversario
+                risultato: risultatoAvv,
+                exp_guadagnata: expAvv
             });
         }
 
-        const { error: partecError } = await supabase
-            .from('partecipazione')
-            .insert(partecipazioni);
+        await supabase.from('partecipazione').insert(partecipazioni);
 
-        if (partecError) throw partecError;
-
-        // Funzione helper per aggiornare un giocatore
-        async function updatePlayerStats(playerId, result, addedExp, awardTrophies = false) {
-            const { data: prof, error: readErr } = await supabase
-                .from('giocatore')
-                .select('exp, livello, trophies')
-                .eq('id_giocatore', playerId)
-                .single();
-
-            if (readErr) return null;
-
-            const EXP_PER_LEVEL = 1000;
-            const nuovaExp = (prof.exp || 0) + addedExp;
-            const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
-            
-            let trophyChange = 0;
-            if (awardTrophies) {
-                if (result === 'vittoria') trophyChange = 25;
-                else if (result === 'sconfitta') trophyChange = -15;
-            }
-            
-            const nuoviTrofei = Math.max(0, (prof.trophies || 0) + trophyChange);
-
-            await supabase
-                .from('giocatore')
-                .update({ exp: nuovaExp, livello: nuovoLivello, trophies: nuoviTrofei })
-                .eq('id_giocatore', playerId);
-
-            return { nuovaExp, nuovoLivello, nuoviTrofei };
-        }
-
-        // 3. Aggiorniamo le statistiche del/dei giocatore/i
-        const statsCasa = await updatePlayerStats(mioId, risultato, expGain, isMultiplayer);
+        // 3. Aggiorniamo le statistiche
+        const statsCasa = await updatePlayerStats(mioId, risultato, exp_guadagnata, isMultiplayer);
         if (isMultiplayer) {
-            const risultatoAvversario = risultato === 'vittoria' ? 'sconfitta' : (risultato === 'sconfitta' ? 'vittoria' : 'pareggio');
-            await updatePlayerStats(id_utente_trasferta, risultatoAvversario, risultatoAvversario === 'vittoria' ? 25 : 5, true);
+            const risultatoAvv = risultato === 'vittoria' ? 'sconfitta' : (risultato === 'sconfitta' ? 'vittoria' : 'pareggio');
+            const expAvv = risultatoAvv === 'vittoria' ? 100 : (risultatoAvv === 'pareggio' ? 50 : 20);
+            await updatePlayerStats(id_utente_trasferta, risultatoAvv, expAvv, true);
         }
 
-        res.status(201).json({
-            messaggio: 'Partita salvata con successo!',
-            id_partita: idPartita,
-            nuova_exp: statsCasa?.nuovaExp || 0,
-            nuovo_livello: statsCasa?.nuovoLivello || 1,
-            nuovi_trofei: statsCasa?.nuoviTrofei || 0
-        });
-
+        return { idPartita, statsCasa };
     } catch (err) {
         console.error("Errore salvataggio partita:", err.message);
+        throw err;
+    }
+}
+
+// Funzione helper per aggiornare un giocatore
+async function updatePlayerStats(playerId, result, addedExp, awardTrophies = false) {
+    try {
+        const { data: prof, error: readErr } = await supabase
+            .from('giocatore')
+            .select('exp, livello, trophies')
+            .eq('id_giocatore', playerId)
+            .single();
+
+        if (readErr) return null;
+
+        const EXP_PER_LEVEL = 1000;
+        const nuovaExp = (prof.exp || 0) + addedExp;
+        const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
+        
+        let trophyChange = 0;
+        if (awardTrophies) {
+            if (result === 'vittoria') trophyChange = 25;
+            else if (result === 'sconfitta') trophyChange = -15;
+            else trophyChange = 5; // Pareggio
+        }
+        
+        const nuoviTrofei = Math.max(0, (prof.trophies || 0) + trophyChange);
+
+        await supabase
+            .from('giocatore')
+            .update({ exp: nuovaExp, livello: nuovoLivello, trophies: nuoviTrofei })
+            .eq('id_giocatore', playerId);
+
+        return { nuovaExp, nuovoLivello, nuoviTrofei, trophyChange };
+    } catch (e) {
+        console.error("Errore updatePlayerStats:", e);
+        return null;
+    }
+}
+
+app.post('/api/salva-partita', verificaToken, async (req, res) => {
+    const mioId = req.utenteId;
+    const { modalita, risultato, exp_guadagnata, id_utente_trasferta } = req.body;
+
+    if (!modalita || !risultato) {
+        return res.status(400).json({ errore: 'modalita e risultato sono obbligatori.' });
+    }
+
+    try {
+        const resultData = await saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_utente_trasferta);
+        res.status(201).json({
+            messaggio: 'Partita salvata con successo!',
+            id_partita: resultData.idPartita,
+            nuova_exp: resultData.statsCasa?.nuovaExp || 0,
+            nuovo_livello: resultData.statsCasa?.nuovoLivello || 1,
+            nuovi_trofei: resultData.statsCasa?.nuoviTrofei || 0
+        });
+    } catch (err) {
         res.status(500).json({ errore: 'Impossibile salvare la partita.' });
     }
 });
@@ -1267,71 +1279,65 @@ const GITHUB_QUERIES = [
  * GET /api/random-snippet
  * Cerca un file di codice casuale su GitHub e lo formatta per il frontend.
  */
+async function getRandomSnippet() {
+    if (!process.env.GITHUB_TOKEN) {
+        throw new Error('GITHUB_TOKEN non configurato');
+    }
+
+    const queryObj = GITHUB_QUERIES[Math.floor(Math.random() * GITHUB_QUERIES.length)];
+    const page = Math.floor(Math.random() * 3) + 1;
+
+    const headers = {
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'CodeGuessr-Server',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Authorization': `token ${process.env.GITHUB_TOKEN}`
+    };
+
+    const keywords = queryObj.q.split('language:')[0].trim();
+    const codeSearchQuery = `${keywords} extension:${queryObj.ext}`;
+    const codeSearchUrl = `https://api.github.com/search/code?q=${encodeURIComponent(codeSearchQuery)}&per_page=30&page=${page}`;
+
+    const codeRes = await fetch(codeSearchUrl, { headers });
+    if (!codeRes.ok) throw new Error(`Code search failed: ${codeRes.status}`);
+
+    const codeData = await codeRes.json();
+    if (!codeData.items || codeData.items.length === 0) {
+        throw new Error(`Nessun file trovato per la query: ${codeSearchQuery}`);
+    }
+
+    const file = codeData.items[Math.floor(Math.random() * codeData.items.length)];
+    const repoFullName = file.repository.full_name;
+
+    const contentRes = await fetch(file.url, { headers });
+    if (!contentRes.ok) throw new Error(`Content fetch failed: ${contentRes.status}`);
+    const contentData = await contentRes.json();
+
+    let rawCode = Buffer.from(contentData.content, 'base64').toString('utf-8');
+    const lines = rawCode.split('\n');
+    if (lines.length > 40) {
+        const start = lines.findIndex(l => l.trim().length > 0);
+        rawCode = lines.slice(start > -1 ? start : 0, (start > -1 ? start : 0) + 40).join('\n');
+    }
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    const monacoLang = EXT_TO_MONACO[ext] || 'plaintext';
+
+    return {
+        code: rawCode,
+        monacoLang,
+        source: `${repoFullName} — ${file.path}`,
+        fileUrl: file.html_url
+    };
+}
+
 app.get('/api/random-snippet', async (req, res) => {
     try {
-        if (!process.env.GITHUB_TOKEN) {
-            console.error("[Backend] ERRORE: GITHUB_TOKEN non trovato nel file .env!");
-            return res.status(500).json({ errore: 'Configurazione server mancante' });
-        }
-
-        const queryObj = GITHUB_QUERIES[Math.floor(Math.random() * GITHUB_QUERIES.length)];
-        const page = Math.floor(Math.random() * 3) + 1;
-
-        const headers = {
-            'Accept': 'application/vnd.github+json',
-            'User-Agent': 'CodeGuessr-Server',
-            'X-GitHub-Api-Version': '2022-11-28',
-            'Authorization': `token ${process.env.GITHUB_TOKEN}`
-        };
-
-        // 1. Estrai solo le parole chiave (es. "sort algorithm language:python" diventa "sort algorithm")
-        const keywords = queryObj.q.split('language:')[0].trim();
-
-        // 2. Ricerca GLOBALE direttamente nei file di codice (come nel tuo script Python)
-        const codeSearchQuery = `${keywords} extension:${queryObj.ext}`;
-        const codeSearchUrl = `https://api.github.com/search/code?q=${encodeURIComponent(codeSearchQuery)}&per_page=30&page=${page}`;
-
-        const codeRes = await fetch(codeSearchUrl, { headers });
-        if (!codeRes.ok) throw new Error(`Code search failed: ${codeRes.status} - ${await codeRes.text()}`);
-
-        const codeData = await codeRes.json();
-        if (!codeData.items || codeData.items.length === 0) {
-            throw new Error(`Nessun file trovato per la query: ${codeSearchQuery}`);
-        }
-
-        // 3. Prendi un file a caso dai risultati globali
-        const file = codeData.items[Math.floor(Math.random() * codeData.items.length)];
-        const repoFullName = file.repository.full_name; // L'API ci fornisce già il nome del repo qui
-
-        // 4. Scarica il contenuto usando l'API ufficiale (Base64)
-        const contentRes = await fetch(file.url, { headers });
-        if (!contentRes.ok) throw new Error(`Content fetch failed: ${contentRes.status} - ${await contentRes.text()}`);
-        const contentData = await contentRes.json();
-
-        // 5. Decodifica il Base64 in testo leggibile
-        let rawCode = Buffer.from(contentData.content, 'base64').toString('utf-8');
-
-        // 6. Tronca a ~40 righe
-        const lines = rawCode.split('\n');
-        if (lines.length > 40) {
-            const start = lines.findIndex(l => l.trim().length > 0);
-            rawCode = lines.slice(start > -1 ? start : 0, (start > -1 ? start : 0) + 40).join('\n');
-        }
-
-        // 7. Determina il linguaggio per Monaco Editor
-        const ext = file.name.split('.').pop().toLowerCase();
-        const monacoLang = EXT_TO_MONACO[ext] || 'plaintext';
-
-        res.status(200).json({
-            code: rawCode,
-            monacoLang,
-            source: `${repoFullName} — ${file.path}`,
-            fileUrl: file.html_url
-        });
-
+        const snippet = await getRandomSnippet();
+        res.status(200).json(snippet);
     } catch (error) {
-        console.error("[Backend] Errore fetch snippet GitHub:", error.message);
-        res.status(500).json({ errore: 'Impossibile recuperare lo snippet da GitHub' });
+        console.error("[Backend] Errore fetch snippet:", error.message);
+        res.status(500).json({ errore: 'Impossibile recuperare lo snippet' });
     }
 });
 
@@ -1426,18 +1432,9 @@ app.post('/api/upload/banner', handleImageUpload('user_banners'));
  *   - punteggio: intero 0–100
  *   - linguaggio: nome del linguaggio rilevato dall'AI (es. "JavaScript")
  */
-app.post('/api/valuta-risposta', async (req, res) => {
-    const { snippet, risposta } = req.body;
-
-    // Validazione campi obbligatori
-    if (!snippet || !risposta) {
-        return res.status(400).json({ errore: 'snippet e risposta sono obbligatori.' });
-    }
-
-    const prompt = `Sei un valutatore esperto per un gioco in cui i giocatori devono spiegare cosa fa un dato frammento di codice.
-La domanda a cui il giocatore deve rispondere è: "Cosa fa questo codice?".
-
-Analizza il seguente frammento di codice:
+// Funzione helper per valutare la risposta tramite AI
+async function evaluateAnswer(snippet, risposta) {
+    const prompt = `Analizza il seguente codice sorgente:
 
 \`\`\`
 ${snippet}
@@ -1457,7 +1454,6 @@ Rispondi ESCLUSIVAMENTE con un oggetto JSON valido nel seguente formato, senza b
 
     try {
         const client = await getOpenRouter();
-
         const completion = await client.chat.send({
             chatRequest: {
                 model: 'openai/gpt-4o-mini',
@@ -1466,33 +1462,391 @@ Rispondi ESCLUSIVAMENTE con un oggetto JSON valido nel seguente formato, senza b
             }
         });
 
-        // Il campo della risposta dipende dalla versione dell'SDK
         const chatResult = completion.chatCompletion ?? completion;
         let rawOutput = chatResult.choices[0].message.content.trim();
-
-        // Pulizia preventiva: rimuove eventuali backtick markdown se l'LLM li inserisce per errore
         rawOutput = rawOutput.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
 
-        let punteggio;
-        try {
-            const parsed = JSON.parse(rawOutput);
-            punteggio = Math.min(100, Math.max(0, parseInt(parsed.punteggio, 10)));
-        } catch (parseErr) {
-            console.error('[OpenRouter] Output non parsabile come JSON:', rawOutput);
-            return res.status(500).json({ errore: 'Risposta non valida da OpenRouter.' });
-        }
+        const parsed = JSON.parse(rawOutput);
+        return Math.min(100, Math.max(0, parseInt(parsed.punteggio, 10)));
+    } catch (err) {
+        console.error('[Evaluation] Errore:', err.message);
+        throw err;
+    }
+}
 
-        if (isNaN(punteggio)) {
-            console.error('[OpenRouter] Punteggio non numerico nel JSON:', rawOutput);
-            return res.status(500).json({ errore: 'Punteggio non valido elaborato dall\'AI.' });
-        }
+app.post('/api/valuta-risposta', async (req, res) => {
+    const { snippet, risposta } = req.body;
+    if (!snippet || !risposta) {
+        return res.status(400).json({ errore: 'Dati mancanti.' });
+    }
 
+    try {
+        const punteggio = await evaluateAnswer(snippet, risposta);
         res.status(200).json({ punteggio });
-
     } catch (err) {
         console.error('[OpenRouter] Errore valutazione risposta:', err.message);
         res.status(500).json({ errore: 'Errore durante la valutazione della risposta.' });
     }
+});
+
+// ==========================================
+// LOGICA MULTIPLAYER (Socket.io)
+// ==========================================
+
+const matchmakingQueue = [];
+const privateRooms = new Map(); // codice -> { idPartita, giocatori: [], unranked: false }
+const activeMatches = new Map(); // roomCode -> { players: [], unranked: false }
+
+// Middleware per autenticazione socket
+io.use(async (socket, next) => {
+    try {
+        const token = socket.handshake.auth.token;
+        if (!token) return next(new Error('Autenticazione fallita: Token mancante'));
+
+        const cleanToken = token.replace(/['"]/g, '');
+        const { data: authData, error } = await supabase.auth.getUser(cleanToken);
+
+        if (error || !authData.user) {
+            return next(new Error('Autenticazione fallita: Token non valido'));
+        }
+
+        socket.userId = authData.user.id;
+        
+        // Recuperiamo il nickname dal DB
+        const { data: profile } = await supabase
+            .from('giocatore')
+            .select('nickname, avatar_url, livello, trophies')
+            .eq('id_giocatore', socket.userId)
+            .single();
+            
+        socket.nickname = profile?.nickname || 'Sconosciuto';
+        socket.avatar_url = profile?.avatar_url || null;
+        socket.livello = profile?.livello || 1;
+        socket.trophies = profile?.trophies || 0;
+        next();
+    } catch (err) {
+        next(new Error('Errore durante l\'autenticazione'));
+    }
+});
+
+io.on('connection', (socket) => {
+    console.log(`[Socket] Utente connesso: ${socket.nickname} (${socket.userId})`);
+
+    // Invia il numero di giocatori online
+    io.emit('statsUpdate', { onlinePlayers: io.engine.clientsCount });
+
+    // 1. MATCHMAKING ONLINE (Gioca Online)
+    socket.on('startMatchmaking', () => {
+        console.log(`[Matchmaking] ${socket.nickname} è entrato in coda.`);
+        
+        // Evita duplicati in coda
+        if (matchmakingQueue.find(s => s.userId === socket.userId)) return;
+
+        if (matchmakingQueue.length > 0) {
+            // Match trovato!
+            const opponent = matchmakingQueue.shift();
+            const roomCode = `MATCH_${Math.random().toString(36).substring(2, 9)}`;
+            
+            socket.join(roomCode);
+            opponent.join(roomCode);
+
+            const matchData = {
+                roomCode,
+                players: [
+                    { id: socket.userId, nickname: socket.nickname, avatar_url: socket.avatar_url, livello: socket.livello, trophies: socket.trophies },
+                    { id: opponent.userId, nickname: opponent.nickname, avatar_url: opponent.avatar_url, livello: opponent.livello, trophies: opponent.trophies }
+                ],
+                unranked: false,
+                answers: {}
+            };
+
+            activeMatches.set(roomCode, matchData);
+            io.to(roomCode).emit('matchFound', matchData);
+            console.log(`[Matchmaking] Partita creata tra ${socket.nickname} e ${opponent.nickname}`);
+        } else {
+            matchmakingQueue.push(socket);
+        }
+    });
+
+    socket.on('cancelMatchmaking', () => {
+        const idx = matchmakingQueue.findIndex(s => s.id === socket.id);
+        if (idx !== -1) matchmakingQueue.splice(idx, 1);
+    });
+
+    // 2. STANZA PRIVATA (Codice a 5 cifre)
+    socket.on('createPrivateRoom', () => {
+        const code = Math.floor(10000 + Math.random() * 90000).toString();
+        privateRooms.set(code, {
+            host: { id: socket.userId, nickname: socket.nickname },
+            giocatori: [{ 
+                id: socket.userId, 
+                nickname: socket.nickname, 
+                socketId: socket.id,
+                avatar_url: socket.avatar_url,
+                livello: socket.livello,
+                trophies: socket.trophies
+            }],
+            unranked: false
+        });
+        
+        socket.join(`ROOM_${code}`);
+        socket.emit('roomCreated', { code });
+        console.log(`[Room] Stanza privata creata: ${code} da ${socket.nickname}`);
+    });
+
+    socket.on('joinPrivateRoom', (code) => {
+        const room = privateRooms.get(code);
+        if (!room) {
+            return socket.emit('error', { message: 'Stanza non trovata' });
+        }
+        if (room.giocatori.length >= 2) {
+            return socket.emit('error', { message: 'Stanza piena' });
+        }
+
+        room.giocatori.push({ 
+            id: socket.userId, 
+            nickname: socket.nickname, 
+            socketId: socket.id,
+            avatar_url: socket.avatar_url,
+            livello: socket.livello,
+            trophies: socket.trophies
+        });
+        socket.join(`ROOM_${code}`);
+
+        const matchData = {
+            roomCode: `ROOM_${code}`,
+            players: room.giocatori.map(g => ({
+                id: g.id,
+                nickname: g.nickname,
+                avatar_url: g.avatar_url,
+                livello: g.livello,
+                trophies: g.trophies
+            })),
+            unranked: room.unranked,
+            answers: {}
+        };
+
+        activeMatches.set(matchData.roomCode, matchData);
+        io.to(`ROOM_${code}`).emit('matchFound', matchData);
+        
+        privateRooms.delete(code); // Rimuovi dalla lista stanze una volta avviata
+        console.log(`[Room] ${socket.nickname} è entrato nella stanza ${code}`);
+    });
+
+    // 3. SFIDA AMICI (Unranked)
+    // Nota: Questa logica viene solitamente attivata da un invito.
+    // Per ora creiamo una stanza speciale unranked.
+    // --- Sincronizzazione Match ---
+    socket.on('joinRoom', (code) => {
+        const match = activeMatches.get(code);
+        if (match) {
+            socket.join(code);
+            
+            // Aggiorna lo stato del giocatore (connesso alla partita)
+            const player = match.players.find(p => p.id === socket.userId);
+            if (player) {
+                player.socketId = socket.id;
+                player.ready = true;
+                player.health = 100;
+            }
+
+            socket.emit('matchInfo', match);
+            console.log(`[Room] ${socket.nickname} è rientrato nella stanza ${code}`);
+
+            // Se entrambi sono pronti, iniziamo la partita
+            const allReady = match.players.every(p => p.ready);
+            if (allReady && !match.started) {
+                match.started = true;
+                match.currentRound = 1;
+                match.maxRounds = 5;
+                startMultiplayerRound(code);
+            }
+        } else {
+            socket.emit('error', { message: 'Partita non trovata o terminata' });
+        }
+    });
+
+    async function startMultiplayerRound(roomCode) {
+        const match = activeMatches.get(roomCode);
+        if (!match) return;
+
+        console.log(`[Match] Inizio Round ${match.currentRound} per ${roomCode}`);
+        
+        try {
+            const snippet = await getRandomSnippet(); 
+            match.currentSnippet = snippet;
+            match.answers = {};
+
+            io.to(roomCode).emit('startRound', {
+                round: match.currentRound,
+                totalRounds: match.maxRounds,
+                snippet: snippet
+            });
+
+            // Timer di sicurezza (65 secondi: 60 di round + 5 di tolleranza/countdown)
+            if (match.timer) clearTimeout(match.timer);
+            match.timer = setTimeout(() => {
+                if (activeMatches.has(roomCode)) {
+                    evaluateMultiplayerRound(roomCode);
+                }
+            }, 65000);
+
+        } catch (err) {
+            io.to(roomCode).emit('error', { message: 'Errore caricamento snippet' });
+        }
+    }
+
+    socket.on('submitMultiplayerAnswer', async (data) => {
+        const { roomCode, answer } = data;
+        const match = activeMatches.get(roomCode);
+        if (!match || !match.started || match.evaluating) return;
+
+        // Salva la risposta
+        match.answers[socket.userId] = answer;
+
+        // Se entrambi hanno risposto, valutiamo
+        if (Object.keys(match.answers).length === 2) {
+            evaluateMultiplayerRound(roomCode);
+        }
+    });
+
+    async function evaluateMultiplayerRound(roomCode) {
+        const match = activeMatches.get(roomCode);
+        if (!match || match.evaluating) return;
+
+        match.evaluating = true; // Blocca altre chiamate simultanee
+        if (match.timer) clearTimeout(match.timer);
+        match.timer = null;
+
+        const results = {};
+        const pIds = match.players.map(p => p.id);
+
+        try {
+            // Valuta entrambe le risposte in parallelo
+            const evaluations = await Promise.all(pIds.map(async (id) => {
+                const score = await evaluateAnswer(match.currentSnippet.code, match.answers[id] || "");
+                return { id, score };
+            }));
+
+            evaluations.forEach(ev => results[ev.id] = ev.score);
+
+            // Calcolo danni
+            const p1 = match.players[0];
+            const p2 = match.players[1];
+            const diff = results[p1.id] - results[p2.id];
+            const damage = Math.abs(diff);
+
+            if (diff > 0) {
+                p2.health = Math.max(0, p2.health - damage);
+            } else if (diff < 0) {
+                p1.health = Math.max(0, p1.health - damage);
+            }
+
+            const roundResult = {
+                scores: results,
+                healths: {
+                    [p1.id]: p1.health,
+                    [p2.id]: p2.health
+                },
+                damage: damage,
+                winnerId: diff > 0 ? p1.id : (diff < 0 ? p2.id : null)
+            };
+
+            io.to(roomCode).emit('roundResult', roundResult);
+
+            // Controlla fine partita o prossimo round
+            if (p1.health <= 0 || p2.health <= 0 || match.currentRound >= match.maxRounds) {
+                setTimeout(() => finishMultiplayerMatch(roomCode), 3000);
+            } else {
+                match.currentRound++;
+                setTimeout(() => startMultiplayerRound(roomCode), 4000);
+            }
+            match.evaluating = false;
+        } catch (err) {
+            console.error("Errore valutazione multiplayer:", err);
+            match.evaluating = false;
+        }
+    }
+
+    async function finishMultiplayerMatch(roomCode) {
+        const match = activeMatches.get(roomCode);
+        if (!match) return;
+
+        const p1 = match.players[0];
+        const p2 = match.players[1];
+
+        let winnerId = null;
+        let risultatoP1 = 'pareggio';
+        let risultatoP2 = 'pareggio';
+
+        if (p1.health > p2.health) {
+            winnerId = p1.id;
+            risultatoP1 = 'vittoria';
+            risultatoP2 = 'sconfitta';
+        } else if (p2.health > p1.health) {
+            winnerId = p2.id;
+            risultatoP1 = 'sconfitta';
+            risultatoP2 = 'vittoria';
+        }
+
+        // Salvataggio nel DB
+        if (!match.unranked) {
+            try {
+                const expP1 = risultatoP1 === 'vittoria' ? 100 : (risultatoP1 === 'pareggio' ? 50 : 20);
+                await saveMatchToDB(p1.id, 'multiplayer', risultatoP1, expP1, p2.id);
+                console.log(`[Match] Risultati salvati per la partita ${roomCode}`);
+            } catch (e) {
+                console.error("[Match] Errore salvataggio DB multiplayer:", e);
+            }
+        }
+
+        io.to(roomCode).emit('matchFinished', {
+            winner: winnerId,
+            players: match.players,
+            unranked: match.unranked
+        });
+
+        activeMatches.delete(roomCode);
+    }
+
+    socket.on('challengeFriend', (friendId) => {
+        // Qui andrebbe inviata una notifica all'amico.
+        // Per ora implementiamo solo il flag unranked se la stanza viene creata da qui.
+        const code = `INVITE_${Math.random().toString(36).substring(2, 7)}`;
+        socket.join(code);
+        socket.emit('challengeCreated', { code, friendId });
+    });
+
+    socket.on('disconnect', () => {
+        const idx = matchmakingQueue.findIndex(s => s.id === socket.id);
+        if (idx !== -1) matchmakingQueue.splice(idx, 1);
+        
+        // Pulizia stanze private se l'host si disconnette
+        for (const [code, room] of privateRooms.entries()) {
+            if (room.host.id === socket.userId) {
+                privateRooms.delete(code);
+            }
+        }
+
+        io.emit('statsUpdate', { onlinePlayers: io.engine.clientsCount });
+        console.log(`[Socket] Utente disconnesso: ${socket.nickname}`);
+
+        // Se l'utente era in una partita attiva, forziamo valutazione con 0 punti
+        for (const [roomCode, match] of activeMatches.entries()) {
+            if (match.players.some(p => p.id === socket.userId)) {
+                console.log(`[Match] Giocatore ${socket.nickname} disconnesso dalla partita ${roomCode}`);
+                if (!match.evaluating) {
+                    if (match.answers) {
+                        match.answers[socket.userId] = ""; // Assegna 0 punti
+                        evaluateMultiplayerRound(roomCode);
+                    } else {
+                        // Se la partita non era ancora iniziata (es. answers non esiste), chiudiamola
+                        finishMultiplayerMatch(roomCode);
+                    }
+                }
+            }
+        }
+    });
 });
 
 // ==========================================
@@ -1507,6 +1861,6 @@ app.use((req, res) => {
 // ==========================================
 // AVVIO SERVER
 // ==========================================
-app.listen(PORT, HOST, () => {
+server.listen(PORT, HOST, () => {
     console.log(`Server in esecuzione su ${BASE_URL}`);
 });

@@ -26,6 +26,7 @@ export function getSession() {
   return {
     isLoggedIn: localStorage.getItem('isLoggedIn') === 'true',
     idGiocatore: localStorage.getItem('id_giocatore'),
+    token: localStorage.getItem('supabaseToken'),
   };
 }
 
