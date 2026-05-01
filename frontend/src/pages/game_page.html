@@ -19,6 +19,7 @@
         <link rel="stylesheet" href="src/css/style.css" />
         <link rel="stylesheet" href="src/css/game_page/main_game.css" />
         <link rel="stylesheet" href="src/css/game_page/code_block.css" />
+        <link rel="stylesheet" href="src/css/game_page/multiplayer_modal.css" />
 
         <style id="anti-flash">
             /* Rimuove l'apparizione del contenuto della pagina prima del loader.js */
@@ -490,9 +491,90 @@
 
         <script src="src/js/game_page/ui.js"></script>
         <script src="src/js/game_page/typing.js"></script>
+        <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+        <script src="src/js/managers/auth.js"></script>
         <script src="src/js/managers/theme.js"></script>
         <script src="src/js/managers/sound.js"></script>
         <script src="src/js/managers/settings.js"></script>
         <script type="module" src="src/js/game_page/profile.js"></script>
+        <!-- ===================== MULTIPLAYER SELECTION MODAL ===================== -->
+        <div class="cg-multi-overlay" id="multiplayer-modal-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+            aria-labelledby="multi-modal-title">
+            <div class="cg-multi-modal" id="multiplayer-modal">
+                <div class="cg-multi-header">
+                    <div class="cg-multi-title-group">
+                        <div class="cg-multi-icon-wrap">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h2 class="cg-multi-title" id="multi-modal-title">Scegli Modalità Multiplayer</h2>
+                    </div>
+                    <button class="cg-multi-close" id="multiplayer-modal-close" aria-label="Chiudi">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <div class="cg-multi-body">
+                    <div class="cg-multi-options">
+                        <!-- 1. Matchmaking Online -->
+                        <div class="cg-multi-option online" id="multi-opt-matchmaking">
+                            <div class="cg-multi-option-icon">
+                                <i class="bi bi-globe2"></i>
+                            </div>
+                            <div class="cg-multi-option-info">
+                                <span class="cg-multi-option-name">Gioca Online</span>
+                                <span class="cg-multi-option-desc">Trova un avversario casuale nel server. Guadagna o perdi trofei.</span>
+                            </div>
+                            <span class="cg-multi-option-badge">Ranked</span>
+                        </div>
+
+                        <!-- 2. Stanza Privata -->
+                        <div class="cg-multi-option private" id="multi-opt-private">
+                            <div class="cg-multi-option-icon">
+                                <i class="bi bi-key-fill"></i>
+                            </div>
+                            <div class="cg-multi-option-info">
+                                <span class="cg-multi-option-name">Stanza Privata</span>
+                                <span class="cg-multi-option-desc">Crea una stanza o entra con un codice a 5 cifre.</span>
+                            </div>
+                            <span class="cg-multi-option-badge">Privata</span>
+                        </div>
+
+                        <!-- Sezione Codice (nascosta di base) -->
+                        <div class="cg-multi-code-section" id="multi-code-section">
+                            <p class="text-darcula-comment mb-2" style="font-size: 0.85rem;">Inserisci il codice della stanza:</p>
+                            <div class="cg-multi-code-input-group">
+                                <input type="text" class="cg-multi-code-input" id="multi-room-code" placeholder="-----" maxlength="5">
+                                <button class="cg-multi-btn cg-multi-btn-primary" id="multi-btn-join">Entra</button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="text-darcula-comment" style="font-size: 0.8rem;">Oppure crea una nuova stanza</span>
+                                <button class="cg-multi-btn cg-multi-btn-secondary" id="multi-btn-create">Crea Stanza</button>
+                            </div>
+                        </div>
+
+                        <!-- 3. Gioca con Amici -->
+                        <div class="cg-multi-option friends" id="multi-opt-friends">
+                            <div class="cg-multi-option-icon">
+                                <i class="bi bi-person-heart"></i>
+                            </div>
+                            <div class="cg-multi-option-info">
+                                <span class="cg-multi-option-name">Sfida Amici</span>
+                                <span class="cg-multi-option-desc">Gioca con i tuoi amici online. Non si guadagnano trofei.</span>
+                            </div>
+                            <span class="cg-multi-option-badge">Unranked</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cg-multi-footer">
+                    <div class="cg-multi-status-text">
+                        <div class="cg-multi-pulse"></div>
+                        <span id="multi-active-players">Connessione al server multiplayer...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="module" src="src/js/game_page/multiplayer_modal.js"></script>
     </body>
 </html>
