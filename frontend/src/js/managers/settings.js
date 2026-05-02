@@ -160,6 +160,10 @@ function applyThemeSetting(theme) {
   }
 }
 
+function applyReducedAnimations(reduced) {
+  document.documentElement.classList.toggle('reduced-animations', reduced);
+}
+
 // ─── Modal Open / Close ───────────────────────────────────────────────────────
 
 function openSettings() {
@@ -196,6 +200,7 @@ function revertUnsavedSettings() {
   });
 
   applyThemeSetting(current.theme);
+  applyReducedAnimations(current.reducedAnimations);
 }
 
 function closeSettings() {
@@ -222,6 +227,9 @@ function initSettings() {
   initToggle('toggle-syntax', 'syntaxHighlight', settings);
   initToggle('toggle-notif-challenge', 'notifChallenge', settings);
   initToggle('toggle-notif-friends', 'notifFriends', settings);
+
+  // Apply initial state
+  applyReducedAnimations(settings.reducedAnimations);
 
   // Open via menu
   el('menu-btn-settings')?.addEventListener('click', (e) => {
@@ -251,6 +259,7 @@ function initSettings() {
     const current = readCurrentSettings();
     saveSettings(current);
     applyThemeSetting(current.theme);
+    applyReducedAnimations(current.reducedAnimations);
     closeSettings();
 
     // Show toast if available

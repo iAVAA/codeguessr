@@ -81,6 +81,25 @@
   transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
 }
 
+/* Reduced Animations Support */
+:root.reduced-animations *,
+:root.reduced-animations *::before,
+:root.reduced-animations *::after {
+  animation-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+/* Specific fix for dropdown stability with reduced animations */
+:root.reduced-animations .profile-dropdown-menu {
+  transition: visibility 0s 0.15s, opacity 0s 0.15s, transform 0s 0.15s !important;
+}
+:root.reduced-animations .profile-dropdown-wrapper:hover .profile-dropdown-menu,
+:root.reduced-animations .profile-dropdown-wrapper.active .profile-dropdown-menu {
+  transition-delay: 0s !important;
+}
+
 html {
   scroll-behavior: smooth;
 }
