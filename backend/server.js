@@ -147,6 +147,11 @@ app.get('/profilo', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'profile_page.html'));
 });
 
+// Pagina della classifica globale
+app.get('/classifica', (req, res) => {
+    res.sendFile(path.join(ROOT, 'src', 'pages', 'leaderboard_page.html'));
+});
+
 // Pagina di partita
 app.get('/match', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'match_page.html'));
@@ -533,6 +538,39 @@ app.get('/api/profilo/:id', async (req, res) => {
     } catch (err) {
         console.error("Errore recupero profilo:", err.message);
         res.status(500).json({ errore: 'Impossibile recuperare il profilo', details: err.message });
+    }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        const { data, count, error } = await supabase
+            .from('v_giocatore_profilo')
+            .select('id_giocatore, nickname, livello, exp, trophies, avatar_url', { count: 'exact' })
+            .order('trophies', { ascending: false })
+            .range(from, to);
+
+        if (error) throw error;
+
+        // Aggiungiamo lo stato online in tempo reale basato sulla mappa activeUsers
+        const dataConStato = data.map(p => ({
+            ...p,
+            online: activeUsers.has(p.id_giocatore)
+        }));
+
+        res.status(200).json({
+            players: dataConStato,
+            total: count,
+            page,
+            totalPages: Math.min(100, Math.ceil(count / limit))
+        });
+    } catch (err) {
+        console.error("Errore recupero classifica:", err.message);
+        res.status(500).json({ errore: 'Impossibile recuperare la classifica' });
     }
 });
 
