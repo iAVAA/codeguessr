@@ -1,0 +1,299 @@
+/* ===========================
+   LEADERBOARD PAGE STYLES
+   =========================== */
+
+.leaderboard-wrapper {
+    min-height: 80vh;
+    animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.leaderboard-header {
+    margin-bottom: 3rem;
+}
+
+.leaderboard-icon-main {
+    font-size: 3.5rem;
+    color: rgb(var(--darcula-yellow));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    background: rgba(var(--darcula-yellow), 0.1);
+    border-radius: 30px;
+    border: 1px solid rgba(var(--darcula-yellow), 0.2);
+    box-shadow: 0 10px 40px rgba(var(--darcula-yellow), 0.15);
+    animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.leaderboard-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.leaderboard-title span {
+    color: rgb(var(--darcula-blue));
+}
+
+.leaderboard-subtitle {
+    font-size: 1.1rem;
+    max-width: 500px;
+    margin: 0.5rem auto 0;
+}
+
+/* ── Card & Table ─────────────────────────────────────────────────── */
+
+.leaderboard-card {
+    background: rgba(var(--darcula-current), 0.5);
+    border: 1px solid rgba(var(--darcula-comment), 0.15);
+    border-radius: 24px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.leaderboard-table-header {
+    background: rgba(var(--darcula-comment), 0.05);
+    border-bottom: 1px solid rgba(var(--darcula-comment), 0.1);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: rgb(var(--darcula-comment));
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Leaderboard Row ──────────────────────────────────────────────── */
+
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(var(--darcula-comment), 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.leaderboard-row:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-row:hover {
+    background: rgba(var(--darcula-blue), 0.08);
+}
+
+.leaderboard-row.is-me {
+    background: rgba(var(--darcula-green), 0.1);
+    border-left: 4px solid rgb(var(--darcula-green));
+}
+
+.me-badge {
+    background: rgb(var(--darcula-green));
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 8px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+/* Rank Column */
+.rank-col {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: rgb(var(--darcula-comment));
+}
+
+.rank-1 .rank-col { color: #FFD700; font-size: 1.5rem; } /* Gold */
+.rank-2 .rank-col { color: #C0C0C0; font-size: 1.4rem; } /* Silver */
+.rank-3 .rank-col { color: #CD7F32; font-size: 1.3rem; } /* Bronze */
+
+/* Player Column */
+.player-col {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.lb-avatar-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+}
+
+.lb-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 2px solid rgba(var(--darcula-comment), 0.2);
+}
+
+.rank-1 .lb-avatar { border-color: #FFD700; }
+.rank-2 .lb-avatar { border-color: #C0C0C0; }
+.rank-3 .lb-avatar { border-color: #CD7F32; }
+
+.lb-status-dot {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgb(var(--darcula-current));
+    background: #4b4b4b; /* offline */
+}
+
+.lb-status-dot.online {
+    background: #629755; /* online green */
+    box-shadow: 0 0 8px rgba(98, 151, 85, 0.6);
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: rgb(var(--darcula-fg));
+}
+
+.player-meta {
+    font-size: 0.75rem;
+    color: rgb(var(--darcula-comment));
+}
+
+/* Level Column */
+.level-col {
+    text-align: center;
+}
+
+.level-badge {
+    background: rgba(var(--darcula-blue), 0.1);
+    color: rgb(var(--darcula-blue));
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 1px solid rgba(var(--darcula-blue), 0.2);
+}
+
+/* Trophies Column */
+.trophy-col {
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: rgb(var(--darcula-yellow));
+}
+
+.trophy-col i {
+    font-size: 1rem;
+    filter: drop-shadow(0 0 5px rgba(255, 198, 109, 0.3));
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .leaderboard-title { font-size: 2rem; }
+    .leaderboard-icon-main { width: 80px; height: 80px; font-size: 2.5rem; }
+    
+    .leaderboard-row {
+        padding: 1rem;
+    }
+    
+    .rank-col { flex: 0 0 30px; }
+    .player-col { flex: 1; }
+    .level-col { display: none; }
+    .trophy-col { flex: 0 0 100px; }
+}
+
+/* Skeleton Loading Animation */
+.skeleton {
+    background: linear-gradient(90deg, 
+        rgba(var(--darcula-comment), 0.05) 25%, 
+        rgba(var(--darcula-comment), 0.1) 50%, 
+        rgba(var(--darcula-comment), 0.05) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Pagination ────────────────────────────────────────────────────── */
+
+#leaderboard-pagination {
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.pagination-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--darcula-current), 0.5);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: 10px;
+    color: rgb(var(--darcula-comment));
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.pagination-btn:hover {
+    background: rgba(var(--darcula-blue), 0.15);
+    border-color: rgba(var(--darcula-blue), 0.4);
+    color: rgb(var(--darcula-blue));
+}
+
+.pagination-btn.active {
+    background: rgb(var(--darcula-blue));
+    border-color: rgb(var(--darcula-blue));
+    color: white;
+    box-shadow: 0 4px 15px rgba(var(--darcula-blue), 0.4);
+}
+
+.pagination-btn.dots {
+    cursor: default;
+    border-color: transparent;
+    background: transparent;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
