@@ -970,7 +970,7 @@ app.get('/api/missioni/:id', async (req, res) => {
  */
 // Helper per salvare la partita nel database
 // Helper per salvare la partita nel database
-async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_utente_trasferta = null, risultato_avv = null, exp_avv = null) {
+async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_utente_trasferta = null, risultato_avv = null, exp_avv = null, trophy_casa = 0, trophy_trasferta = 0) {
     try {
         const isMultiplayer = modalita === 'multiplayer' && id_utente_trasferta;
 
@@ -1012,11 +1012,11 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
         await supabase.from('partecipazione').insert(partecipazioni);
 
         // 3. Aggiorniamo le statistiche
-        const statsCasa = await updatePlayerStats(mioId, risultato, exp_guadagnata, isMultiplayer);
+        const statsCasa = await updatePlayerStats(mioId, risultato, exp_guadagnata, trophy_casa);
         if (isMultiplayer) {
             const risultatoAvv = risultato_avv !== null ? risultato_avv : (risultato === 'vittoria' ? 'sconfitta' : 'vittoria');
             const expAvv = exp_avv !== null ? exp_avv : (risultatoAvv === 'vittoria' ? 100 : -10);
-            await updatePlayerStats(id_utente_trasferta, risultatoAvv, expAvv, true);
+            await updatePlayerStats(id_utente_trasferta, risultatoAvv, expAvv, trophy_trasferta);
         }
 
         return { idPartita, statsCasa };
@@ -1027,7 +1027,7 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
 }
 
 // Funzione helper per aggiornare un giocatore
-async function updatePlayerStats(playerId, result, addedExp, awardTrophies = false) {
+async function updatePlayerStats(playerId, result, addedExp, trophyChange = 0) {
     try {
         const { data: prof, error: readErr } = await supabase
             .from('giocatore')
@@ -1040,13 +1040,6 @@ async function updatePlayerStats(playerId, result, addedExp, awardTrophies = fal
         const EXP_PER_LEVEL = 1000;
         const nuovaExp = Math.max(0, (prof.exp || 0) + addedExp);
         const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
-
-        let trophyChange = 0;
-        if (awardTrophies) {
-            if (result === 'vittoria') trophyChange = 25;
-            else if (result === 'sconfitta') trophyChange = -15;
-            else trophyChange = 5; // Pareggio
-        }
 
         const nuoviTrofei = Math.max(0, (prof.trophies || 0) + trophyChange);
 
@@ -1832,7 +1825,16 @@ io.on('connection', (socket) => {
             try {
                 const expP1 = risultatoP1 === 'vittoria' ? 100 + Math.round(p1.health / 2) : -10 - Math.round(p2.health / 2);
                 const expP2 = risultatoP2 === 'vittoria' ? 100 + Math.round(p2.health / 2) : -10 - Math.round(p1.health / 2);
-                await saveMatchToDB(p1.id, 'multiplayer', risultatoP1, expP1, p2.id, risultatoP2, expP2);
+                
+                const trophyP1 = risultatoP1 === 'vittoria' 
+                    ? Math.floor(Math.random() * 11) + 30 + Math.round(p1.health / 2) 
+                    : -(Math.floor(Math.random() * 11) + 20) - Math.round(p2.health / 2);
+                    
+                const trophyP2 = risultatoP2 === 'vittoria' 
+                    ? Math.floor(Math.random() * 11) + 30 + Math.round(p2.health / 2) 
+                    : -(Math.floor(Math.random() * 11) + 20) - Math.round(p1.health / 2);
+
+                await saveMatchToDB(p1.id, 'multiplayer', risultatoP1, expP1, p2.id, risultatoP2, expP2, trophyP1, trophyP2);
                 console.log(`[Match] Risultati salvati per la partita ${roomCode}`);
             } catch (e) {
                 console.error("[Match] Errore salvataggio DB multiplayer:", e);

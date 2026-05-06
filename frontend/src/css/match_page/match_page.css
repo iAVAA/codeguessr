@@ -472,11 +472,56 @@
 
 /* Light mode */
 .light-mode .end-game-card {
-  background: #f5f5f5;
+  background: #ffffff;
   border-color: rgba(0, 0, 0, 0.1);
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.18);
 }
-.light-mode .end-game-overlay { background: rgba(0, 0, 0, 0.4); }
+.light-mode .end-game-overlay { background: rgba(255, 255, 255, 0.75); }
+
+/* Nuovi fix contrasto White Mode per la pagina match */
+.light-mode .match-timer {
+  color: rgb(var(--darcula-fg));
+  text-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+}
+.light-mode .vscode-match-window {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+}
+.light-mode .vscode-titlebar {
+  background: #f3f4f6;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+.light-mode .play-area-container {
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.light-mode .match-player-card,
+.light-mode .match-timer-container,
+.light-mode .match-guess-container {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+.light-mode .guess-input {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+.light-mode .match-countdown-overlay {
+  background: rgba(255, 255, 255, 0.85);
+}
+.light-mode .match-countdown-title {
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+}
+.light-mode .end-game-card .btn-outline-light {
+  color: rgb(var(--darcula-fg));
+  border-color: rgba(var(--darcula-comment), 0.6);
+}
+.light-mode .end-game-card .btn-outline-light:hover {
+  background-color: rgb(var(--darcula-fg));
+  color: #ffffff;
+  border-color: rgb(var(--darcula-fg));
+}
 
 /* Mobile */
 @media (max-width: 480px) {
