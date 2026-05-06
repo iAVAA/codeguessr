@@ -5,7 +5,7 @@
 
 import { getSession, fetchAuth } from '../managers/auth.js';
 
-const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
+
 const XP_PER_LEVEL = 500;
 
 // ─── XP Ring ─────────────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ async function fetchPlayerAmici(idGiocatore) {
   const makeEntry = (amico, type) => ({
     userid: amico.userid,
     name: amico.user,
-    avatar: amico.avatar_url || `${AVATAR_BASE}?seed=${amico.userid}&backgroundColor=1e1f21`,
+    avatar: amico.avatar_url || `/src/assets/img/user_profile.webp`,
     online: amico.online || false,
     type
   });
@@ -233,10 +233,8 @@ async function fetchPlayerAmici(idGiocatore) {
 function buildPlayerFromAPI(data, idGiocatore, amiciData, stats, missions) {
   const xpBase = XP_PER_LEVEL;
 
-  // Avatar: usa avatar_url dal DB se disponibile, altrimenti DiceBear
-  const avatar = data.avatar_url
-    ? data.avatar_url
-    : `${AVATAR_BASE}?seed=${idGiocatore}&backgroundColor=1e1f21`;
+  // Avatar: usa avatar_url dal DB se disponibile, altrimenti immagine predefinita
+  const avatar = data.avatar_url || `/src/assets/img/user_profile.webp`;
 
   return {
     name: data.user,

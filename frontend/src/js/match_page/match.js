@@ -553,13 +553,14 @@ async function loadProfiles() {
   document.getElementById('match-p1-name').textContent = 'Giocatore';
   document.getElementById('match-p1-lvl').textContent = 1;
   document.getElementById('match-p1-cups').textContent = 0;
+  document.getElementById('match-p1-avatar').src = '/src/assets/img/user_profile.webp';
 
   // Bot avversario o giocatore reale in multiplayer
   if (isMultiplayer && opponentData) {
     document.getElementById('match-p2-name').textContent = opponentData.nickname;
     document.getElementById('match-p2-lvl').textContent = opponentData.livello || '--';
     document.getElementById('match-p2-cups').textContent = opponentData.trophies || '--';
-    document.getElementById('match-p2-avatar').src = opponentData.avatar_url;
+    document.getElementById('match-p2-avatar').src = opponentData.avatar_url || '/src/assets/img/user_profile.webp';
   } else {
     const { difficulty } = (() => {
       try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { return {}; }
@@ -584,7 +585,7 @@ async function loadProfiles() {
         document.getElementById('match-p1-name').textContent = myProfile.user;
         document.getElementById('match-p1-lvl').textContent = myProfile.livello || 1;
         document.getElementById('match-p1-cups').textContent = myProfile.exp || 0;
-        const avatarSrc = myProfile.avatar_url;
+        const avatarSrc = myProfile.avatar_url || '/src/assets/img/user_profile.webp';
         document.getElementById('match-p1-avatar').src = avatarSrc;
       }
     } catch (e) {
