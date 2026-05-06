@@ -128,7 +128,7 @@ function buildResultItem(player) {
     const safeUserId = player.userid;
     
     
-    const avatar = player.avatar_url || `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(player.avatarSeed)}`;
+    const avatar = player.avatar_url || `/src/assets/img/user_profile.webp`;
 
     // Controlliamo lo stato dalla nostra memoria
     const stato = relazioniUtente[safeName]?.stato || 'nessuno';
@@ -346,7 +346,7 @@ function initAddFriendSearch() {
                 if (listaAmiciContainer) {
                     // 🚀 NOVITÀ 1: Cerchiamo la vecchia richiesta in attesa nella sidebar ed eliminiamola!
                     const vecchiaRichiesta = document.getElementById(`sidebar-rel-${userid}`);
-                    let avatarAmico = `https://api.dicebear.com/8.x/bottts-neutral/svg?seed=${encodeURIComponent(userid)}&backgroundColor=1e1f21`;
+                    let avatarAmico = `/src/assets/img/user_profile.webp`;
                     
                     if (vecchiaRichiesta) {
                         const img = vecchiaRichiesta.querySelector('img');

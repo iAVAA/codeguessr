@@ -308,21 +308,21 @@ async function fetchFullProfileData(userId) {
     const dataStorico = resStorico.ok ? await resStorico.json() : [];
     const amiciData = resAmici.ok ? await resAmici.json() : { amici: [], inviate: [], ricevute: [] };
 
-    const avatar = dataProfilo.avatar_url;
+    const avatar = dataProfilo.avatar_url || '/src/assets/img/user_profile.webp';
 
     const amiciFormattati = amiciData.amici.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: a.avatar_url,
+        avatar: a.avatar_url || '/src/assets/img/user_profile.webp',
         online: a.online || false, type: 'amico'
     }));
     const inviate = amiciData.inviate.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: a.avatar_url,
+        avatar: a.avatar_url || '/src/assets/img/user_profile.webp',
         online: false, type: 'inviata'
     }));
     const ricevute = amiciData.ricevute.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: a.avatar_url,
+        avatar: a.avatar_url || '/src/assets/img/user_profile.webp',
         online: false, type: 'ricevuta'
     }));
 
@@ -471,7 +471,7 @@ async function updateNavbar(playerData) {
 
     const navAvatar = document.getElementById('player-avatar');
     if (navAvatar) {
-        navAvatar.src = playerData.avatar_url;
+        navAvatar.src = playerData.avatar_url || '/src/assets/img/user_profile.webp';
     }
 
     const xpPercent = Math.min(100, (playerData.exp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));

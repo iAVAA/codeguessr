@@ -5,7 +5,7 @@
 
 import { getSession, fetchAuth } from '../managers/auth.js';
 
-const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
+
 const XP_PER_LEVEL = 500;
 
 // ─── Header Stats handling ───────────────────────────────────────────────────
@@ -42,7 +42,7 @@ async function loadHeaderData(idGiocatore) {
 
         const avatarEl = document.getElementById('player-avatar');
         if (avatarEl) {
-            avatarEl.src = data.avatar_url || `${AVATAR_BASE}?seed=${idGiocatore}&backgroundColor=1e1f21`;
+            avatarEl.src = data.avatar_url || `/src/assets/img/user_profile.webp`;
         }
 
         const xpPct = Math.min(100, (data.exp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
@@ -71,7 +71,7 @@ async function fetchLeaderboard(page = 1) {
 function buildLeaderboardRow(player, index, myId, page) {
     const rank = (page - 1) * itemsPerPage + index + 1;
     const isMe = player.id_giocatore === myId;
-    const avatar = player.avatar_url || `${AVATAR_BASE}?seed=${player.id_giocatore}&backgroundColor=1e1f21`;
+    const avatar = player.avatar_url || `/src/assets/img/user_profile.webp`;
     
     return `
         <div class="leaderboard-row rank-${rank} ${isMe ? 'is-me' : ''}" data-username="${player.nickname}">
