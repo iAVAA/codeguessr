@@ -193,7 +193,7 @@ app.get('/api/profilo/nickname/:username', verificaToken, async (req, res) => {
 // Usiamo DELETE perché stiamo eliminando una riga esistente
 app.delete('/api/rifiuta-richiesta/:id', verificaToken, async (req, res) => {
     const mioId = req.utenteId;
-    const targetId = req.params.id; 
+    const targetId = req.params.id;
 
     if (!targetId) {
         return res.status(400).json({ errore: 'ID mancante.' });
@@ -205,7 +205,7 @@ app.delete('/api/rifiuta-richiesta/:id', verificaToken, async (req, res) => {
             .from('amicizia')
             .delete()
             .or(`and(id_utente_a.eq.${targetId},id_utente_b.eq.${mioId}),and(id_utente_a.eq.${mioId},id_utente_b.eq.${targetId})`)
-            .select(); 
+            .select();
 
         if (error) throw error;
 
@@ -309,7 +309,7 @@ app.post('/api/invia-richiesta/:id', verificaToken, async (req, res) => {
 
 
 app.get('/api/amicizie-confermate/:id', verificaToken, async (req, res) => {
-    
+
     const targetId = req.params.id; // L'ID del giocatore che stiamo guardando
 
     try {
@@ -328,7 +328,7 @@ app.get('/api/amicizie-confermate/:id', verificaToken, async (req, res) => {
         }
 
         // 2. Estraiamo la lista degli ID dei suoi amici
-        const idAmici = relazioni.map(riga => 
+        const idAmici = relazioni.map(riga =>
             riga.id_utente_a === targetId ? riga.id_utente_b : riga.id_utente_a
         );
 
@@ -348,10 +348,10 @@ app.get('/api/amicizie-confermate/:id', verificaToken, async (req, res) => {
         }));
 
         // Restituiamo l'oggetto con le richieste in attesa vuote per non far arrabbiare il frontend
-        res.status(200).json({ 
-            amici: amiciConfermati, 
-            inviate: [], 
-            ricevute: [] 
+        res.status(200).json({
+            amici: amiciConfermati,
+            inviate: [],
+            ricevute: []
         });
 
     } catch (err) {
@@ -370,7 +370,7 @@ app.get('/api/amicizie-confermate/:id', verificaToken, async (req, res) => {
  */
 app.post('/api/heartbeat', verificaToken, async (req, res) => {
     const mioId = req.utenteId;
-    
+
     // Se non era già nella mappa (o è scaduto), lo impostiamo come attivo nel database
     if (!activeUsers.has(mioId)) {
         try {
@@ -379,7 +379,7 @@ app.post('/api/heartbeat', verificaToken, async (req, res) => {
             console.error("Impossibile aggiornare stato online nel DB", e);
         }
     }
-    
+
     activeUsers.set(mioId, Date.now());
     res.status(200).json({ success: true });
 });
@@ -462,16 +462,16 @@ app.get('/api/mie-amicizie', verificaToken, async (req, res) => {
             const sonoIoIlMittente = riga.id_utente_a === mioId;
             const idAltro = sonoIoIlMittente ? riga.id_utente_b : riga.id_utente_a;
             const datiAltro = mappaProfili[idAltro] || { nickname: "Utente Sconosciuto", avatar_url: null };
-            
+
             // Calcola lo stato online
             const lastSeen = activeUsers.get(idAltro);
             const isOnline = lastSeen ? (Date.now() - lastSeen < HEARTBEAT_TIMEOUT) : false;
 
-            const utente = { 
-                userid: idAltro, 
-                user: datiAltro.nickname, 
+            const utente = {
+                userid: idAltro,
+                user: datiAltro.nickname,
                 avatar_url: datiAltro.avatar_url,
-                online: isOnline 
+                online: isOnline
             };
 
             if (riga.stato === 'accettata') {
@@ -615,7 +615,7 @@ app.get('/api/storico/:id', async (req, res) => {
         const storico = (data || []).map(p => {
             const partita = p.partita;
             let opponentName = null;
-            
+
             if (partita && partita.modalita === 'multiplayer') {
                 if (partita.id_utente_casa === idGiocatore) {
                     opponentName = partita.trasferta?.nickname;
@@ -672,10 +672,10 @@ app.get('/api/statistiche/:id', async (req, res) => {
         if (error) throw error;
 
         // Formattiamo per mantenere compatibilità con il frontend attuale
-        res.status(200).json({ 
-            played: data.partite_giocate || 0, 
-            won: data.partite_vinte || 0, 
-            lost: data.partite_perse || 0, 
+        res.status(200).json({
+            played: data.partite_giocate || 0,
+            won: data.partite_vinte || 0,
+            lost: data.partite_perse || 0,
             win_rate: data.percentuale_vittorie || 0,
             total_exp: 0 // deprecated
         });
@@ -777,7 +777,7 @@ app.get('/api/missioni/:id', async (req, res) => {
         const { data: achievements, error: achErr } = await supabase
             .from('achievements')
             .select('*');
-            
+
         if (achErr) throw achErr;
 
         // 2. Legge il profilo
@@ -822,7 +822,7 @@ app.get('/api/missioni/:id', async (req, res) => {
         const amiciCount = amicizie ? amicizie.length : 0;
         const mpPlayed = partecipazioni.filter(p => p.partita?.modalita === 'multiplayer').length;
         const mpWon = partecipazioni.filter(p => p.partita?.modalita === 'multiplayer' && p.risultato === 'vittoria').length;
-        
+
         // Calcolo Notte Bianca (giocato tra le 00 e le 05)
         let notteBianca = 0;
         for (const p of partecipazioni) {
@@ -886,7 +886,7 @@ app.get('/api/missioni/:id', async (req, res) => {
         };
 
         let completedMissionsCount = 0;
-        
+
         // Primo passaggio per contare le completate (serve a Collezionista)
         achievements.forEach(ach => {
             if (ach.name !== 'Collezionista') {
@@ -895,7 +895,7 @@ app.get('/api/missioni/:id', async (req, res) => {
                 if (current >= target) completedMissionsCount++;
             }
         });
-        
+
         progressMap['Collezionista'] = Math.min(completedMissionsCount, 10);
 
         const daRiscatto = [];
@@ -905,7 +905,7 @@ app.get('/api/missioni/:id', async (req, res) => {
             const current = progressMap[ach.name] || 0;
             const target = targetMap[ach.name] || 1;
             const isCompleted = current >= target;
-            
+
             // Se la missione è appena stata completata e non è ancora salvata nel DB
             if (isCompleted && !sbloccatiSet.has(ach.id)) {
                 daRiscatto.push(ach);
@@ -929,12 +929,12 @@ app.get('/api/missioni/:id', async (req, res) => {
                     // Inserisci in user_achievements
                     const insertData = daRiscatto.map(ach => ({ user_id: idGiocatore, achievement_id: ach.id }));
                     const { error: insErr } = await supabase.from('user_achievements').insert(insertData);
-                    
+
                     if (!insErr) {
                         // Somma i premi
                         const expTot = daRiscatto.reduce((sum, ach) => sum + ach.exp_reward, 0);
                         const trophyTot = daRiscatto.reduce((sum, ach) => sum + ach.trophy_reward, 0);
-                        
+
                         // Aggiorna giocatore (il Trigger PostgreSQL gestirà il Level Up se exp supera 500!)
                         const { data: prof } = await supabase.from('giocatore').select('exp, trophies').eq('id_giocatore', idGiocatore).single();
                         if (prof) {
@@ -1040,14 +1040,14 @@ async function updatePlayerStats(playerId, result, addedExp, awardTrophies = fal
         const EXP_PER_LEVEL = 1000;
         const nuovaExp = (prof.exp || 0) + addedExp;
         const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
-        
+
         let trophyChange = 0;
         if (awardTrophies) {
             if (result === 'vittoria') trophyChange = 25;
             else if (result === 'sconfitta') trophyChange = -15;
             else trophyChange = 5; // Pareggio
         }
-        
+
         const nuoviTrofei = Math.max(0, (prof.trophies || 0) + trophyChange);
 
         await supabase
@@ -1549,14 +1549,14 @@ io.use(async (socket, next) => {
         }
 
         socket.userId = authData.user.id;
-        
+
         // Recuperiamo il nickname dal DB
         const { data: profile } = await supabase
             .from('giocatore')
             .select('nickname, avatar_url, livello, trophies')
             .eq('id_giocatore', socket.userId)
             .single();
-            
+
         socket.nickname = profile?.nickname || 'Sconosciuto';
         socket.avatar_url = profile?.avatar_url || null;
         socket.livello = profile?.livello || 1;
@@ -1576,7 +1576,7 @@ io.on('connection', (socket) => {
     // 1. MATCHMAKING ONLINE (Gioca Online)
     socket.on('startMatchmaking', () => {
         console.log(`[Matchmaking] ${socket.nickname} è entrato in coda.`);
-        
+
         // Evita duplicati in coda
         if (matchmakingQueue.find(s => s.userId === socket.userId)) return;
 
@@ -1584,7 +1584,7 @@ io.on('connection', (socket) => {
             // Match trovato!
             const opponent = matchmakingQueue.shift();
             const roomCode = `MATCH_${Math.random().toString(36).substring(2, 9)}`;
-            
+
             socket.join(roomCode);
             opponent.join(roomCode);
 
@@ -1616,9 +1616,9 @@ io.on('connection', (socket) => {
         const code = Math.floor(10000 + Math.random() * 90000).toString();
         privateRooms.set(code, {
             host: { id: socket.userId, nickname: socket.nickname },
-            giocatori: [{ 
-                id: socket.userId, 
-                nickname: socket.nickname, 
+            giocatori: [{
+                id: socket.userId,
+                nickname: socket.nickname,
                 socketId: socket.id,
                 avatar_url: socket.avatar_url,
                 livello: socket.livello,
@@ -1626,7 +1626,7 @@ io.on('connection', (socket) => {
             }],
             unranked: false
         });
-        
+
         socket.join(`ROOM_${code}`);
         socket.emit('roomCreated', { code });
         console.log(`[Room] Stanza privata creata: ${code} da ${socket.nickname}`);
@@ -1641,9 +1641,9 @@ io.on('connection', (socket) => {
             return socket.emit('error', { message: 'Stanza piena' });
         }
 
-        room.giocatori.push({ 
-            id: socket.userId, 
-            nickname: socket.nickname, 
+        room.giocatori.push({
+            id: socket.userId,
+            nickname: socket.nickname,
             socketId: socket.id,
             avatar_url: socket.avatar_url,
             livello: socket.livello,
@@ -1666,7 +1666,7 @@ io.on('connection', (socket) => {
 
         activeMatches.set(matchData.roomCode, matchData);
         io.to(`ROOM_${code}`).emit('matchFound', matchData);
-        
+
         privateRooms.delete(code); // Rimuovi dalla lista stanze una volta avviata
         console.log(`[Room] ${socket.nickname} è entrato nella stanza ${code}`);
     });
@@ -1679,7 +1679,7 @@ io.on('connection', (socket) => {
         const match = activeMatches.get(code);
         if (match) {
             socket.join(code);
-            
+
             // Aggiorna lo stato del giocatore (connesso alla partita)
             const player = match.players.find(p => p.id === socket.userId);
             if (player) {
@@ -1709,9 +1709,9 @@ io.on('connection', (socket) => {
         if (!match) return;
 
         console.log(`[Match] Inizio Round ${match.currentRound} per ${roomCode}`);
-        
+
         try {
-            const snippet = await getRandomSnippet(); 
+            const snippet = await getRandomSnippet();
             match.currentSnippet = snippet;
             match.answers = {};
 
@@ -1858,7 +1858,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         const idx = matchmakingQueue.findIndex(s => s.id === socket.id);
         if (idx !== -1) matchmakingQueue.splice(idx, 1);
-        
+
         // Pulizia stanze private se l'host si disconnette
         for (const [code, room] of privateRooms.entries()) {
             if (room.host.id === socket.userId) {

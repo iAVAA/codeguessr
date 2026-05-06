@@ -59,19 +59,16 @@ function showToast(message, color = 'blue') {
 
 // ─── Game Buttons ─────────────────────────────────────────────────────────────
 
-function initGameButtons() {
+document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-singleplayer')?.addEventListener('click', () => {
     console.log('[CodeGuessr] Starting Single Player…');
-    showToast('🎮 Single Player – Caricamento partita…', 'blue');
+    if (typeof showToast === 'function') {
+      showToast('🎮 Single Player – Caricamento partita…', 'blue');
+    }
     window.location.href = '/match';
   });
+});
 
-  document.getElementById('btn-multiplayer')?.addEventListener('click', () => {
-    console.log('[CodeGuessr] Starting Multiplayer…');
-    showToast('👥 Multiplayer – Creazione stanza…', 'green');
-    window.location.href = '/match';
-  });
-}
 
 // ===== START CUSTOM: ADD FRIEND SEARCH (btn-add-friend) =====
 

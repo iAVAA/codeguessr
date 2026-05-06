@@ -96,35 +96,37 @@ function initMonacoEditor(snippet) {
     return Promise.reject(new Error('Monaco not loaded'));
   }
 
-  window.require.config({
-    paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }
-  });
-
-  return new Promise((resolve) => {
-    window.require(['vs/editor/editor.main'], () => {
-      monacoEditorInstance = window.monaco.editor.create(
-        document.getElementById('monaco-container'),
-        {
-          value: snippet.code,
-          language: snippet.monacoLang,
-          theme: 'vs-dark',
-          readOnly: true,
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          fontSize: 15,
-          fontFamily: "'JetBrains Mono', monospace",
-          padding: { top: 16 },
-          scrollbar: {
-            vertical: 'visible',
-            horizontal: 'visible',
-            verticalScrollbarSize: 12,
-            horizontalScrollbarSize: 12,
-          }
-        }
-      );
-      updateTitleBar(snippet);
-      resolve();
+  // Se loader.js ha già precarlicato Monaco durante lo splash, riusiamo quella Promise
+  // così evitiamo un secondo round-trip di rete che causa il "contatore che parte a 3"
+  const monacoReady = window.__monacoReady ?? (() => {
+    window.require.config({
+      paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }
     });
+    return new Promise((res) => window.require(['vs/editor/editor.main'], res));
+  })();
+
+  return monacoReady.then(() => {
+    monacoEditorInstance = window.monaco.editor.create(
+      document.getElementById('monaco-container'),
+      {
+        value: snippet.code,
+        language: snippet.monacoLang,
+        theme: 'vs-dark',
+        readOnly: true,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        fontSize: 15,
+        fontFamily: "'JetBrains Mono', monospace",
+        padding: { top: 16 },
+        scrollbar: {
+          vertical: 'visible',
+          horizontal: 'visible',
+          verticalScrollbarSize: 12,
+          horizontalScrollbarSize: 12,
+        }
+      }
+    );
+    updateTitleBar(snippet);
   });
 }
 
@@ -314,17 +316,23 @@ function showEndGame() {
  * Se Monaco è già inizializzato, aggiorna solo il modello.
  */
 async function loadRoundSnippet() {
-  const titleEl = document.querySelector('.vscode-title');
-  if (titleEl) {
-    titleEl.innerHTML = `<i class="bi bi-hourglass-split"></i> Caricamento snippet da GitHub...`;
-  }
-
-  try {
-    currentSnippet = await fetchRandomGitHubSnippet();
-    console.log(`[Match] Snippet round ${currentRound}: ${currentSnippet.source} (${currentSnippet.monacoLang})`);
-  } catch (err) {
-    console.warn('[Match] Snippet fetch fallito, uso fallback:', err.message);
-    currentSnippet = fallbackSnippet;
+  // Round 1: usa lo snippet precaricato dal loader durante lo splash screen
+  if (currentRound === 1 && window.__firstSnippet) {
+    currentSnippet = window.__firstSnippet;
+    window.__firstSnippet = null; // consuma e svuota per i round successivi
+    console.log(`[Match] Round 1: uso snippet precaricato (${currentSnippet.source})`);
+  } else {
+    const titleEl = document.querySelector('.vscode-title');
+    if (titleEl) {
+      titleEl.innerHTML = `<i class="bi bi-hourglass-split"></i> Caricamento snippet da GitHub...`;
+    }
+    try {
+      currentSnippet = await fetchRandomGitHubSnippet();
+      console.log(`[Match] Snippet round ${currentRound}: ${currentSnippet.source} (${currentSnippet.monacoLang})`);
+    } catch (err) {
+      console.warn('[Match] Snippet fetch fallito, uso fallback:', err.message);
+      currentSnippet = fallbackSnippet;
+    }
   }
 
   if (monacoEditorInstance) {
@@ -333,6 +341,7 @@ async function loadRoundSnippet() {
     await initMonacoEditor(currentSnippet);
   }
 }
+
 
 /**
  * Esegue il countdown (3-2-1-VIA!) e poi avvia il timer del round.
