@@ -970,7 +970,7 @@ app.get('/api/missioni/:id', async (req, res) => {
  */
 // Helper per salvare la partita nel database
 // Helper per salvare la partita nel database
-async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_utente_trasferta = null) {
+async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_utente_trasferta = null, risultato_avv = null, exp_avv = null) {
     try {
         const isMultiplayer = modalita === 'multiplayer' && id_utente_trasferta;
 
@@ -999,8 +999,8 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
         }];
 
         if (isMultiplayer) {
-            const risultatoAvv = risultato === 'vittoria' ? 'sconfitta' : (risultato === 'sconfitta' ? 'vittoria' : 'pareggio');
-            const expAvv = risultatoAvv === 'vittoria' ? 100 : (risultatoAvv === 'pareggio' ? 50 : 20);
+            const risultatoAvv = risultato_avv !== null ? risultato_avv : (risultato === 'vittoria' ? 'sconfitta' : 'vittoria');
+            const expAvv = exp_avv !== null ? exp_avv : (risultatoAvv === 'vittoria' ? 100 : -10);
             partecipazioni.push({
                 id_partita: idPartita,
                 id_giocatore: id_utente_trasferta,
@@ -1014,8 +1014,8 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
         // 3. Aggiorniamo le statistiche
         const statsCasa = await updatePlayerStats(mioId, risultato, exp_guadagnata, isMultiplayer);
         if (isMultiplayer) {
-            const risultatoAvv = risultato === 'vittoria' ? 'sconfitta' : (risultato === 'sconfitta' ? 'vittoria' : 'pareggio');
-            const expAvv = risultatoAvv === 'vittoria' ? 100 : (risultatoAvv === 'pareggio' ? 50 : 20);
+            const risultatoAvv = risultato_avv !== null ? risultato_avv : (risultato === 'vittoria' ? 'sconfitta' : 'vittoria');
+            const expAvv = exp_avv !== null ? exp_avv : (risultatoAvv === 'vittoria' ? 100 : -10);
             await updatePlayerStats(id_utente_trasferta, risultatoAvv, expAvv, true);
         }
 
@@ -1038,7 +1038,7 @@ async function updatePlayerStats(playerId, result, addedExp, awardTrophies = fal
         if (readErr) return null;
 
         const EXP_PER_LEVEL = 1000;
-        const nuovaExp = (prof.exp || 0) + addedExp;
+        const nuovaExp = Math.max(0, (prof.exp || 0) + addedExp);
         const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
 
         let trophyChange = 0;
@@ -1830,8 +1830,9 @@ io.on('connection', (socket) => {
         // Salvataggio nel DB
         if (!match.unranked) {
             try {
-                const expP1 = risultatoP1 === 'vittoria' ? 100 : (risultatoP1 === 'pareggio' ? 50 : 20);
-                await saveMatchToDB(p1.id, 'multiplayer', risultatoP1, expP1, p2.id);
+                const expP1 = risultatoP1 === 'vittoria' ? 100 + Math.round(p1.health / 2) : -10 - Math.round(p2.health / 2);
+                const expP2 = risultatoP2 === 'vittoria' ? 100 + Math.round(p2.health / 2) : -10 - Math.round(p1.health / 2);
+                await saveMatchToDB(p1.id, 'multiplayer', risultatoP1, expP1, p2.id, risultatoP2, expP2);
                 console.log(`[Match] Risultati salvati per la partita ${roomCode}`);
             } catch (e) {
                 console.error("[Match] Errore salvataggio DB multiplayer:", e);

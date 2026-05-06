@@ -100,7 +100,7 @@ export function initLoader() {
       </div>
 
       <!-- Testo di stato -->
-      <div class="gl-status" id="gl-status-text">Resolving Environment<span class="gl-ellipsis"></span></div>
+      <div class="gl-status" id="gl-status-text">Caricamento<span class="gl-ellipsis"></span></div>
     `;
 
     document.body.insertAdjacentElement('afterbegin', loaderEl);

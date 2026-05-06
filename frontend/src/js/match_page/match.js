@@ -2,7 +2,7 @@ import { getSession, fetchAuth } from '../managers/auth.js';
 
 // ─── Costanti ───────────────────────────────────────────────────────────────
 const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
-const TOTAL_ROUNDS = 5;
+const TOTAL_ROUNDS = 1;
 const ROUND_SECONDS = 60;
 const SETTINGS_KEY = 'codeguessr-settings';
 
@@ -245,31 +245,26 @@ function showEndGame() {
 
   let result, title, subtitle, icon, expEarned, badgeClass;
 
-  if (myHealth > oppHealth) {
+  if (myHealth >= oppHealth) {
     result = 'vittoria';
     title = 'VITTORIA!';
-    subtitle = `Hai vinto con ${myHealth} HP rimasti!`;
+    subtitle = myHealth === oppHealth ? `Entrambi con ${myHealth} HP — Vittoria per tutti!` : `Hai vinto con ${myHealth} HP rimasti!`;
     icon = 'bi-trophy-fill';
     badgeClass = 'end-result--win';
-    expEarned = 50 + Math.round(myHealth / 2);
-  } else if (oppHealth > myHealth) {
+    expEarned = 100 + Math.round(myHealth / 2);
+    if (typeof CG_Sound !== 'undefined') CG_Sound.playWin();
+  } else {
     result = 'sconfitta';
     title = 'SCONFITTA';
     subtitle = `Il bot ha vinto con ${oppHealth} HP rimasti.`;
     icon = 'bi-x-octagon-fill';
     badgeClass = 'end-result--lose';
-    expEarned = 10;
-  } else {
-    result = 'pareggio';
-    title = 'PAREGGIO!';
-    subtitle = `Entrambi con ${myHealth} HP — battaglia epica!`;
-    icon = 'bi-shield-fill-check';
-    badgeClass = 'end-result--draw';
-    expEarned = 25;
+    expEarned = -10 - Math.round(oppHealth / 2);
+    if (typeof CG_Sound !== 'undefined') CG_Sound.playGameOver();
   }
 
-  // Salva nel DB (vittoria e pareggio → EXP piena, sconfitta → consolazione)
-  const dbRisultato = result === 'vittoria' ? 'vittoria' : 'sconfitta';
+  // Salva nel DB (vittoria → EXP piena, sconfitta → consolazione)
+  const dbRisultato = result;
   saveMatchResult(dbRisultato, expEarned);
 
   // Crea overlay end-game (stesso schema modale delle impostazioni)
@@ -292,7 +287,7 @@ function showEndGame() {
           <span class="end-hp-val ${oppHealth > myHealth ? 'text-danger' : (oppHealth < myHealth ? 'text-success' : 'text-warning')}">${oppHealth} HP</span>
         </div>
       </div>
-      <div class="end-exp-badge">+${expEarned} EXP</div>
+      <div class="end-exp-badge">${expEarned > 0 ? '+' : ''}${expEarned} EXP</div>
       <div class="d-flex gap-3 mt-2 flex-wrap justify-content-center">
         <a href="/home" class="btn btn-outline-light rounded-pill px-4 py-2">
           <i class="bi bi-house-fill me-2"></i>Home
@@ -473,7 +468,7 @@ async function handleSubmit(val) {
       reduceHealth('p1', damage);
     } else {
       setFeedback(
-        `<i class="bi bi-dash-circle-fill me-1"></i>Pareggio! Entrambi <b>${myScore}</b>. Nessun danno.`,
+        `<i class="bi bi-dash-circle-fill me-1"></i>Entrambi <b>${myScore}</b>. Nessun danno.`,
         'text-warning'
       );
     }
@@ -685,7 +680,7 @@ async function init() {
         );
       } else {
         setFeedback(
-          `<i class="bi bi-dash-circle-fill me-1"></i>Pareggio! Entrambi <b>${myScore}</b>. Nessun danno.`,
+          `<i class="bi bi-dash-circle-fill me-1"></i>Entrambi <b>${myScore}</b>. Nessun danno.`,
           'text-warning'
         );
       }
@@ -728,15 +723,20 @@ function updateHealthBars() {
 
 function showEndGameMultiplayer(data) {
   const session = getSession();
-  const isWinner = data.winner === session.idGiocatore;
-  const isDraw = data.winner === null;
+  const isWinner = data.winner === session.idGiocatore || data.winner === null;
 
   stopTimer();
   setFormEnabled(false);
 
-  let title = isWinner ? 'VITTORIA!' : (isDraw ? 'PAREGGIO!' : 'SCONFITTA');
-  let icon = isWinner ? 'bi-trophy-fill' : (isDraw ? 'bi-shield-fill-check' : 'bi-x-octagon-fill');
-  let badgeClass = isWinner ? 'end-result--win' : (isDraw ? 'end-result--draw' : 'end-result--lose');
+  let title = isWinner ? 'VITTORIA!' : 'SCONFITTA';
+  let icon = isWinner ? 'bi-trophy-fill' : 'bi-x-octagon-fill';
+  let badgeClass = isWinner ? 'end-result--win' : 'end-result--lose';
+
+  if (isWinner) {
+    if (typeof CG_Sound !== 'undefined') CG_Sound.playWin();
+  } else {
+    if (typeof CG_Sound !== 'undefined') CG_Sound.playGameOver();
+  }
 
   const overlay = document.createElement('div');
   overlay.id = 'end-game-overlay';
@@ -745,7 +745,7 @@ function showEndGameMultiplayer(data) {
     <div class="end-game-card ${badgeClass} p-4 p-lg-5 text-center d-flex flex-column align-items-center gap-3">
       <i class="bi ${icon} end-game-icon"></i>
       <h1 class="end-game-title">${title}</h1>
-      <p class="end-game-subtitle">${isWinner ? 'Hai dominato la sfida!' : (isDraw ? 'Bella partita!' : 'Sarà per la prossima volta!')}</p>
+      <p class="end-game-subtitle">${isWinner ? 'Hai dominato la sfida!' : 'Sarà per la prossima volta!'}</p>
       <div class="d-flex gap-3 mt-2 flex-wrap justify-content-center">
         <a href="/home" class="btn btn-outline-light rounded-pill px-4 py-2">
           <i class="bi bi-house-fill me-2"></i>Home

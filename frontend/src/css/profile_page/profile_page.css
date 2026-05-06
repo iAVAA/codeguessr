@@ -163,11 +163,6 @@
   box-shadow: 0 0 12px rgba(var(--darcula-red), 0.1);
 }
 
-.history-result.draw {
-  background: rgba(var(--darcula-yellow), 0.1);
-  color: rgb(var(--darcula-yellow));
-}
-
 .history-opponent {
   margin-left: 4px;
 }
