@@ -358,3 +358,132 @@
     flex-shrink: 0;
   }
 }
+
+/* ===========================
+   END-GAME MODAL
+   =========================== */
+
+/* Overlay — stesso schema di .cg-settings-overlay */
+.end-game-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.end-game-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Card — appare dal centro con scala */
+.end-game-card {
+  width: 100%;
+  max-width: 480px;
+  background: rgb(var(--darcula-bg));
+  border: 1px solid rgba(var(--darcula-comment), 0.2);
+  border-radius: 24px;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transform: scale(0.88);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.end-game-overlay.visible .end-game-card {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Accent border per ogni risultato */
+.end-result--win  { border-top: 4px solid rgb(var(--darcula-green)); }
+.end-result--lose { border-top: 4px solid rgb(var(--darcula-red)); }
+.end-result--draw { border-top: 4px solid rgb(var(--darcula-yellow)); }
+
+/* Icona grande */
+.end-game-icon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+.end-result--win  .end-game-icon { color: rgb(var(--darcula-green)); filter: drop-shadow(0 0 18px rgba(var(--darcula-green), 0.55)); }
+.end-result--lose .end-game-icon { color: rgb(var(--darcula-red));   filter: drop-shadow(0 0 18px rgba(var(--darcula-red),   0.55)); }
+.end-result--draw .end-game-icon { color: rgb(var(--darcula-yellow));filter: drop-shadow(0 0 18px rgba(var(--darcula-yellow),0.55)); }
+
+/* Titolo */
+.end-game-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: rgb(var(--darcula-fg));
+}
+
+/* Sottotitolo */
+.end-game-subtitle {
+  font-size: 0.95rem;
+  color: rgb(var(--darcula-comment));
+  margin: 0;
+}
+
+/* HP row */
+.end-game-hp-row { gap: 2rem; }
+.end-hp-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+.end-hp-label {
+  font-size: 0.7rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgb(var(--darcula-comment));
+}
+.end-hp-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.end-hp-sep {
+  font-size: 0.85rem;
+  color: rgb(var(--darcula-comment));
+  align-self: center;
+}
+
+/* EXP badge */
+.end-exp-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgb(var(--darcula-yellow));
+  background: rgba(var(--darcula-yellow), 0.12);
+  border: 1px solid rgba(var(--darcula-yellow), 0.3);
+  border-radius: 20px;
+  padding: 0.35rem 1.2rem;
+}
+
+/* Light mode */
+.light-mode .end-game-card {
+  background: #f5f5f5;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.18);
+}
+.light-mode .end-game-overlay { background: rgba(0, 0, 0, 0.4); }
+
+/* Mobile */
+@media (max-width: 480px) {
+  .end-game-card { border-radius: 18px; }
+  .end-game-title { font-size: 1.6rem; }
+  .end-game-icon { font-size: 2.8rem; }
+}
+
