@@ -2,21 +2,58 @@
  * CodeGuessr – Global Loader
  * Inietta un overlay di caricamento animato che rispetta il tema (dark/light)
  * e previene il Flash Of Unstyled Content (FOUC).
- *
- * Utilizzo in ogni pagina:
- *   <script>
- *     // Anti-FOUC inline (prima del </head>)
- *     (function() {
- *       var t = localStorage.getItem('codeguessr-theme');
- *       var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
- *       if (t === 'light' || (!t && !prefersDark)) {
- *         document.documentElement.classList.add('light-mode');
- *       }
- *     })();
- *   </script>
- *   <script src="../js/loader.js" defer></script>
- *   <script>initLoader();</script>  ← oppure chiama initLoader() dal tuo JS
  */
+
+/**
+ * Prova a precaricare Monaco Editor (vs/editor/editor.main) durante lo splash.
+ * DEVE essere chiamata il prima possibile (prima che match.js esegua init()).
+ * Salva la Promise in window.__monacoReady così initMonacoEditor() la riutilizza.
+ */
+function preloadMonacoIfNeeded() {
+  if (
+    !window.require ||
+    typeof window.require.config !== 'function' ||
+    !document.getElementById('monaco-container')
+  ) {
+    return Promise.resolve();
+  }
+
+  if (window.__monacoReady) return window.__monacoReady;
+
+  window.require.config({
+    paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }
+  });
+
+  window.__monacoReady = new Promise((resolve) => {
+    window.require(['vs/editor/editor.main'], () => {
+      console.log('[Loader] Monaco Editor precaricato con successo.');
+      resolve();
+    });
+  });
+
+  return window.__monacoReady;
+}
+
+/**
+ * Fetcha il primo snippet da GitHub durante lo splash, così al round 1
+ * lo snippet è già pronto e il countdown parte immediatamente.
+ * Salva il risultato in window.__firstSnippet.
+ */
+async function preloadFirstSnippet(statusEl) {
+  // Solo sulla match_page (controlla il contenitore Monaco)
+  if (!document.getElementById('monaco-container')) return;
+
+  try {
+    if (statusEl) statusEl.innerHTML = 'Caricamento snippet<span class="gl-ellipsis"></span>';
+    const res = await fetch('/api/random-snippet');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    window.__firstSnippet = await res.json();
+    console.log('[Loader] Primo snippet precaricato:', window.__firstSnippet?.source);
+  } catch (err) {
+    console.warn('[Loader] Preload snippet fallito, match.js userà il fallback:', err.message);
+    window.__firstSnippet = null;
+  }
+}
 
 export function initLoader() {
   const _inject = () => {
@@ -24,6 +61,11 @@ export function initLoader() {
     document.body.classList.add('loader-open');
 
     if (document.getElementById('globalLoader')) return; // già presente
+
+    // ── AVVIA IL PRELOAD DI MONACO SUBITO (prima di qualsiasi await) ─────────
+    // Questo imposta window.__monacoReady in modo sincrono prima che
+    // match.js chiami initMonacoEditor(), evitando il race condition.
+    const monacoLoad = preloadMonacoIfNeeded();
 
     // ── Costruisci l'HTML del loader ─────────────────────────────────────────
     const loaderEl = document.createElement('div');
@@ -58,7 +100,7 @@ export function initLoader() {
       </div>
 
       <!-- Testo di stato -->
-      <div class="gl-status">Resolving Environment<span class="gl-ellipsis"></span></div>
+      <div class="gl-status" id="gl-status-text">Resolving Environment<span class="gl-ellipsis"></span></div>
     `;
 
     document.body.insertAdjacentElement('afterbegin', loaderEl);
@@ -67,7 +109,6 @@ export function initLoader() {
     const _hide = () => {
       const loader = document.getElementById('globalLoader');
 
-      // Rimuovi stile anti-FOUC se presente
       const foucStyle = document.getElementById('fouc-prevention');
       if (foucStyle) foucStyle.remove();
 
@@ -76,7 +117,7 @@ export function initLoader() {
         setTimeout(() => {
           loader.remove();
           document.body.classList.remove('loader-open');
-        }, 500); // uguale alla durata CSS transition
+        }, 500);
       } else {
         document.body.classList.remove('loader-open');
       }
@@ -85,12 +126,22 @@ export function initLoader() {
     // Tempo minimo visibilità (ms)
     const minTime = new Promise(res => setTimeout(res, 1400));
 
-    if (document.readyState === 'complete') {
-      minTime.then(_hide);
-    } else {
-      const pageLoad = new Promise(res => window.addEventListener('load', res, { once: true }));
-      Promise.all([minTime, pageLoad]).then(_hide);
-    }
+    // Pagina pronta
+    const pageLoad = document.readyState === 'complete'
+      ? Promise.resolve()
+      : new Promise(res => window.addEventListener('load', res, { once: true }));
+
+    // Appena la pagina è pronta, avvia il preload del primo snippet
+    const snippetLoad = pageLoad.then(() => {
+      const statusEl = document.getElementById('gl-status-text');
+      return Promise.all([
+        monacoLoad,
+        preloadFirstSnippet(statusEl)
+      ]);
+    });
+
+    // Il loader rimane aperto finché: tempo minimo + pagina caricata + Monaco pronto + snippet pronto
+    Promise.all([minTime, pageLoad, snippetLoad]).then(_hide);
   };
 
   // Inietta subito se il DOM è pronto, altrimenti aspetta
