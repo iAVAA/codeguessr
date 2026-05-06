@@ -1,7 +1,6 @@
 import { getSession, fetchAuth } from '../managers/auth.js';
 
 // ─── Costanti ───────────────────────────────────────────────────────────────
-const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
 const TOTAL_ROUNDS = 1;
 const ROUND_SECONDS = 60;
 const SETTINGS_KEY = 'codeguessr-settings';
@@ -554,29 +553,26 @@ async function loadProfiles() {
   document.getElementById('match-p1-name').textContent = 'Giocatore';
   document.getElementById('match-p1-lvl').textContent = 1;
   document.getElementById('match-p1-cups').textContent = 0;
-  document.getElementById('match-p1-avatar').src = `${AVATAR_BASE}?seed=guest&backgroundColor=1e1f21`;
 
   // Bot avversario o giocatore reale in multiplayer
   if (isMultiplayer && opponentData) {
     document.getElementById('match-p2-name').textContent = opponentData.nickname;
     document.getElementById('match-p2-lvl').textContent = opponentData.livello || '--';
     document.getElementById('match-p2-cups').textContent = opponentData.trophies || '--';
-    document.getElementById('match-p2-avatar').src = opponentData.avatar_url
-      ? opponentData.avatar_url
-      : `${AVATAR_BASE}?seed=${opponentData.id}&backgroundColor=1e1f21`;
+    document.getElementById('match-p2-avatar').src = opponentData.avatar_url;
   } else {
     const { difficulty } = (() => {
       try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch { return {}; }
     })();
-    const botNames = { easy: 'EasyBot 🤖', normal: 'CodeBot 🤖', hard: 'HardCore 🤖' };
+    const botNames = { easy: 'EasyBot', normal: 'CodeBot', hard: 'HardCore' };
     const botLvls = { easy: 5, normal: 25, hard: 99 };
     const botCups = { easy: 400, normal: 2800, hard: 9999 };
     const diff = difficulty ?? 'normal';
 
-    document.getElementById('match-p2-name').textContent = botNames[diff] || 'CodeBot 🤖';
+    document.getElementById('match-p2-name').textContent = botNames[diff] || 'CodeBot';
     document.getElementById('match-p2-lvl').textContent = botLvls[diff] || 25;
     document.getElementById('match-p2-cups').textContent = botCups[diff] || 2800;
-    document.getElementById('match-p2-avatar').src = `${AVATAR_BASE}?seed=${oppSeed}&backgroundColor=1e1f21`;
+    document.getElementById('match-p2-avatar').src = `/src/assets/img/bot_image.webp`;
   }
 
   // Carica profilo reale dal DB
@@ -588,9 +584,7 @@ async function loadProfiles() {
         document.getElementById('match-p1-name').textContent = myProfile.user;
         document.getElementById('match-p1-lvl').textContent = myProfile.livello || 1;
         document.getElementById('match-p1-cups').textContent = myProfile.exp || 0;
-        const avatarSrc = myProfile.avatar_url
-          ? myProfile.avatar_url
-          : `${AVATAR_BASE}?seed=${myProfile.userid}&backgroundColor=1e1f21`;
+        const avatarSrc = myProfile.avatar_url;
         document.getElementById('match-p1-avatar').src = avatarSrc;
       }
     } catch (e) {
