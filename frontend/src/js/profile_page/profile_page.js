@@ -30,7 +30,7 @@ window.handleProfileFriendAction = async function (action, targetUserId) {
         alert('C\'è stato un problema. Riprova più tardi.');
     }
 }
-const AVATAR_BASE = 'https://api.dicebear.com/8.x/bottts-neutral/svg';
+
 const XP_PER_LEVEL = 500;
 
 // ─── Utility XP Ring ─────────────────────────────────────────────────────────
@@ -308,23 +308,21 @@ async function fetchFullProfileData(userId) {
     const dataStorico = resStorico.ok ? await resStorico.json() : [];
     const amiciData = resAmici.ok ? await resAmici.json() : { amici: [], inviate: [], ricevute: [] };
 
-    const avatar = dataProfilo.avatar_url
-        ? dataProfilo.avatar_url
-        : `${AVATAR_BASE}?seed=${userId}&backgroundColor=1e1f21`;
+    const avatar = dataProfilo.avatar_url;
 
     const amiciFormattati = amiciData.amici.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        avatar: a.avatar_url,
         online: a.online || false, type: 'amico'
     }));
     const inviate = amiciData.inviate.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        avatar: a.avatar_url,
         online: false, type: 'inviata'
     }));
     const ricevute = amiciData.ricevute.map(a => ({
         userid: a.userid, name: a.user,
-        avatar: a.avatar_url || `${AVATAR_BASE}?seed=${a.userid}&backgroundColor=1e1f21`,
+        avatar: a.avatar_url,
         online: false, type: 'ricevuta'
     }));
 
@@ -473,9 +471,7 @@ async function updateNavbar(playerData) {
 
     const navAvatar = document.getElementById('player-avatar');
     if (navAvatar) {
-        navAvatar.src = playerData.avatar_url
-            ? playerData.avatar_url
-            : `${AVATAR_BASE}?seed=${playerData.userid}&backgroundColor=1e1f21`;
+        navAvatar.src = playerData.avatar_url;
     }
 
     const xpPercent = Math.min(100, (playerData.exp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
