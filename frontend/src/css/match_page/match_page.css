@@ -406,7 +406,6 @@
 /* Accent border per ogni risultato */
 .end-result--win  { border-top: 4px solid rgb(var(--darcula-green)); }
 .end-result--lose { border-top: 4px solid rgb(var(--darcula-red)); }
-.end-result--draw { border-top: 4px solid rgb(var(--darcula-yellow)); }
 
 /* Icona grande */
 .end-game-icon {
@@ -415,7 +414,6 @@
 }
 .end-result--win  .end-game-icon { color: rgb(var(--darcula-green)); filter: drop-shadow(0 0 18px rgba(var(--darcula-green), 0.55)); }
 .end-result--lose .end-game-icon { color: rgb(var(--darcula-red));   filter: drop-shadow(0 0 18px rgba(var(--darcula-red),   0.55)); }
-.end-result--draw .end-game-icon { color: rgb(var(--darcula-yellow));filter: drop-shadow(0 0 18px rgba(var(--darcula-yellow),0.55)); }
 
 /* Titolo */
 .end-game-title {

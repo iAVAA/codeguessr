@@ -28,8 +28,8 @@
 
   let _musicVolume = 0.6;
   let _sfxVolume = 0.8;
-  let _musicEl = null;
-  let _musicPlaying = false;
+  let _musicEls = {};
+  let _currentMusic = null;
   const _clickPool = [];
 
   // ─── VOLUMI DAL LOCALSTORAGE ──────────────────────────────────────────────
@@ -56,8 +56,10 @@
 
   function init() {
     loadVolumeFromSettings();
-    _musicEl = makeAudio(`${BASE}/game_music_loop.mp3`, true);
-    _musicEl.volume = _musicVolume;
+    _musicEls['game'] = makeAudio(`${BASE}/game_music_loop.mp3`, true);
+    _musicEls['match'] = makeAudio(`${BASE}/match_music_loop.mp3`, true);
+    _musicEls['game'].volume = _musicVolume;
+    _musicEls['match'].volume = _musicVolume;
     for (let i = 1; i <= CLICK_COUNT; i++) {
       const el = makeAudio(`${BASE}/button_clicks/button_click_${i}.mp3`);
       el.volume = _sfxVolume;
@@ -90,22 +92,28 @@
     playGameOver()        { playSfxFile(`${BASE}/game_over.mp3`);       },
     playMissionComplete() { playSfxFile(`${BASE}/mission_complete.mp3`); },
 
-    startMusic() {
-      if (!_musicEl || _musicPlaying) return;
-      _musicEl.volume = _musicVolume;
-      _musicEl.play().then(() => { _musicPlaying = true; }).catch(() => { });
+    startMusic(type = 'game') {
+      if (_currentMusic === type && !_musicEls[type].paused) return;
+      this.stopMusic();
+      const el = _musicEls[type];
+      if (!el) return;
+      el.volume = _musicVolume;
+      el.play().catch(() => { });
+      _currentMusic = type;
     },
 
     stopMusic() {
-      if (!_musicEl) return;
-      _musicEl.pause();
-      _musicEl.currentTime = 0;
-      _musicPlaying = false;
+      if (_currentMusic && _musicEls[_currentMusic]) {
+        _musicEls[_currentMusic].pause();
+        _musicEls[_currentMusic].currentTime = 0;
+      }
+      _currentMusic = null;
     },
 
     setMusicVolume(vol) {
       _musicVolume = Math.max(0, Math.min(1, vol));
-      if (_musicEl) _musicEl.volume = _musicVolume;
+      if (_musicEls['game']) _musicEls['game'].volume = _musicVolume;
+      if (_musicEls['match']) _musicEls['match'].volume = _musicVolume;
     },
 
     setSfxVolume(vol) {
@@ -113,7 +121,7 @@
       _clickPool.forEach(el => { el.volume = _sfxVolume; });
     },
 
-    isMusicPlaying() { return _musicPlaying; },
+    isMusicPlaying() { return _currentMusic !== null && !_musicEls[_currentMusic].paused; },
   };
 
   // ─── BANNER AUDIO (HTML già in game_page.html) ────────────────────────────
@@ -121,19 +129,19 @@
   // Qui gestiamo solo visibilità e logica.
 
   function initAudioBanner() {
+    const pref = localStorage.getItem(PREF_KEY);
+    const getMusicType = () => window.location.pathname.includes('/match') ? 'match' : 'game';
+
+    // Già accettato → avvia subito la musica
+    if (pref === 'yes') {
+      CG_Sound.startMusic(getMusicType());
+    }
+
     const banner = document.getElementById('cg-audio-banner');
     if (!banner) return; // pagina senza banner → nessun popup
 
-    const pref = localStorage.getItem(PREF_KEY);
-
-    // Già accettato → avvia subito la musica, non mostrare il banner
-    if (pref === 'yes') {
-      CG_Sound.startMusic();
-      return;
-    }
-
-    // Già rifiutato → non mostrare più
-    if (pref === 'no') return;
+    // Se aveva già scelto (yes o no), non mostrare il banner
+    if (pref === 'yes' || pref === 'no') return;
 
     // Prima visita → mostra il banner
     banner.removeAttribute('hidden');
@@ -149,7 +157,7 @@
     if (btnYes) {
       btnYes.addEventListener('click', () => {
         dismiss('yes');
-        CG_Sound.startMusic();
+        CG_Sound.startMusic(getMusicType());
       });
     }
 

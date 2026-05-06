@@ -98,12 +98,11 @@ function formatModalita(modalita) {
 
 function buildHistoryHTML(match) {
     const isWin = match.risultato === 'vittoria';
-    const isDraw = match.risultato === 'pareggio';
 
     let icon = 'bi-arrow-down-right';
     let resultClass = 'loss';
     let xpColor = 'text-darcula-red';
-    let xpPrefix = '';
+    let xpPrefix = '-';
     let textResult = 'Sconfitta';
 
     if (isWin) {
@@ -112,11 +111,6 @@ function buildHistoryHTML(match) {
         xpColor = 'text-darcula-green';
         xpPrefix = '+';
         textResult = 'Vittoria';
-    } else if (isDraw) {
-        icon = 'bi-dash-lg';
-        resultClass = 'draw';
-        xpColor = 'text-warning';
-        textResult = 'Pareggio';
     }
 
     const timeAgo = formatRelativeTime(match.data_fine || match.data_inizio);
