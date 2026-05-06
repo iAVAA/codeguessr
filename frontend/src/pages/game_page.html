@@ -1,583 +1,585 @@
 <!DOCTYPE html>
 <html lang="it">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description"
-            content="CodeGuessr - Guess the programming language from random code snippets. Single player or multiplayer. Train your developer intuition." />
-        <meta name="theme-color" content="#313335" />
-        <title>CodeGuessr - Lobby</title>
-        <link rel="icon" type="image/webp" href="src/assets/icons/logo.ico" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-            integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-        <link rel="stylesheet" href="src/css/style.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
-            rel="stylesheet" />
-        <link rel="stylesheet" href="src/css/style.css" />
-        <link rel="stylesheet" href="src/css/game_page/main_game.css" />
-        <link rel="stylesheet" href="src/css/game_page/code_block.css" />
-        <link rel="stylesheet" href="src/css/game_page/multiplayer_modal.css" />
 
-        <style id="anti-flash">
-            /* Rimuove l'apparizione del contenuto della pagina prima del loader.js */
-            body.loader-open>*:not(#globalLoader):not(#noscript-wall):not(script):not(style) {
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="CodeGuessr - Guess the programming language from random code snippets. Single player or multiplayer. Train your developer intuition." />
+    <meta name="theme-color" content="#313335" />
+    <title>CodeGuessr - Lobby</title>
+    <link rel="icon" type="image/webp" href="src/assets/icons/logo.ico" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="src/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="src/css/style.css" />
+    <link rel="stylesheet" href="src/css/game_page/main_game.css" />
+    <link rel="stylesheet" href="src/css/game_page/code_block.css" />
+    <link rel="stylesheet" href="src/css/game_page/multiplayer_modal.css" />
+
+    <style id="anti-flash">
+        /* Rimuove l'apparizione del contenuto della pagina prima del loader.js */
+        body.loader-open>*:not(#globalLoader):not(#noscript-wall):not(script):not(style) {
             opacity: 0 !important;
             pointer-events: none !important;
-            }
-        </style>
+        }
+    </style>
 
-        <script>
-            // Fissa la game_page.html per evitare il caricamento di altre pagine
-            if (localStorage.getItem('isLoggedIn') !== 'true') {
-              window.location.replace('/index.html');
-            }
-        </script>
-        <script id="fouc-prevention">
-            // Anti-FOUC: applica il tema dal localStorage prima che il CSS venga parsato
-            (function () {
-              var t = localStorage.getItem('codeguessr-theme');
-              var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-              if (t === 'light' || (!t && !prefersDark)) {
+    <script>
+        // Fissa la game_page.html per evitare il caricamento di altre pagine
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.replace('/index.html');
+        }
+    </script>
+    <script id="fouc-prevention">
+        // Anti-FOUC: applica il tema dal localStorage prima che il CSS venga parsato
+        (function () {
+            var t = localStorage.getItem('codeguessr-theme');
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (t === 'light' || (!t && !prefersDark)) {
                 document.documentElement.classList.add('light-mode');
-              }
-            })();
-        </script>
-    </head>
+            }
+        })();
+    </script>
+</head>
 
-    <body>
-        <noscript>
-            <div id="noscript-wall" role="alert" aria-live="assertive">
-                <div class="ns-logo">
-                    <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" onerror="this.style.display='none'">
-                    <span>Code<b>Guessr</b></span>
-                </div>
-                <div class="ns-icon-wrap" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                <h1 class="ns-title">JavaScript <span>disabilitato</span></h1>
-                <p class="ns-desc">
-                    CodeGuessr richiede JavaScript per funzionare. Senza di esso non è possibile
-                    caricare le partite, il profilo o le classifiche.
-                </p>
-                <div class="ns-code" aria-label="Istruzioni per abilitare JavaScript">
-                    <span class="c-dim"># Come abilitare JavaScript</span><br>
-                    <span class="c-kw">Chrome</span> → Impostazioni > Privacy > JavaScript → <span
-                        class="c-val">Consentito</span><br>
-                    <span class="c-kw">Firefox</span> → <span class="c-val">about:config</span> > javascript.enabled → <span
-                        class="c-val">true</span><br>
-                    <span class="c-kw">Safari</span> → Preferenze > Sicurezza > Abilita JavaScript → <span class="c-val"><i
+<body>
+    <noscript>
+        <div id="noscript-wall" role="alert" aria-live="assertive">
+            <div class="ns-logo">
+                <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" onerror="this.style.display='none'">
+                <span>Code<b>Guessr</b></span>
+            </div>
+            <div class="ns-icon-wrap" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <h1 class="ns-title">JavaScript <span>disabilitato</span></h1>
+            <p class="ns-desc">
+                CodeGuessr richiede JavaScript per funzionare. Senza di esso non è possibile
+                caricare le partite, il profilo o le classifiche.
+            </p>
+            <div class="ns-code" aria-label="Istruzioni per abilitare JavaScript">
+                <span class="c-dim"># Come abilitare JavaScript</span><br>
+                <span class="c-kw">Chrome</span> → Impostazioni > Privacy > JavaScript → <span
+                    class="c-val">Consentito</span><br>
+                <span class="c-kw">Firefox</span> → <span class="c-val">about:config</span> > javascript.enabled → <span
+                    class="c-val">true</span><br>
+                <span class="c-kw">Safari</span> → Preferenze > Sicurezza > Abilita JavaScript → <span class="c-val"><i
                         class="bi bi-check"></i></span>
-                </div>
-                <div class="ns-links">
-                    <a class="ns-link" href="https://enable-javascript.com/it/" target="_blank">
+            </div>
+            <div class="ns-links">
+                <a class="ns-link" href="https://enable-javascript.com/it/" target="_blank">
                     Guida dettagliata per il tuo browser
+                </a>
+            </div>
+        </div>
+    </noscript>
+
+    <script type="module">
+        import { initLoader } from '/src/js/loader.js';
+        initLoader();
+    </script>
+
+    <!-- ===================== HEADER ===================== -->
+    <header class="navbar-codeguessr d-flex align-items-center justify-content-between" style="position:relative">
+        <!-- == Left Side: Brand Logo == -->
+        <div class="navbar-brand-logo" id="nav-brand">
+            <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" class="logo-img" />
+            <span class="brand-text">Code<span class="brand-accent">Guessr</span></span>
+        </div>
+
+        <!-- == Right Side: Profile == -->
+        <div class="d-flex align-items-center gap-3">
+            <!-- Profile Section -->
+            <div class="profile-dropdown-wrapper d-none" id="profile-dropdown-wrapper">
+                <div class="profile-widget" id="profile-widget" tabindex="0">
+                    <!-- Name + Stats -->
+                    <div class="profile-info">
+                        <span class="profile-name" id="player-name"></span>
+                        <div class="profile-stats">
+                            <span class="stat-tier">LV <span id="player-level"></span></span>
+                            <span class="stat-divider">&bull;</span>
+                            <span class="profile-cups">
+                                <i class="bi bi-trophy-fill"></i>
+                                <span id="player-cups"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Avatar with XP ring -->
+                    <div class="profile-avatar-wrapper">
+                        <svg class="xp-ring" viewBox="0 0 36 36">
+                            <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
+                            <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"></circle>
+                        </svg>
+                        <img src="https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21"
+                            alt="Player avatar" class="profile-avatar" id="player-avatar"
+                            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Ccircle cx=\'24\' cy=\'24\' r=\'24\' fill=\'%23464a4a\'/%3E%3Ctext x=\'50%25\' y=\'55%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Inter\' font-weight=\'700\' font-size=\'18\' fill=\'%23a9b7c6\'%3EG%3C/text%3E%3C/svg%3E'" />
+                    </div>
+
+                    <i class="bi bi-chevron-down profile-chevron" id="profile-chevron"></i>
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div class="profile-dropdown-menu" id="profile-dropdown">
+                    <a href="/profilo" class="dropdown-item">
+                        <i class="bi bi-person-fill"></i> Il mio Profilo
+                    </a>
+                    <a href="/classifica" class="dropdown-item">
+                        <i class="bi bi-award-fill"></i> Classifica
+                    </a>
+                    <button class="dropdown-item" id="menu-btn-settings"><i class="bi bi-gear-fill">
+                        </i> Impostazioni
+                    </button>
+
+                    <div class="dropdown-divider" id="menu-divider"></div>
+
+                    <button class="dropdown-item text-danger" id="menu-btn-logout">
+                        <i class="bi bi-box-arrow-right"></i> Log out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="game-hero" id="main-lobby">
+        <div class="container-fluid w-100" style="max-width: 1600px;">
+            <div class="row align-items-center justify-content-center h-100 gy-5">
+
+                <!-- Left Panel (Missions) -->
+                <div class="col-12 col-lg-3 order-2 order-lg-1">
+                    <div class="side-panel">
+                        <div class="panel-title d-flex justify-content-between align-items-center">
+                            <div><i class="bi bi-card-checklist"></i> Missioni</div>
+                            <button id="btn-toggle-missions" class="btn-panel-action" title="Mostra completate">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                        </div>
+
+                        <div class="mission-list"></div>
+                    </div>
+                </div>
+
+                <!-- Center Panel -->
+                <div class="col-12 col-lg-6 order-1 order-lg-2 d-flex justify-content-center">
+                    <div class="hero-content w-100 m-0">
+
+                        <h1 class="hero-welcome mb-3">
+                            Bentornato, <span class="hero-title-accent" id="hero-welcome-name"></span>
+                        </h1>
+
+                        <!-- Random Code snippets decoration -->
+                        <div class="code-decoration"></div>
+
+                        <!-- Main Buttons -->
+                        <div class="play-buttons">
+                            <!-- Single Player -->
+                            <button class="btn-play btn-singleplayer" id="btn-singleplayer"
+                                aria-label="Gioca in single player">
+                                <div class="btn-play-icon">
+                                    <i class="bi bi-controller"></i>
+                                </div>
+                                <div class="btn-play-text">
+                                    <span class="btn-play-label">Gioca da solo</span>
+                                    <span class="btn-play-title">Single Player</span>
+                                </div>
+                            </button>
+
+                            <!-- Multiplayer -->
+                            <button class="btn-play btn-multiplayer" id="btn-multiplayer"
+                                aria-label="Gioca in multiplayer">
+                                <div class="btn-play-icon">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div class="btn-play-text">
+                                    <span class="btn-play-label">Sfida amici</span>
+                                    <span class="btn-play-title">Multiplayer</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel (Friends) -->
+                <div class="col-12 col-lg-3 order-3 order-lg-3">
+                    <div class="side-panel">
+                        <div class="panel-title d-flex justify-content-between align-items-center mb-0">
+                            <span><i class="bi bi-people"></i> Amici</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill" id="friends-online-badge">Online</span>
+                                <button class="btn-add-friend" id="btn-add-friend" aria-label="Aggiungi amico"
+                                    title="Aggiungi amico">
+                                    <i class="bi bi-person-plus-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="friends-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== START CUSTOM: ADD FRIEND SEARCH (btn-add-friend) ===== -->
+    <div class="cg-friend-search-overlay" id="friend-search-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+        aria-labelledby="friend-search-title">
+        <div class="cg-friend-search-modal" id="friend-search-modal">
+            <div class="cg-friend-search-header">
+                <div class="cg-friend-search-title-group">
+                    <div class="cg-friend-search-icon-wrap">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h2 class="cg-friend-search-title" id="friend-search-title">Cerca giocatori</h2>
+                </div>
+
+                <button class="cg-friend-search-close" id="friend-search-close" aria-label="Chiudi ricerca giocatori">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="cg-friend-search-body">
+                <label class="cg-friend-search-input-wrap" for="friend-search-input">
+                    <i class="bi bi-search"></i>
+                    <input id="friend-search-input" type="text" placeholder="Cerca per nickname o username"
+                        autocomplete="off">
+                </label>
+
+                <p class="cg-friend-search-hint">Scrivi almeno 2 caratteri per cercare un giocatore.</p>
+
+                <div class="cg-friend-search-results" id="friend-search-results" aria-live="polite"></div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END CUSTOM: ADD FRIEND SEARCH (btn-add-friend) ===== -->
+
+    <!-- ===================== MISSION DETAIL ===================== -->
+    <div class="cg-friend-search-overlay" id="mission-detail-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+        aria-labelledby="mission-detail-title">
+        <div class="cg-friend-search-modal" id="mission-detail-modal">
+            <div class="cg-friend-search-header">
+                <div class="cg-friend-search-title-group">
+                    <div class="cg-friend-search-icon-wrap"
+                        style="color: rgb(var(--darcula-yellow)); background: rgba(var(--darcula-yellow), 0.14); border-color: rgba(var(--darcula-yellow), 0.32);">
+                        <i class="bi bi-trophy-fill"></i>
+                    </div>
+                    <h2 class="cg-friend-search-title" id="mission-detail-title">Dettaglio Missione</h2>
+                </div>
+                <button class="cg-friend-search-close" id="mission-detail-close" aria-label="Chiudi dettaglio missione">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="cg-friend-search-body">
+                <h3 id="mission-detail-name"
+                    style="color: rgb(var(--darcula-fg)); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">
+                    Nome Missione</h3>
+                <p id="mission-detail-desc"
+                    style="color: rgba(var(--darcula-comment), 0.95); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.4;">
+                    Descrizione dettagliata su come completare la missione.</p>
+
+                <div
+                    style="background: rgba(var(--darcula-bg), 0.65); border: 1px solid rgba(var(--darcula-comment), 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                        <span style="color: rgb(var(--darcula-comment));">Progresso</span>
+                        <span id="mission-detail-progress-text" style="color: rgb(var(--darcula-fg));">0/1</span>
+                    </div>
+                    <div class="mission-progress-bar" style="height: 8px; margin-bottom: 0;">
+                        <div id="mission-detail-progress-fill" class="progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem;">
+                    <span
+                        style="font-size: 0.85rem; font-weight: 600; color: rgb(var(--darcula-comment));">Ricompensa</span>
+                    <span id="mission-detail-reward" class="mission-reward"
+                        style="font-size: 0.95rem; font-weight: 700;">+0 XP</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===================== END MISSION DETAIL ===================== -->
+
+    <!-- ===================== SETTINGS ===================== -->
+    <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+        aria-labelledby="settings-title">
+        <div class="cg-settings-modal" id="settings-modal">
+            <div class="cg-settings-header">
+                <div class="cg-settings-title-group">
+                    <div class="cg-settings-icon-wrap">
+                        <i class="bi bi-gear-fill"></i>
+                    </div>
+                    <h2 class="cg-settings-title" id="settings-title">Impostazioni</h2>
+                </div>
+
+                <button class="cg-settings-close" id="settings-close" aria-label="Chiudi impostazioni">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="cg-settings-body">
+                <!-- Audio -->
+                <section class="cg-settings-section">
+                    <div class="cg-settings-section-label"><i class="bi bi-volume-up-fill"></i> Audio</div>
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Volume musica</span>
+                            <span class="cg-settings-row-desc">Musica di sottofondo</span>
+                        </div>
+                        <div class="cg-slider-group">
+                            <i class="bi bi-volume-down cg-slider-icon"></i>
+                            <input type="range" class="cg-slider" id="volume-music" min="0" max="100" value="100"
+                                aria-label="Volume musica">
+                            <i class="bi bi-volume-up cg-slider-icon"></i>
+                            <span class="cg-slider-value" id="volume-music-val">100%</span>
+                        </div>
+                    </div>
+
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Volume effetti</span>
+                            <span class="cg-settings-row-desc">Suoni di click e notifiche</span>
+                        </div>
+                        <div class="cg-slider-group">
+                            <i class="bi bi-volume-down cg-slider-icon"></i>
+                            <input type="range" class="cg-slider" id="volume-sfx" min="0" max="100" value="75"
+                                aria-label="Volume effetti">
+                            <i class="bi bi-volume-up cg-slider-icon"></i>
+                            <span class="cg-slider-value" id="volume-sfx-val">75%</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Appearance -->
+                <section class="cg-settings-section">
+                    <div class="cg-settings-section-label"><i class="bi bi-palette-fill"></i> Aspetto</div>
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Tema</span>
+                            <span class="cg-settings-row-desc">Seleziona il tema nel sito</span>
+                        </div>
+                        <div class="cg-theme-picker" id="theme-picker" role="group" aria-label="Seleziona tema">
+                            <button class="cg-theme-btn" data-theme="dark" aria-pressed="true">
+                                <i class="bi bi-moon-stars-fill"></i> Dark
+                            </button>
+                            <button class="cg-theme-btn" data-theme="light" aria-pressed="false">
+                                <i class="bi bi-sun-fill"></i> Light
+                            </button>
+                            <button class="cg-theme-btn" data-theme="system" aria-pressed="false">
+                                <i class="bi bi-display"></i> Sistema
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Animazioni ridotte</span>
+                            <span class="cg-settings-row-desc">Disabilita le transizioni</span>
+                        </div>
+                        <label class="cg-toggle" aria-label="Animazioni ridotte">
+                            <input type="checkbox" id="toggle-animations" role="switch">
+                            <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
+                        </label>
+                    </div>
+                </section>
+                <!-- Gameplay -->
+                <section class="cg-settings-section">
+                    <div class="cg-settings-section-label"><i class="bi bi-controller"></i> Gameplay</div>
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Difficoltà predefinita</span>
+                            <span class="cg-settings-row-desc">Difficoltà del Bot in Single Player</span>
+                        </div>
+                        <div class="cg-theme-picker" id="difficulty-picker" role="group" aria-label="Difficoltà">
+                            <button class="cg-theme-btn cg-diff-btn" data-diff="easy"
+                                aria-pressed="false">Facile</button>
+                            <button class="cg-theme-btn cg-diff-btn" data-diff="normal"
+                                aria-pressed="true">Normale</button>
+                            <button class="cg-theme-btn cg-diff-btn" data-diff="hard"
+                                aria-pressed="false">Difficile</button>
+                        </div>
+                    </div>
+                </section>
+                <!-- Danger Zone -->
+                <section class="cg-settings-section" style="border-bottom: none;">
+                    <div class="cg-settings-section-label text-danger"><i class="bi bi-exclamation-triangle-fill"></i>
+                        Zona Pericolosa</div>
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name text-danger">Elimina Profilo</span>
+                            <span class="cg-settings-row-desc">Questa azione è irreversibile. Tutti i tuoi dati andranno
+                                persi.</span>
+                        </div>
+                        <button class="cg-btn-danger" id="btn-delete-profile">
+                            <i class="bi bi-trash3-fill"></i> Elimina
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Footer -->
+            <div class="cg-settings-footer">
+                <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0-alpha</span>
+                <div class="d-flex gap-2">
+                    <button class="cg-btn-secondary" id="settings-cancel">Annulla</button>
+                    <button class="cg-btn-primary" id="settings-save">Applica</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="site-footer" id="site-footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <!-- Left Side -->
+                <div class="footer-copy">
+                    <span class="footer-brand">
+                        <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
+                    </span>
+                    <span class="footer-sep" aria-hidden="true">&mdash;</span>
+                    <span class="footer-authors">
+                        Salvatore Iavarone &amp; Michele Pio Forlani
+                    </span>
+                    <span class="footer-sep" aria-hidden="true">&bull;</span>
+                    <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
+                        class="footer-license">Licenza MIT</a>
+                    <span class="footer-sep" aria-hidden="true">&bull;</span>
+                    <span class="footer-version">v1.0.0-alpha</span>
+                </div>
+                <!-- Right Side -->
+                <div class="footer-links-inline">
+                    <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
+                        title="GitHub">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/in/salvatoreiavarone" target="_blank" class="social-btn"
+                        aria-label="LinkedIn" title="LinkedIn">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr"
+                        target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
+                        <i class="bi bi-envelope-fill"></i>
                     </a>
                 </div>
             </div>
-        </noscript>
+        </div>
+    </footer>
 
-        <script type="module">
-            import { initLoader } from '/src/js/loader.js';
-            initLoader();
+    <!-- ===================== AUDIO PERMISSION BANNER ===================== -->
+    <div id="cg-audio-banner" aria-live="polite" hidden>
+        <span class="cg-audio-banner-icon"><i class="bi bi-music-note-beamed"></i></span>
+        <span class="cg-audio-banner-text">Vuoi abilitare la musica di sottofondo?</span>
+        <button id="cg-audio-yes" class="cg-audio-btn cg-audio-btn--yes">Sì, abilita</button>
+        <button id="cg-audio-no" class="cg-audio-btn cg-audio-btn--no">No grazie</button>
+    </div>
+
+    <script>
+        document.body.classList.add('loader-open');
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
         </script>
 
-        <!-- ===================== HEADER ===================== -->
-        <header class="navbar-codeguessr d-flex align-items-center justify-content-between" style="position:relative">
-            <!-- == Left Side: Brand Logo == -->
-            <div class="navbar-brand-logo" id="nav-brand">
-                <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" class="logo-img" />
-                <span class="brand-text">Code<span class="brand-accent">Guessr</span></span>
+    <script src="src/js/game_page/ui.js"></script>
+    <script src="src/js/game_page/typing.js"></script>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="src/js/managers/auth.js"></script>
+    <script src="src/js/managers/theme.js"></script>
+    <script src="src/js/managers/sound.js"></script>
+    <script src="src/js/managers/settings.js"></script>
+    <script type="module" src="src/js/game_page/profile.js"></script>
+    <!-- ===================== MULTIPLAYER SELECTION MODAL ===================== -->
+    <div class="cg-multi-overlay" id="multiplayer-modal-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+        aria-labelledby="multi-modal-title">
+        <div class="cg-multi-modal" id="multiplayer-modal">
+            <div class="cg-multi-header">
+                <div class="cg-multi-title-group">
+                    <div class="cg-multi-icon-wrap">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h2 class="cg-multi-title" id="multi-modal-title">Scegli Modalità Multiplayer</h2>
+                </div>
+                <button class="cg-multi-close" id="multiplayer-modal-close" aria-label="Chiudi">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
 
-            <!-- == Right Side: Profile == -->
-            <div class="d-flex align-items-center gap-3">
-                <!-- Profile Section -->
-                <div class="profile-dropdown-wrapper d-none" id="profile-dropdown-wrapper">
-                    <div class="profile-widget" id="profile-widget" tabindex="0">
-                        <!-- Name + Stats -->
-                        <div class="profile-info">
-                            <span class="profile-name" id="player-name"></span>
-                            <div class="profile-stats">
-                                <span class="stat-tier">LV <span id="player-level"></span></span>
-                                <span class="stat-divider">&bull;</span>
-                                <span class="profile-cups">
-                                    <i class="bi bi-trophy-fill"></i>
-                                    <span id="player-cups"></span>
-                                </span>
-                            </div>
+            <div class="cg-multi-body">
+                <div class="cg-multi-options">
+                    <!-- 1. Matchmaking Online -->
+                    <div class="cg-multi-option online" id="multi-opt-matchmaking">
+                        <div class="cg-multi-option-icon">
+                            <i class="bi bi-globe2"></i>
                         </div>
-                        <!-- Avatar with XP ring -->
-                        <div class="profile-avatar-wrapper">
-                            <svg class="xp-ring" viewBox="0 0 36 36">
-                                <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
-                                <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"></circle>
-                            </svg>
-                            <img src="https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21"
-                                alt="Player avatar" class="profile-avatar" id="player-avatar"
-                                onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 48 48\'%3E%3Ccircle cx=\'24\' cy=\'24\' r=\'24\' fill=\'%23464a4a\'/%3E%3Ctext x=\'50%25\' y=\'55%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Inter\' font-weight=\'700\' font-size=\'18\' fill=\'%23a9b7c6\'%3EG%3C/text%3E%3C/svg%3E'" />
+                        <div class="cg-multi-option-info">
+                            <span class="cg-multi-option-name">Gioca Online</span>
+                            <span class="cg-multi-option-desc">Trova un avversario casuale nel server. Guadagna o perdi
+                                trofei.</span>
                         </div>
-
-                        <i class="bi bi-chevron-down profile-chevron" id="profile-chevron"></i>
+                        <span class="cg-multi-option-badge">Ranked</span>
                     </div>
 
-                    <!-- Dropdown Menu -->
-                    <div class="profile-dropdown-menu" id="profile-dropdown">
-                        <a href="/profilo" class="dropdown-item">
-                            <i class="bi bi-person-fill"></i> Il mio Profilo
-                        </a>
-                        <a href="/classifica" class="dropdown-item">
-                            <i class="bi bi-award-fill"></i> Classifica
-                        </a>
-                        <button class="dropdown-item" id="menu-btn-settings"><i class="bi bi-gear-fill">
-                        </i> Impostazioni
-                        </button>
+                    <!-- 2. Stanza Privata -->
+                    <div class="cg-multi-option private" id="multi-opt-private">
+                        <div class="cg-multi-option-icon">
+                            <i class="bi bi-key-fill"></i>
+                        </div>
+                        <div class="cg-multi-option-info">
+                            <span class="cg-multi-option-name">Stanza Privata</span>
+                            <span class="cg-multi-option-desc">Crea una stanza o entra con un codice a 5 cifre.</span>
+                        </div>
+                        <span class="cg-multi-option-badge">Privata</span>
+                    </div>
 
-                        <div class="dropdown-divider" id="menu-divider"></div>
+                    <!-- Sezione Codice (nascosta di base) -->
+                    <div class="cg-multi-code-section" id="multi-code-section">
+                        <p class="text-darcula-comment mb-2" style="font-size: 0.85rem;">Inserisci il codice della
+                            stanza:</p>
+                        <div class="cg-multi-code-input-group">
+                            <input type="text" class="cg-multi-code-input" id="multi-room-code" placeholder="-----"
+                                maxlength="5">
+                            <button class="cg-multi-btn cg-multi-btn-primary" id="multi-btn-join">Entra</button>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="text-darcula-comment" style="font-size: 0.8rem;">Oppure crea una nuova
+                                stanza</span>
+                            <button class="cg-multi-btn cg-multi-btn-secondary" id="multi-btn-create">Crea
+                                Stanza</button>
+                        </div>
+                    </div>
 
-                        <button class="dropdown-item text-danger" id="menu-btn-logout">
-                            <i class="bi bi-box-arrow-right"></i> Log out
-                        </button>
+                    <!-- 3. Gioca con Amici -->
+                    <div class="cg-multi-option friends" id="multi-opt-friends">
+                        <div class="cg-multi-option-icon">
+                            <i class="bi bi-person-heart"></i>
+                        </div>
+                        <div class="cg-multi-option-info">
+                            <span class="cg-multi-option-name">Sfida Amici</span>
+                            <span class="cg-multi-option-desc">Gioca con i tuoi amici online. Non si guadagnano
+                                trofei.</span>
+                        </div>
+                        <span class="cg-multi-option-badge">Unranked</span>
                     </div>
                 </div>
             </div>
-        </header>
 
-        <!-- ===================== MAIN ===================== -->
-        <main class="game-hero" id="main-lobby">
-            <div class="container-fluid w-100" style="max-width: 1600px;">
-                <div class="row align-items-center justify-content-center h-100 gy-5">
-
-                    <!-- Left Panel (Missions) -->
-                    <div class="col-12 col-lg-3 order-2 order-lg-1">
-                        <div class="side-panel">
-                            <div class="panel-title d-flex justify-content-between align-items-center">
-                                <div><i class="bi bi-card-checklist"></i> Missioni</div>
-                                <button id="btn-toggle-missions" class="btn-panel-action" title="Mostra completate">
-                                    <i class="bi bi-archive"></i>
-                                </button>
-                            </div>
-
-                            <div class="mission-list"></div>
-                        </div>
-                    </div>
-
-                    <!-- Center Panel -->
-                    <div class="col-12 col-lg-6 order-1 order-lg-2 d-flex justify-content-center">
-                        <div class="hero-content w-100 m-0">
-
-                            <h1 class="hero-welcome mb-3">
-                                Bentornato, <span class="hero-title-accent" id="hero-welcome-name"></span>
-                            </h1>
-
-                            <!-- Random Code snippets decoration -->
-                            <div class="code-decoration"></div>
-
-                            <!-- Main Buttons -->
-                            <div class="play-buttons">
-                                <!-- Single Player -->
-                                <button class="btn-play btn-singleplayer" id="btn-singleplayer" aria-label="Gioca in single player">
-                                    <div class="btn-play-icon">
-                                        <i class="bi bi-controller"></i>
-                                    </div>
-                                    <div class="btn-play-text">
-                                        <span class="btn-play-label">Gioca da solo</span>
-                                        <span class="btn-play-title">Single Player</span>
-                                    </div>
-                                </button>
-
-                                <!-- Multiplayer -->
-                                <button class="btn-play btn-multiplayer" id="btn-multiplayer" aria-label="Gioca in multiplayer">
-                                    <div class="btn-play-icon">
-                                        <i class="bi bi-people-fill"></i>
-                                    </div>
-                                    <div class="btn-play-text">
-                                        <span class="btn-play-label">Sfida amici</span>
-                                        <span class="btn-play-title">Multiplayer</span>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Panel (Friends) -->
-                    <div class="col-12 col-lg-3 order-3 order-lg-3">
-                        <div class="side-panel">
-                            <div class="panel-title d-flex justify-content-between align-items-center mb-0">
-                                <span><i class="bi bi-people"></i> Amici</span>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge rounded-pill" id="friends-online-badge">Online</span>
-                                    <button class="btn-add-friend" id="btn-add-friend" aria-label="Aggiungi amico" title="Aggiungi amico">
-                                        <i class="bi bi-person-plus-fill"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="friends-list"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- ===== START CUSTOM: ADD FRIEND SEARCH (btn-add-friend) ===== -->
-        <div class="cg-friend-search-overlay" id="friend-search-overlay" aria-hidden="true" role="dialog" aria-modal="true"
-            aria-labelledby="friend-search-title">
-            <div class="cg-friend-search-modal" id="friend-search-modal">
-                <div class="cg-friend-search-header">
-                    <div class="cg-friend-search-title-group">
-                        <div class="cg-friend-search-icon-wrap">
-                            <i class="bi bi-person-plus-fill"></i>
-                        </div>
-                        <h2 class="cg-friend-search-title" id="friend-search-title">Cerca giocatori</h2>
-                    </div>
-
-                    <button class="cg-friend-search-close" id="friend-search-close" aria-label="Chiudi ricerca giocatori">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-
-                <div class="cg-friend-search-body">
-                    <label class="cg-friend-search-input-wrap" for="friend-search-input">
-                        <i class="bi bi-search"></i>
-                        <input id="friend-search-input" type="text" placeholder="Cerca per nickname o username" autocomplete="off">
-                    </label>
-
-                    <p class="cg-friend-search-hint">Scrivi almeno 2 caratteri per cercare un giocatore.</p>
-
-                    <div class="cg-friend-search-results" id="friend-search-results" aria-live="polite"></div>
+            <div class="cg-multi-footer">
+                <div class="cg-multi-status-text">
+                    <div class="cg-multi-pulse"></div>
+                    <span id="multi-active-players">Connessione al server multiplayer...</span>
                 </div>
             </div>
         </div>
-        <!-- ===== END CUSTOM: ADD FRIEND SEARCH (btn-add-friend) ===== -->
+    </div>
 
-        <!-- ===================== MISSION DETAIL ===================== -->
-        <div class="cg-friend-search-overlay" id="mission-detail-overlay" aria-hidden="true" role="dialog" aria-modal="true"
-            aria-labelledby="mission-detail-title">
-            <div class="cg-friend-search-modal" id="mission-detail-modal">
-                <div class="cg-friend-search-header">
-                    <div class="cg-friend-search-title-group">
-                        <div class="cg-friend-search-icon-wrap" style="color: rgb(var(--darcula-yellow)); background: rgba(var(--darcula-yellow), 0.14); border-color: rgba(var(--darcula-yellow), 0.32);">
-                            <i class="bi bi-trophy-fill"></i>
-                        </div>
-                        <h2 class="cg-friend-search-title" id="mission-detail-title">Dettaglio Missione</h2>
-                    </div>
-                    <button class="cg-friend-search-close" id="mission-detail-close" aria-label="Chiudi dettaglio missione">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-                <div class="cg-friend-search-body">
-                    <h3 id="mission-detail-name" style="color: rgb(var(--darcula-fg)); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">Nome Missione</h3>
-                    <p id="mission-detail-desc" style="color: rgba(var(--darcula-comment), 0.95); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.4;">Descrizione dettagliata su come completare la missione.</p>
-                    
-                    <div style="background: rgba(var(--darcula-bg), 0.65); border: 1px solid rgba(var(--darcula-comment), 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;">
-                            <span style="color: rgb(var(--darcula-comment));">Progresso</span>
-                            <span id="mission-detail-progress-text" style="color: rgb(var(--darcula-fg));">0/1</span>
-                        </div>
-                        <div class="mission-progress-bar" style="height: 8px; margin-bottom: 0;">
-                            <div id="mission-detail-progress-fill" class="progress-fill" style="width: 0%;"></div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem;">
-                        <span style="font-size: 0.85rem; font-weight: 600; color: rgb(var(--darcula-comment));">Ricompensa</span>
-                        <span id="mission-detail-reward" class="mission-reward" style="font-size: 0.95rem; font-weight: 700;">+0 XP</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- ===================== END MISSION DETAIL ===================== -->
+    <script type="module" src="src/js/game_page/multiplayer_modal.js"></script>
+</body>
 
-        <!-- ===================== SETTINGS ===================== -->
-        <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true"
-            aria-labelledby="settings-title">
-            <div class="cg-settings-modal" id="settings-modal">
-                <div class="cg-settings-header">
-                    <div class="cg-settings-title-group">
-                        <div class="cg-settings-icon-wrap">
-                            <i class="bi bi-gear-fill"></i>
-                        </div>
-                        <h2 class="cg-settings-title" id="settings-title">Impostazioni</h2>
-                    </div>
-
-                    <button class="cg-settings-close" id="settings-close" aria-label="Chiudi impostazioni">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-
-                <!-- Settings Section -->
-                <div class="cg-settings-body">
-                    <!-- Audio -->
-                    <section class="cg-settings-section">
-                        <div class="cg-settings-section-label"><i class="bi bi-volume-up-fill"></i> Audio</div>
-                        <div class="cg-settings-row">
-                            <div class="cg-settings-row-info">
-                                <span class="cg-settings-row-name">Volume musica</span>
-                                <span class="cg-settings-row-desc">Musica di sottofondo</span>
-                            </div>
-                            <div class="cg-slider-group">
-                                <i class="bi bi-volume-down cg-slider-icon"></i>
-                                <input type="range" class="cg-slider" id="volume-music" min="0" max="100" value="100"
-                                    aria-label="Volume musica">
-                                <i class="bi bi-volume-up cg-slider-icon"></i>
-                                <span class="cg-slider-value" id="volume-music-val">100%</span>
-                            </div>
-                        </div>
-
-                        <div class="cg-settings-row">
-                            <div class="cg-settings-row-info">
-                                <span class="cg-settings-row-name">Volume effetti</span>
-                                <span class="cg-settings-row-desc">Suoni di click e notifiche</span>
-                            </div>
-                            <div class="cg-slider-group">
-                                <i class="bi bi-volume-down cg-slider-icon"></i>
-                                <input type="range" class="cg-slider" id="volume-sfx" min="0" max="100" value="75"
-                                    aria-label="Volume effetti">
-                                <i class="bi bi-volume-up cg-slider-icon"></i>
-                                <span class="cg-slider-value" id="volume-sfx-val">75%</span>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Appearance -->
-                    <section class="cg-settings-section">
-                        <div class="cg-settings-section-label"><i class="bi bi-palette-fill"></i> Aspetto</div>
-                        <div class="cg-settings-row">
-                            <div class="cg-settings-row-info">
-                                <span class="cg-settings-row-name">Tema</span>
-                                <span class="cg-settings-row-desc">Seleziona il tema nel sito</span>
-                            </div>
-                            <div class="cg-theme-picker" id="theme-picker" role="group" aria-label="Seleziona tema">
-                                <button class="cg-theme-btn" data-theme="dark" aria-pressed="true">
-                                    <i class="bi bi-moon-stars-fill"></i> Dark
-                                </button>
-                                <button class="cg-theme-btn" data-theme="light" aria-pressed="false">
-                                    <i class="bi bi-sun-fill"></i> Light
-                                </button>
-                                <button class="cg-theme-btn" data-theme="system" aria-pressed="false">
-                                    <i class="bi bi-display"></i> Sistema
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="cg-settings-row">
-                            <div class="cg-settings-row-info">
-                                <span class="cg-settings-row-name">Animazioni ridotte</span>
-                                <span class="cg-settings-row-desc">Disabilita le transizioni</span>
-                            </div>
-                            <label class="cg-toggle" aria-label="Animazioni ridotte">
-                            <input type="checkbox" id="toggle-animations" role="switch">
-                            <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
-                            </label>
-                        </div>
-                    </section>
-                    <!-- Gameplay -->
-                    <section class="cg-settings-section">
-                        <div class="cg-settings-section-label"><i class="bi bi-controller"></i> Gameplay</div>
-                        <div class="cg-settings-row">
-                            <div class="cg-settings-row-info">
-                                <span class="cg-settings-row-name">Difficoltà predefinita</span>
-                                <span class="cg-settings-row-desc">Difficoltà del Bot in Single Player</span>
-                            </div>
-                            <div class="cg-theme-picker" id="difficulty-picker" role="group" aria-label="Difficoltà">
-                                <button class="cg-theme-btn cg-diff-btn" data-diff="easy" aria-pressed="false">Facile</button>
-                                <button class="cg-theme-btn cg-diff-btn" data-diff="normal" aria-pressed="true">Normale</button>
-                                <button class="cg-theme-btn cg-diff-btn" data-diff="hard" aria-pressed="false">Difficile</button>
-                            </div>
-                        </div>
-                    </section>
-                    <!-- Notifications -->
-                    <section class="cg-settings-section">
-                        <div class="cg-settings-section-label"><i class="bi bi-bell-fill"></i> Notifiche</div>
-                        <div class="cg-settings-row">
-                            <div class="cg-settings-row-info">
-                                <span class="cg-settings-row-name">Notifiche Generali</span>
-                                <span class="cg-settings-row-desc">Notifica eventi importanti nella schermata</span>
-                            </div>
-                            <label class="cg-toggle" aria-label="Notifiche sfide">
-                            <input type="checkbox" id="toggle-notif-challenge" role="switch" checked>
-                            <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
-                            </label>
-                        </div>
-                        <div class="cg-settings-row">
-                            <div class="cg-settings-row-info">
-                                <span class="cg-settings-row-name">Amici online</span>
-                                <span class="cg-settings-row-desc">Notifica quando un amico si connette</span>
-                            </div>
-                            <label class="cg-toggle" aria-label="Notifiche amici online">
-                            <input type="checkbox" id="toggle-notif-friends" role="switch">
-                            <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
-                            </label>
-                        </div>
-                    </section>
-
-                    <!-- Danger Zone -->
-                    <section class="cg-settings-section" style="border-bottom: none;">
-                        <div class="cg-settings-section-label text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Zona Pericolosa</div>
-                        <div class="cg-settings-row">
-                            <div class="cg-settings-row-info">
-                                <span class="cg-settings-row-name text-danger">Elimina Profilo</span>
-                                <span class="cg-settings-row-desc">Questa azione è irreversibile. Tutti i tuoi dati andranno persi.</span>
-                            </div>
-                            <button class="cg-btn-danger" id="btn-delete-profile">
-                                <i class="bi bi-trash3-fill"></i> Elimina
-                            </button>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Footer -->
-                <div class="cg-settings-footer">
-                    <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0-alpha</span>
-                    <div class="d-flex gap-2">
-                        <button class="cg-btn-secondary" id="settings-cancel">Annulla</button>
-                        <button class="cg-btn-primary" id="settings-save">Applica</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===================== FOOTER ===================== -->
-        <footer class="site-footer" id="site-footer">
-            <div class="container">
-                <div class="footer-bottom">
-                    <!-- Left Side -->
-                    <div class="footer-copy">
-                        <span class="footer-brand">
-                            <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
-                        </span>
-                        <span class="footer-sep" aria-hidden="true">&mdash;</span>
-                        <span class="footer-authors">
-                            Salvatore Iavarone &amp; Michele Pio Forlani
-                        </span>
-                        <span class="footer-sep" aria-hidden="true">&bull;</span>
-                        <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank" class="footer-license">Licenza MIT</a>
-                        <span class="footer-sep" aria-hidden="true">&bull;</span>
-                        <span class="footer-version">v1.0.0-alpha</span>
-                    </div>
-                    <!-- Right Side -->
-                    <div class="footer-links-inline">
-                        <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
-                            title="GitHub">
-                        <i class="bi bi-github"></i>
-                        </a>
-                        <a href="https://www.linkedin.com/in/salvatoreiavarone" target="_blank" class="social-btn" aria-label="LinkedIn"
-                            title="LinkedIn">
-                        <i class="bi bi-linkedin"></i>
-                        </a>
-                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr"
-                            target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
-                        <i class="bi bi-envelope-fill"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </footer>
-
-        <!-- ===================== AUDIO PERMISSION BANNER ===================== -->
-        <div id="cg-audio-banner" aria-live="polite" hidden>
-            <span class="cg-audio-banner-icon"><i class="bi bi-music-note-beamed"></i></span>
-            <span class="cg-audio-banner-text">Vuoi abilitare la musica di sottofondo?</span>
-            <button id="cg-audio-yes" class="cg-audio-btn cg-audio-btn--yes">Sì, abilita</button>
-            <button id="cg-audio-no"  class="cg-audio-btn cg-audio-btn--no">No grazie</button>
-        </div>
-
-        <script>
-            document.body.classList.add('loader-open');
-        </script>
-
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-            crossorigin="anonymous">
-        </script>
-
-        <script src="src/js/game_page/ui.js"></script>
-        <script src="src/js/game_page/typing.js"></script>
-        <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-        <script src="src/js/managers/auth.js"></script>
-        <script src="src/js/managers/theme.js"></script>
-        <script src="src/js/managers/sound.js"></script>
-        <script src="src/js/managers/settings.js"></script>
-        <script type="module" src="src/js/game_page/profile.js"></script>
-        <!-- ===================== MULTIPLAYER SELECTION MODAL ===================== -->
-        <div class="cg-multi-overlay" id="multiplayer-modal-overlay" aria-hidden="true" role="dialog" aria-modal="true"
-            aria-labelledby="multi-modal-title">
-            <div class="cg-multi-modal" id="multiplayer-modal">
-                <div class="cg-multi-header">
-                    <div class="cg-multi-title-group">
-                        <div class="cg-multi-icon-wrap">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                        <h2 class="cg-multi-title" id="multi-modal-title">Scegli Modalità Multiplayer</h2>
-                    </div>
-                    <button class="cg-multi-close" id="multiplayer-modal-close" aria-label="Chiudi">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-
-                <div class="cg-multi-body">
-                    <div class="cg-multi-options">
-                        <!-- 1. Matchmaking Online -->
-                        <div class="cg-multi-option online" id="multi-opt-matchmaking">
-                            <div class="cg-multi-option-icon">
-                                <i class="bi bi-globe2"></i>
-                            </div>
-                            <div class="cg-multi-option-info">
-                                <span class="cg-multi-option-name">Gioca Online</span>
-                                <span class="cg-multi-option-desc">Trova un avversario casuale nel server. Guadagna o perdi trofei.</span>
-                            </div>
-                            <span class="cg-multi-option-badge">Ranked</span>
-                        </div>
-
-                        <!-- 2. Stanza Privata -->
-                        <div class="cg-multi-option private" id="multi-opt-private">
-                            <div class="cg-multi-option-icon">
-                                <i class="bi bi-key-fill"></i>
-                            </div>
-                            <div class="cg-multi-option-info">
-                                <span class="cg-multi-option-name">Stanza Privata</span>
-                                <span class="cg-multi-option-desc">Crea una stanza o entra con un codice a 5 cifre.</span>
-                            </div>
-                            <span class="cg-multi-option-badge">Privata</span>
-                        </div>
-
-                        <!-- Sezione Codice (nascosta di base) -->
-                        <div class="cg-multi-code-section" id="multi-code-section">
-                            <p class="text-darcula-comment mb-2" style="font-size: 0.85rem;">Inserisci il codice della stanza:</p>
-                            <div class="cg-multi-code-input-group">
-                                <input type="text" class="cg-multi-code-input" id="multi-room-code" placeholder="-----" maxlength="5">
-                                <button class="cg-multi-btn cg-multi-btn-primary" id="multi-btn-join">Entra</button>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span class="text-darcula-comment" style="font-size: 0.8rem;">Oppure crea una nuova stanza</span>
-                                <button class="cg-multi-btn cg-multi-btn-secondary" id="multi-btn-create">Crea Stanza</button>
-                            </div>
-                        </div>
-
-                        <!-- 3. Gioca con Amici -->
-                        <div class="cg-multi-option friends" id="multi-opt-friends">
-                            <div class="cg-multi-option-icon">
-                                <i class="bi bi-person-heart"></i>
-                            </div>
-                            <div class="cg-multi-option-info">
-                                <span class="cg-multi-option-name">Sfida Amici</span>
-                                <span class="cg-multi-option-desc">Gioca con i tuoi amici online. Non si guadagnano trofei.</span>
-                            </div>
-                            <span class="cg-multi-option-badge">Unranked</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="cg-multi-footer">
-                    <div class="cg-multi-status-text">
-                        <div class="cg-multi-pulse"></div>
-                        <span id="multi-active-players">Connessione al server multiplayer...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script type="module" src="src/js/game_page/multiplayer_modal.js"></script>
-    </body>
 </html>

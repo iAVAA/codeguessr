@@ -218,7 +218,7 @@ function renderHistory(history) {
         return;
     }
 
-    container.innerHTML = history.map(buildHistoryHTML).join('');
+    container.innerHTML = history.slice(0, 10).map(buildHistoryHTML).join('');
 }
 
 function renderFriends(friends) {
@@ -434,30 +434,32 @@ async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
 
         // 4. Trasformiamo il bottone in base allo stato!
         if (isAmico) {
-            newBtn.innerHTML = '<i class="bi bi-person-x"></i> Rimuovi Amicizia';
-            newBtn.className = 'btn btn-outline-danger';
+            newBtn.innerHTML = '<i class="bi bi-person-x-fill"></i> Rimuovi Amicizia';
+            newBtn.className = 'profile-action-btn profile-action-btn--danger';
             newBtn.onclick = () => handleProfileFriendAction('rimuovi', targetUserId);
         }
         else if (haInviatoLui) {
             // Se ce l'ha inviata lui, ci servono DUE bottoni: Accetta e Rifiuta!
             container.innerHTML = `
-                <button class="btn btn-success me-2" onclick="handleProfileFriendAction('accetta', '${targetUserId}')">
-                    <i class="bi bi-check-lg"></i> Accetta
-                </button>
-                <button class="btn btn-danger" onclick="handleProfileFriendAction('rifiuta', '${targetUserId}')">
-                    <i class="bi bi-x-lg"></i> Rifiuta
-                </button>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="profile-action-btn profile-action-btn--success" onclick="handleProfileFriendAction('accetta', '${targetUserId}')">
+                        <i class="bi bi-check-lg"></i> Accetta
+                    </button>
+                    <button class="profile-action-btn profile-action-btn--danger" onclick="handleProfileFriendAction('rifiuta', '${targetUserId}')">
+                        <i class="bi bi-x-lg"></i> Rifiuta
+                    </button>
+                </div>
             `;
         }
         else if (hoInviatoIo) {
-            newBtn.innerHTML = '<i class="bi bi-clock-history"></i> Annulla Richiesta';
-            newBtn.className = 'btn btn-outline-warning';
+            newBtn.innerHTML = '<i class="bi bi-clock-history"></i> Richiesta inviata';
+            newBtn.className = 'profile-action-btn profile-action-btn--muted';
             newBtn.onclick = () => handleProfileFriendAction('annulla', targetUserId);
         }
         else {
             // Nessun rapporto: bottone per aggiungere
-            newBtn.innerHTML = '<i class="bi bi-person-plus"></i> Aggiungi Amico';
-            newBtn.className = 'btn btn-primary';
+            newBtn.innerHTML = '<i class="bi bi-person-plus-fill"></i> Aggiungi Amico';
+            newBtn.className = 'profile-action-btn profile-action-btn--primary';
             newBtn.onclick = () => handleProfileFriendAction('aggiungi', targetUserId);
         }
 
