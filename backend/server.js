@@ -1077,6 +1077,109 @@ app.post('/api/salva-partita', verificaToken, async (req, res) => {
     }
 });
 
+// ==========================================
+// API CREA PARTITA (POST)
+// ==========================================
+
+/**
+ * POST /api/crea-partita
+ * Crea una nuova partita con stato "in_corso" (prima che inizi il match).
+ * Usata dal socket handler per la sfida tra amici e dal matchmaking.
+ */
+app.post('/api/crea-partita', verificaToken, async (req, res) => {
+    const { id_giocatore_1, id_giocatore_2, modalita = 'multiplayer' } = req.body;
+
+    if (!id_giocatore_1 || !id_giocatore_2) {
+        return res.status(400).json({ errore: 'id_giocatore_1 e id_giocatore_2 sono obbligatori.' });
+    }
+
+    try {
+        // Inserisci una nuova partita con stato 'in_corso'
+        const { data: partitaData, error: partitaError } = await supabase
+            .from('partita')
+            .insert([{
+                modalita,
+                stato: 'in_corso',
+                data_inizio: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (partitaError) throw partitaError;
+
+        const idPartita = partitaData.id_partita;
+
+        // Inserisci i due giocatori nella tabella partecipazione (ancora senza risultato)
+        const { error: partecError } = await supabase
+            .from('partecipazione')
+            .insert([
+                {
+                    id_partita: idPartita,
+                    id_giocatore: id_giocatore_1,
+                    risultato: null,  // Da completare alla fine del match
+                    exp_guadagnata: 0
+                },
+                {
+                    id_partita: idPartita,
+                    id_giocatore: id_giocatore_2,
+                    risultato: null,  // Da completare alla fine del match
+                    exp_guadagnata: 0
+                }
+            ]);
+
+        if (partecError) throw partecError;
+
+        res.status(201).json({
+            messaggio: 'Partita creata con successo.',
+            id_partita: idPartita,
+            stato: 'in_corso'
+        });
+    } catch (err) {
+        console.error("Errore creazione partita:", err.message);
+        res.status(500).json({ errore: 'Impossibile creare la partita.' });
+    }
+});
+
+// ==========================================
+// API RECUPERA PARTITA (GET)
+// ==========================================
+
+/**
+ * GET /api/partita/:id
+ * Recupera i dati di una partita dal database (per recovery e debugging).
+ */
+app.get('/api/partita/:id', verificaToken, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { data: partitaData, error: partitaError } = await supabase
+            .from('partita')
+            .select('*')
+            .eq('id_partita', id)
+            .single();
+
+        if (partitaError || !partitaData) {
+            return res.status(404).json({ errore: 'Partita non trovata.' });
+        }
+
+        // Recupera i giocatori e i loro risultati
+        const { data: partecipazioni, error: partecError } = await supabase
+            .from('partecipazione')
+            .select('id_giocatore, risultato, exp_guadagnata')
+            .eq('id_partita', id);
+
+        if (partecError) throw partecError;
+
+        res.status(200).json({
+            partita: partitaData,
+            partecipazioni: partecipazioni || []
+        });
+    } catch (err) {
+        console.error("Errore recupero partita:", err.message);
+        res.status(500).json({ errore: 'Impossibile recuperare la partita.' });
+    }
+});
+
 
 app.get('/api/search/:nome', async (req, res) => {
     // Nota: ho chiamato il parametro "nome" invece di "id" per maggiore chiarezza
@@ -1303,6 +1406,72 @@ const GITHUB_QUERIES = [
     { q: 'leetcode hash map language:cpp', ext: 'cpp' },
     { q: 'leetcode depth first search language:py', ext: 'py' }
 ];
+
+const FALLBACK_SNIPPETS = [
+    {
+        code: `function twoSum(nums, target) {\n  const seen = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const need = target - nums[i];\n    if (seen.has(need)) return [seen.get(need), i];\n    seen.set(nums[i], i);\n  }\n  return [];\n}`,
+        monacoLang: 'javascript',
+        source: 'fallback/local - two_sum.js',
+        fileUrl: null
+    },
+    {
+        code: `def is_palindrome(s: str) -> bool:\n    clean = ''.join(ch.lower() for ch in s if ch.isalnum())\n    left, right = 0, len(clean) - 1\n\n    while left < right:\n        if clean[left] != clean[right]:\n            return False\n        left += 1\n        right -= 1\n\n    return True`,
+        monacoLang: 'python',
+        source: 'fallback/local - palindrome.py',
+        fileUrl: null
+    },
+    {
+        code: `public static int[] mergeSorted(int[] a, int[] b) {\n    int[] out = new int[a.length + b.length];\n    int i = 0, j = 0, k = 0;\n\n    while (i < a.length && j < b.length) {\n        out[k++] = (a[i] <= b[j]) ? a[i++] : b[j++];\n    }\n    while (i < a.length) out[k++] = a[i++];\n    while (j < b.length) out[k++] = b[j++];\n\n    return out;\n}`,
+        monacoLang: 'java',
+        source: 'fallback/local - merge_sorted.java',
+        fileUrl: null
+    },
+    {
+        code: `fn factorial(n: u64) -> u64 {\n    if n <= 1 {\n        return 1;\n    }\n\n    let mut result = 1;\n    for i in 2..=n {\n        result *= i;\n    }\n    result\n}`,
+        monacoLang: 'rust',
+        source: 'fallback/local - factorial.rs',
+        fileUrl: null
+    }
+];
+
+let lastPublicSnippetCode = null;
+
+function buildFallbackSnippet(previousCode = null) {
+    const pool = previousCode
+        ? FALLBACK_SNIPPETS.filter(s => s.code !== previousCode)
+        : FALLBACK_SNIPPETS;
+
+    const sourcePool = pool.length > 0 ? pool : FALLBACK_SNIPPETS;
+    const choice = sourcePool[Math.floor(Math.random() * sourcePool.length)];
+    return { ...choice };
+}
+
+async function getRoundSnippet(previousCode = null) {
+    let firstSnippet = null;
+
+    for (let i = 0; i < 5; i++) {
+        try {
+            const snippet = await getRandomSnippet();
+            if (!snippet || !snippet.code) continue;
+
+            if (!firstSnippet) {
+                firstSnippet = snippet;
+            }
+
+            if (!previousCode || snippet.code !== previousCode) {
+                return snippet;
+            }
+        } catch (error) {
+            // Proviamo di nuovo: il fallback viene gestito fuori dal loop.
+        }
+    }
+
+    if (firstSnippet && (!previousCode || firstSnippet.code !== previousCode)) {
+        return firstSnippet;
+    }
+
+    return buildFallbackSnippet(previousCode);
+}
 // ==========================================
 // API GITHUB SNIPPET (GET)
 // ==========================================
@@ -1364,11 +1533,14 @@ async function getRandomSnippet() {
 
 app.get('/api/random-snippet', async (req, res) => {
     try {
-        const snippet = await getRandomSnippet();
+        const snippet = await getRoundSnippet(lastPublicSnippetCode);
+        lastPublicSnippetCode = snippet.code;
         res.status(200).json(snippet);
     } catch (error) {
         console.error("[Backend] Errore fetch snippet:", error.message);
-        res.status(500).json({ errore: 'Impossibile recuperare lo snippet' });
+        const snippet = buildFallbackSnippet(lastPublicSnippetCode);
+        lastPublicSnippetCode = snippet.code;
+        res.status(200).json(snippet);
     }
 });
 
@@ -1527,6 +1699,15 @@ app.post('/api/valuta-risposta', async (req, res) => {
 const matchmakingQueue = [];
 const privateRooms = new Map(); // codice -> { idPartita, giocatori: [], unranked: false }
 const activeMatches = new Map(); // roomCode -> { players: [], unranked: false }
+const pendingFriendInvites = new Map(); // inviteId -> { challengerId, friendId, timeoutId }
+const disconnectedMatches = new Map(); // roomCode -> { partita_id, disconnectTime, suspensionTimeout, disconnectedUserId }
+
+function getSocketByUserId(userId) {
+    for (const s of io.sockets.sockets.values()) {
+        if (s.userId === userId) return s;
+    }
+    return null;
+}
 
 // Middleware per autenticazione socket
 io.use(async (socket, next) => {
@@ -1566,8 +1747,41 @@ io.on('connection', (socket) => {
     // Invia il numero di giocatori online
     io.emit('statsUpdate', { onlinePlayers: io.engine.clientsCount });
 
+    // ========================================
+    // AUTO-REJOIN: Se l'utente aveva una partita sospesa, fa il rejoin automatico
+    // ========================================
+    for (const [roomCode, match] of activeMatches.entries()) {
+        if (match.players.some(p => p.id === socket.userId)) {
+            const suspended = disconnectedMatches.get(roomCode);
+            if (suspended?.disconnectedUserIds?.includes(socket.userId)) {
+                console.log(`[Match] Auto-rejoin rilevato: ${socket.nickname} sta ritornando a ${roomCode}`);
+                
+                // Rimuovi da disconnected
+                suspended.disconnectedUserIds = suspended.disconnectedUserIds.filter(id => id !== socket.userId);
+                
+                // Se tutti sono ritornati, cancella il timeout
+                if (suspended.disconnectedUserIds.length === 0) {
+                    clearTimeout(suspended.suspensionTimeout);
+                    disconnectedMatches.delete(roomCode);
+                    console.log(`[Match] ✓ Sospensione cancellata per ${roomCode} - Tutti i giocatori sono ritornati`);
+                }
+                
+                // Aggiungi il socket alla room
+                socket.join(roomCode);
+                
+                // Comunica il rejoin agli altri in room
+                io.to(roomCode).emit('opponentRejoined', {
+                    playerName: socket.nickname,
+                    roomCode
+                });
+                
+                console.log(`[Match] ✓ ${socket.nickname} è stato automaticamente riaggiunto a ${roomCode}`);
+            }
+        }
+    }
+
     // 1. MATCHMAKING ONLINE (Gioca Online)
-    socket.on('startMatchmaking', () => {
+    socket.on('startMatchmaking', async () => {
         console.log(`[Matchmaking] ${socket.nickname} è entrato in coda.`);
 
         // Evita duplicati in coda
@@ -1578,22 +1792,72 @@ io.on('connection', (socket) => {
             const opponent = matchmakingQueue.shift();
             const roomCode = `MATCH_${Math.random().toString(36).substring(2, 9)}`;
 
-            socket.join(roomCode);
-            opponent.join(roomCode);
+            // ========================================
+            // CREAZIONE PARTITA NEL DATABASE
+            // ========================================
+            try {
+                const { data: partitaData, error: partitaError } = await supabase
+                    .from('partita')
+                    .insert([{
+                        modalita: 'multiplayer',
+                        stato: 'in_corso',
+                        data_inizio: new Date().toISOString(),
+                        id_utente_casa: socket.userId,
+                        id_utente_trasferta: opponent.userId
+                    }])
+                    .select()
+                    .single();
 
-            const matchData = {
-                roomCode,
-                players: [
-                    { id: socket.userId, nickname: socket.nickname, avatar_url: socket.avatar_url, livello: socket.livello, trophies: socket.trophies },
-                    { id: opponent.userId, nickname: opponent.nickname, avatar_url: opponent.avatar_url, livello: opponent.livello, trophies: opponent.trophies }
-                ],
-                unranked: false,
-                answers: {}
-            };
+                if (partitaError) throw partitaError;
 
-            activeMatches.set(roomCode, matchData);
-            io.to(roomCode).emit('matchFound', matchData);
-            console.log(`[Matchmaking] Partita creata tra ${socket.nickname} e ${opponent.nickname}`);
+                const idPartita = partitaData.id_partita;
+
+                // Inserisci i due giocatori nella partecipazione
+                const { error: partecError } = await supabase
+                    .from('partecipazione')
+                    .insert([
+                        {
+                            id_partita: idPartita,
+                            id_giocatore: socket.userId,
+                            risultato: null,
+                            exp_guadagnata: 0
+                        },
+                        {
+                            id_partita: idPartita,
+                            id_giocatore: opponent.userId,
+                            risultato: null,
+                            exp_guadagnata: 0
+                        }
+                    ]);
+
+                if (partecError) throw partecError;
+
+                socket.join(roomCode);
+                opponent.join(roomCode);
+
+                const matchData = {
+                    roomCode,
+                    partita_id: idPartita,  // ← Salva l'ID della partita nel match
+                    players: [
+                        { id: socket.userId, nickname: socket.nickname, avatar_url: socket.avatar_url, livello: socket.livello, trophies: socket.trophies },
+                        { id: opponent.userId, nickname: opponent.nickname, avatar_url: opponent.avatar_url, livello: opponent.livello, trophies: opponent.trophies }
+                    ],
+                    unranked: false,
+                    answers: {},
+                    started: false  // ← Ancora non iniziato
+                };
+
+                activeMatches.set(roomCode, matchData);
+                io.to(roomCode).emit('matchFound', {
+                    ...matchData,
+                    partita_id: idPartita  // ← Emetti l'ID della partita ai client
+                });
+                console.log(`[Matchmaking] Partita ${idPartita} creata tra ${socket.nickname} e ${opponent.nickname}, roomCode=${roomCode}`);
+            } catch (err) {
+                console.error("[Matchmaking] Errore creazione partita:", err.message);
+                socket.emit('error', { message: 'Errore nella creazione della partita.' });
+                opponent.emit('error', { message: 'Errore nella creazione della partita.' });
+            }
         } else {
             matchmakingQueue.push(socket);
         }
@@ -1654,7 +1918,8 @@ io.on('connection', (socket) => {
                 trophies: g.trophies
             })),
             unranked: room.unranked,
-            answers: {}
+            answers: {},
+            started: false  // ← Ancora non iniziato
         };
 
         activeMatches.set(matchData.roomCode, matchData);
@@ -1701,11 +1966,18 @@ io.on('connection', (socket) => {
         const match = activeMatches.get(roomCode);
         if (!match) return;
 
-        console.log(`[Match] Inizio Round ${match.currentRound} per ${roomCode}`);
+        console.log(`[Match] Inizio Round ${match.currentRound} per ${roomCode}, partita_id=${match.partita_id}`);
+        
+        // Marca il match come iniziato (per evitare false sospensioni prima del primo round)
+        if (!match.started) {
+            match.started = true;
+            console.log(`[Match] ✓ Match ${roomCode} ufficialmente iniziato (started=true)`);
+        }
 
         try {
-            const snippet = await getRandomSnippet();
+            const snippet = await getRoundSnippet(match.lastSnippetCode || null);
             match.currentSnippet = snippet;
+            match.lastSnippetCode = snippet.code;
             match.answers = {};
 
             io.to(roomCode).emit('startRound', {
@@ -1714,16 +1986,33 @@ io.on('connection', (socket) => {
                 snippet: snippet
             });
 
-            // Timer di sicurezza (65 secondi: 60 di round + 5 di tolleranza/countdown)
+            // Timer di sicurezza (90 secondi: 60 di round + 30 di tolleranza per lag/digitazione lenta)
             if (match.timer) clearTimeout(match.timer);
             match.timer = setTimeout(() => {
                 if (activeMatches.has(roomCode)) {
                     evaluateMultiplayerRound(roomCode);
                 }
-            }, 65000);
+            }, 90000);
 
         } catch (err) {
-            io.to(roomCode).emit('error', { message: 'Errore caricamento snippet' });
+            console.error(`[Match] Snippet GitHub fallito per ${roomCode}:`, err.message);
+            const snippet = buildFallbackSnippet(match.lastSnippetCode || null);
+            match.currentSnippet = snippet;
+            match.lastSnippetCode = snippet.code;
+            match.answers = {};
+
+            io.to(roomCode).emit('startRound', {
+                round: match.currentRound,
+                totalRounds: match.maxRounds,
+                snippet
+            });
+
+            if (match.timer) clearTimeout(match.timer);
+            match.timer = setTimeout(() => {
+                if (activeMatches.has(roomCode)) {
+                    evaluateMultiplayerRound(roomCode);
+                }
+            }, 90000);
         }
     }
 
@@ -1735,7 +2024,18 @@ io.on('connection', (socket) => {
         // Salva la risposta
         match.answers[socket.userId] = answer;
 
-        // Se entrambi hanno risposto, valutiamo
+        const suspended = disconnectedMatches.get(roomCode);
+        
+        // Se un giocatore è disconnesso e l'altro ha inviato la risposta, assegna 0 all'assente
+        if (suspended?.disconnectedUserIds && suspended.disconnectedUserIds.length > 0) {
+            for (const disconnectedId of suspended.disconnectedUserIds) {
+                if (!match.answers[disconnectedId]) {
+                    match.answers[disconnectedId] = ""; // Score 0 per il disconnesso
+                }
+            }
+        }
+
+        // Se entrambi hanno risposto (o uno è disconnesso), valutiamo
         if (Object.keys(match.answers).length === 2) {
             evaluateMultiplayerRound(roomCode);
         }
@@ -1801,10 +2101,15 @@ io.on('connection', (socket) => {
 
     async function finishMultiplayerMatch(roomCode) {
         const match = activeMatches.get(roomCode);
-        if (!match) return;
+        if (!match) {
+            console.warn(`[Match] finishMultiplayerMatch: Match ${roomCode} non trovato`);
+            return;
+        }
 
         const p1 = match.players[0];
         const p2 = match.players[1];
+
+        console.log(`[Match] Inizio finishMultiplayerMatch per ${roomCode}, partita_id: ${match.partita_id}`);
 
         let winnerId = null;
         let risultatoP1 = 'pareggio';
@@ -1821,24 +2126,94 @@ io.on('connection', (socket) => {
         }
 
         // Salvataggio nel DB
-        if (!match.unranked) {
-            try {
-                const expP1 = risultatoP1 === 'vittoria' ? 100 + Math.round(p1.health / 2) : -10 - Math.round(p2.health / 2);
-                const expP2 = risultatoP2 === 'vittoria' ? 100 + Math.round(p2.health / 2) : -10 - Math.round(p1.health / 2);
+        try {
+            const expP1 = risultatoP1 === 'vittoria' ? 100 + Math.round(p1.health / 2) : (risultatoP1 === 'sconfitta' ? -10 - Math.round(p2.health / 2) : 20);
+            const expP2 = risultatoP2 === 'vittoria' ? 100 + Math.round(p2.health / 2) : (risultatoP2 === 'sconfitta' ? -10 - Math.round(p1.health / 2) : 20);
+            
+            const trophyP1 = risultatoP1 === 'vittoria' 
+                ? Math.floor(Math.random() * 11) + 30 + Math.round(p1.health / 2) 
+                : (risultatoP1 === 'sconfitta' ? -(Math.floor(Math.random() * 11) + 20) - Math.round(p2.health / 2) : 0);
                 
-                const trophyP1 = risultatoP1 === 'vittoria' 
-                    ? Math.floor(Math.random() * 11) + 30 + Math.round(p1.health / 2) 
-                    : -(Math.floor(Math.random() * 11) + 20) - Math.round(p2.health / 2);
-                    
-                const trophyP2 = risultatoP2 === 'vittoria' 
-                    ? Math.floor(Math.random() * 11) + 30 + Math.round(p2.health / 2) 
-                    : -(Math.floor(Math.random() * 11) + 20) - Math.round(p1.health / 2);
+            const trophyP2 = risultatoP2 === 'vittoria' 
+                ? Math.floor(Math.random() * 11) + 30 + Math.round(p2.health / 2) 
+                : (risultatoP2 === 'sconfitta' ? -(Math.floor(Math.random() * 11) + 20) - Math.round(p1.health / 2) : 0);
 
-                await saveMatchToDB(p1.id, 'multiplayer', risultatoP1, expP1, p2.id, risultatoP2, expP2, trophyP1, trophyP2);
-                console.log(`[Match] Risultati salvati per la partita ${roomCode}`);
-            } catch (e) {
-                console.error("[Match] Errore salvataggio DB multiplayer:", e);
+            // Se la partita è stata creata nel DB (partita_id è presente)
+            if (match.partita_id) {
+                console.log(`[Match] Completamento partita ${match.partita_id}: P1=${p1.id} (${risultatoP1}, hp=${p1.health}) vs P2=${p2.id} (${risultatoP2}, hp=${p2.health})`);
+                
+                // STEP 1: Aggiorna la partecipazione di P1
+                console.log(`[Match] Step 1: Aggiornamento partecipazione P1...`);
+                const { error: updatePartecP1 } = await supabase
+                    .from('partecipazione')
+                    .update({
+                        risultato: risultatoP1,
+                        exp_guadagnata: expP1
+                    })
+                    .eq('id_partita', match.partita_id)
+                    .eq('id_giocatore', p1.id);
+
+                if (updatePartecP1) {
+                    console.error(`[Match] ERRORE Step 1 - Aggiornamento partecipazione P1:`, updatePartecP1.message);
+                    throw updatePartecP1;
+                }
+                console.log(`[Match] ✓ Step 1 completato`);
+
+                // STEP 2: Aggiorna la partecipazione di P2
+                console.log(`[Match] Step 2: Aggiornamento partecipazione P2...`);
+                const { error: updatePartecP2 } = await supabase
+                    .from('partecipazione')
+                    .update({
+                        risultato: risultatoP2,
+                        exp_guadagnata: expP2
+                    })
+                    .eq('id_partita', match.partita_id)
+                    .eq('id_giocatore', p2.id);
+
+                if (updatePartecP2) {
+                    console.error(`[Match] ERRORE Step 2 - Aggiornamento partecipazione P2:`, updatePartecP2.message);
+                    throw updatePartecP2;
+                }
+                console.log(`[Match] ✓ Step 2 completato`);
+
+                // STEP 3: Aggiorna lo stato della partita a 'terminata'
+                console.log(`[Match] Step 3: Aggiornamento stato partita a 'terminata'...`);
+                const dataFine = new Date().toISOString();
+                const { data: updateResult, error: updateError } = await supabase
+                    .from('partita')
+                    .update({
+                        stato: 'terminata',
+                        data_fine: dataFine
+                    })
+                    .eq('id_partita', match.partita_id)
+                    .select();
+
+                if (updateError) {
+                    console.error(`[Match] ERRORE Step 3 - Aggiornamento stato partita:`, updateError.message);
+                    throw updateError;
+                }
+                console.log(`[Match] ✓ Step 3 completato`, updateResult);
+
+                console.log(`[Match] ✓✓✓ Partita ${match.partita_id} completata nel DB con successo`);
+                
+                // STEP 4: Aggiorna le statistiche dei giocatori SOLO per partite ranked
+                if (!match.unranked) {
+                    console.log(`[Match] Step 4: Aggiornamento statistiche giocatori (partita ranked)...`);
+                    await updatePlayerStats(p1.id, risultatoP1, expP1, trophyP1);
+                    await updatePlayerStats(p2.id, risultatoP2, expP2, trophyP2);
+                    console.log(`[Match] ✓ Step 4 completato - Statistiche aggiornate per partita ranked ${match.partita_id}`);
+                } else {
+                    console.log(`[Match] Partita ${match.partita_id} è unranked, statistiche NON aggiornate`);
+                }
+            } else {
+                console.error(`[Match] ERRORE: Partita ${roomCode} NON ha partita_id!`);
+                console.error(`[Match] Match data:`, { roomCode, partita_id: match.partita_id, players: match.players.map(p => p.id) });
             }
+
+            console.log(`[Match] ✓ Completamento salvataggio risultati per partita ${roomCode}`);
+        } catch (e) {
+            console.error("[Match] ERRORE critico salvataggio DB multiplayer:", e.message || e);
+            console.error("[Match] Stack:", e.stack);
         }
 
         io.to(roomCode).emit('matchFinished', {
@@ -1848,19 +2223,208 @@ io.on('connection', (socket) => {
         });
 
         activeMatches.delete(roomCode);
+        
+        // Cancella anche il timeout di sospensione se esiste
+        const suspended = disconnectedMatches.get(roomCode);
+        if (suspended?.suspensionTimeout) {
+            clearTimeout(suspended.suspensionTimeout);
+            console.log(`[Match] Timeout di sospensione cancellato per ${roomCode}`);
+        }
+        disconnectedMatches.delete(roomCode);
+        
+        console.log(`[Match] Match ${roomCode} rimosso da activeMatches e disconnectedMatches`);
     }
 
-    socket.on('challengeFriend', (friendId) => {
-        // Qui andrebbe inviata una notifica all'amico.
-        // Per ora implementiamo solo il flag unranked se la stanza viene creata da qui.
-        const code = `INVITE_${Math.random().toString(36).substring(2, 7)}`;
-        socket.join(code);
-        socket.emit('challengeCreated', { code, friendId });
+    socket.on('challengeFriend', (payload) => {
+        const friendId = typeof payload === 'string' ? payload : payload?.friendId;
+
+        if (!friendId) {
+            socket.emit('challengeError', { message: 'ID amico non valido.' });
+            return;
+        }
+        if (friendId === socket.userId) {
+            socket.emit('challengeError', { message: 'Non puoi sfidare te stesso.' });
+            return;
+        }
+
+        const friendSocket = getSocketByUserId(friendId);
+        if (!friendSocket) {
+            socket.emit('challengeError', { message: 'Questo amico non e online.' });
+            return;
+        }
+
+        const inviteId = `INV_${Math.random().toString(36).substring(2, 10)}`;
+        const timeoutId = setTimeout(() => {
+            const invite = pendingFriendInvites.get(inviteId);
+            if (!invite) return;
+
+            pendingFriendInvites.delete(inviteId);
+            const challengerSocket = getSocketByUserId(invite.challengerId);
+            const receiverSocket = getSocketByUserId(invite.friendId);
+
+            if (challengerSocket) {
+                challengerSocket.emit('challengeExpired', { inviteId });
+            }
+            if (receiverSocket) {
+                receiverSocket.emit('challengeExpired', { inviteId });
+            }
+        }, 30000);
+
+        pendingFriendInvites.set(inviteId, {
+            challengerId: socket.userId,
+            friendId,
+            timeoutId
+        });
+
+        friendSocket.emit('challengeInvite', {
+            inviteId,
+            challenger: {
+                id: socket.userId,
+                nickname: socket.nickname,
+                avatar_url: socket.avatar_url,
+                livello: socket.livello,
+                trophies: socket.trophies
+            }
+        });
+
+        socket.emit('challengeSent', {
+            inviteId,
+            friendId,
+            friendNickname: friendSocket.nickname
+        });
+    });
+
+    socket.on('respondChallenge', async ({ inviteId, accepted }) => {
+        const invite = pendingFriendInvites.get(inviteId);
+        if (!invite) {
+            socket.emit('challengeError', { message: 'Invito non valido o scaduto.' });
+            return;
+        }
+
+        // Solo il destinatario originale puo rispondere all'invito.
+        if (socket.userId !== invite.friendId) {
+            socket.emit('challengeError', { message: 'Non puoi rispondere a questo invito.' });
+            return;
+        }
+
+        clearTimeout(invite.timeoutId);
+        pendingFriendInvites.delete(inviteId);
+
+        const challengerSocket = getSocketByUserId(invite.challengerId);
+        if (!challengerSocket) {
+            socket.emit('challengeError', { message: 'Lo sfidante non e piu online.' });
+            return;
+        }
+
+        if (!accepted) {
+            challengerSocket.emit('challengeDeclined', {
+                inviteId,
+                by: { id: socket.userId, nickname: socket.nickname }
+            });
+            socket.emit('challengeRejected', { inviteId });
+            return;
+        }
+
+        const roomCode = `FRIEND_${Math.random().toString(36).substring(2, 9)}`;
+
+        // ========================================
+        // CREAZIONE PARTITA NEL DATABASE
+        // ========================================
+        try {
+            const { data: partitaData, error: partitaError } = await supabase
+                .from('partita')
+                .insert([{
+                    modalita: 'multiplayer',
+                    stato: 'in_corso',
+                    data_inizio: new Date().toISOString(),
+                    id_utente_casa: challengerSocket.userId,
+                    id_utente_trasferta: socket.userId
+                }])
+                .select()
+                .single();
+
+            if (partitaError) throw partitaError;
+
+            const idPartita = partitaData.id_partita;
+
+            // Inserisci i due giocatori nella partecipazione
+            const { error: partecError } = await supabase
+                .from('partecipazione')
+                .insert([
+                    {
+                        id_partita: idPartita,
+                        id_giocatore: challengerSocket.userId,
+                        risultato: null,
+                        exp_guadagnata: 0
+                    },
+                    {
+                        id_partita: idPartita,
+                        id_giocatore: socket.userId,
+                        risultato: null,
+                        exp_guadagnata: 0
+                    }
+                ]);
+
+            if (partecError) throw partecError;
+
+            challengerSocket.join(roomCode);
+            socket.join(roomCode);
+
+            const matchData = {
+                roomCode,
+                partita_id: idPartita,  // ← Salva l'ID della partita nel match
+                players: [
+                    {
+                        id: challengerSocket.userId,
+                        nickname: challengerSocket.nickname,
+                        avatar_url: challengerSocket.avatar_url,
+                        livello: challengerSocket.livello,
+                        trophies: challengerSocket.trophies
+                    },
+                    {
+                        id: socket.userId,
+                        nickname: socket.nickname,
+                        avatar_url: socket.avatar_url,
+                        livello: socket.livello,
+                        trophies: socket.trophies
+                    }
+                ],
+                unranked: true,
+                answers: {},
+                started: false  // ← Ancora non iniziato
+            };
+
+            activeMatches.set(roomCode, matchData);
+            io.to(roomCode).emit('matchFound', {
+                ...matchData,
+                partita_id: idPartita  // ← Emetti l'ID della partita ai client
+            });
+
+            console.log(`[Match] Partita ${idPartita} creata per amici: ${challengerSocket.nickname} vs ${socket.nickname}, roomCode=${roomCode}`);
+        } catch (err) {
+            console.error("[Match] Errore creazione partita:", err.message);
+            socket.emit('challengeError', { message: 'Errore nella creazione della partita.' });
+            challengerSocket.emit('challengeError', { message: 'Errore nella creazione della partita.' });
+        }
     });
 
     socket.on('disconnect', () => {
         const idx = matchmakingQueue.findIndex(s => s.id === socket.id);
         if (idx !== -1) matchmakingQueue.splice(idx, 1);
+
+        // Ripulisci eventuali inviti pendenti che coinvolgono l'utente disconnesso.
+        for (const [inviteId, invite] of pendingFriendInvites.entries()) {
+            if (invite.challengerId === socket.userId || invite.friendId === socket.userId) {
+                clearTimeout(invite.timeoutId);
+                pendingFriendInvites.delete(inviteId);
+
+                const otherUserId = invite.challengerId === socket.userId ? invite.friendId : invite.challengerId;
+                const otherSocket = getSocketByUserId(otherUserId);
+                if (otherSocket) {
+                    otherSocket.emit('challengeExpired', { inviteId });
+                }
+            }
+        }
 
         // Pulizia stanze private se l'host si disconnette
         for (const [code, room] of privateRooms.entries()) {
@@ -1870,23 +2434,106 @@ io.on('connection', (socket) => {
         }
 
         io.emit('statsUpdate', { onlinePlayers: io.engine.clientsCount });
-        console.log(`[Socket] Utente disconnesso: ${socket.nickname}`);
+        console.log(`[Socket] Utente disconnesso: ${socket.nickname} (Motivo: ${socket.handshake.headers['user-agent'] || 'N/A'})`);
 
-        // Se l'utente era in una partita attiva, forziamo valutazione con 0 punti
+        // Se l'utente era in una partita attiva E il match è già iniziato, sospendi la partita (graceful disconnect)
         for (const [roomCode, match] of activeMatches.entries()) {
             if (match.players.some(p => p.id === socket.userId)) {
-                console.log(`[Match] Giocatore ${socket.nickname} disconnesso dalla partita ${roomCode}`);
-                if (!match.evaluating) {
-                    if (match.answers) {
-                        match.answers[socket.userId] = ""; // Assegna 0 punti
-                        evaluateMultiplayerRound(roomCode);
+                // IMPORTANTE: Solo sospendere se il match è già iniziato (è stato emesso startRound)
+                if (!match.started) {
+                    console.log(`[Match] Giocatore ${socket.nickname} disconnesso da ${roomCode} PRIMA dell'inizio - NESSUNA sospensione`);
+                    continue;  // Salta questo match, non fare sospensione
+                }
+
+                console.log(`[Match] Giocatore ${socket.nickname} disconnesso dalla partita ${roomCode} - Sospensione per 120s`);
+
+                // Verifica se c'è già un timeout di sospensione attivo per questa room
+                const existingSuspension = disconnectedMatches.get(roomCode);
+                if (existingSuspension?.suspensionTimeout) {
+                    // C'è già un timeout, non crearne uno nuovo
+                    console.log(`[Match] Timeout già esistente per ${roomCode}, non creo uno nuovo`);
+                    // Aggiorna solo il giocatore disconnesso
+                    if (existingSuspension.disconnectedUserIds) {
+                        existingSuspension.disconnectedUserIds.push(socket.userId);
                     } else {
-                        // Se la partita non era ancora iniziata (es. answers non esiste), chiudiamola
-                        finishMultiplayerMatch(roomCode);
+                        existingSuspension.disconnectedUserIds = [socket.userId];
                     }
+                } else {
+                    // Primo disconnect in questa room, crea il timeout
+                    const suspensionTimeout = setTimeout(() => {
+                        console.log(`[Match] Timeout di sospensione raggiunto per ${roomCode} - Partita continua naturalmente`);
+                        disconnectedMatches.delete(roomCode);
+                    }, 120000); // 120 secondi (2 minuti)
+
+                    disconnectedMatches.set(roomCode, {
+                        partita_id: match.partita_id,
+                        disconnectTime: Date.now(),
+                        suspensionTimeout,
+                        disconnectedUserIds: [socket.userId],
+                        wasDisconnected: true
+                    });
+                }
+
+                // Informa l'altro giocatore della disconnessione
+                const otherPlayerId = match.players.find(p => p.id !== socket.userId)?.id;
+                const otherSocket = getSocketByUserId(otherPlayerId);
+                if (otherSocket) {
+                    otherSocket.emit('opponentDisconnected', {
+                        roomCode,
+                        playerName: socket.nickname,
+                        resumeTime: 120000  // 120 secondi
+                    });
                 }
             }
         }
+    });
+
+    socket.on('rejoinMatch', async ({ roomCode }) => {
+        const match = activeMatches.get(roomCode);
+        const suspended = disconnectedMatches.get(roomCode);
+
+        if (!match || !suspended) {
+            socket.emit('rejoinFailed', { message: 'Partita non trovata o timeout scaduto.' });
+            return;
+        }
+
+        // Verifica che il giocatore sia uno di quelli disconnessi
+        if (!suspended.disconnectedUserIds || !suspended.disconnectedUserIds.includes(socket.userId)) {
+            socket.emit('rejoinFailed', { message: 'Non sei il giocatore disconnesso di questa partita.' });
+            return;
+        }
+
+        // Cancella il timeout di sospensione (solo se questo è l'ultimo giocatore che ritorna)
+        const stillDisconnected = suspended.disconnectedUserIds.filter(id => id !== socket.userId);
+        if (stillDisconnected.length === 0) {
+            clearTimeout(suspended.suspensionTimeout);
+            disconnectedMatches.delete(roomCode);
+            console.log(`[Match] Tutti i giocatori sono ritornati per ${roomCode}, sospensione cancellata`);
+        } else {
+            // Aggiorna l'array dei disconnessi
+            suspended.disconnectedUserIds = stillDisconnected;
+            console.log(`[Match] Giocatore ritornato, ancora disconnessi: ${stillDisconnected.length}`);
+        }
+
+        // Aggiungi il socket alla room
+        socket.join(roomCode);
+
+        // Comunica il rejoin agli altri giocatori
+        io.to(roomCode).emit('opponentRejoined', {
+            playerName: socket.nickname,
+            roomCode
+        });
+
+        // Informa il client che è rientrato
+        socket.emit('rejoinSuccess', {
+            match: {
+                players: match.players,
+                currentRound: match.currentRound,
+                currentSnippet: match.currentSnippet
+            }
+        });
+
+        console.log(`[Match] Giocatore ${socket.nickname} è ritornato nella partita ${roomCode}`);
     });
 });
 

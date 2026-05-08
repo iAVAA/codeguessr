@@ -289,3 +289,97 @@
   70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(var(--darcula-green), 0); }
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--darcula-green), 0); }
 }
+
+/* Invito sfida amici: modal leggero e coerente con il tema */
+.cg-challenge-invite-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.cg-challenge-invite-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.cg-challenge-invite-card {
+  width: min(420px, 100%);
+  background: rgb(var(--darcula-bg, 30, 31, 33));
+  border: 1px solid rgba(var(--darcula-comment, 128, 128, 128), 0.35);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  padding: 1.25rem;
+  text-align: center;
+  transform: translateY(10px) scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+.cg-challenge-invite-overlay.open .cg-challenge-invite-card {
+  transform: translateY(0) scale(1);
+}
+
+.cg-challenge-invite-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.75rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: rgb(var(--darcula-blue));
+  background: rgba(var(--darcula-blue), 0.15);
+}
+
+.cg-challenge-invite-title {
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  color: rgb(var(--darcula-fg));
+}
+
+.cg-challenge-invite-text {
+  margin: 0.5rem 0 1rem;
+  color: rgb(var(--darcula-comment));
+  font-size: 0.9rem;
+}
+
+.cg-challenge-invite-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.cg-challenge-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.cg-challenge-btn:hover {
+  transform: translateY(-1px);
+}
+
+.cg-challenge-btn--ghost {
+  background: rgba(var(--darcula-comment), 0.18);
+  color: rgb(var(--darcula-fg));
+}
+
+.cg-challenge-btn--accept {
+  background: rgb(var(--darcula-green));
+  color: rgb(var(--darcula-bg));
+}
