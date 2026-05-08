@@ -1,54 +1,67 @@
-require('dotenv').config();
+// ==========================================
+// DIPENDENZE
+// ==========================================
+require('dotenv').config(); // Carica le variabili d'ambiente dal file .env
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const { createClient } = require("@supabase/supabase-js");
 const cors = require('cors');
+const multer = require('multer'); // Upload file immagini
 
-// non so se serve ma è meglio metterlo subito per evitare problemi di CORS con il frontend in sviluppo 
+// ==========================================
+// SERVER & SOCKET.IO
+// ==========================================
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app); // Server HTTP che wrappa Express
+
+// Socket.io con CORS aperto (in produzione: restringere origin all'URL del deploy)
 const io = socketIo(server, {
     cors: {
-        origin: '*', // In produzione specifica l'URL esatto
+        origin: '*',
         methods: ['GET', 'POST']
     }
 });
+
+// CORS per le chiamate REST dal frontend (solo localhost:3000 in sviluppo)
 app.use(cors({
-    origin: 'http://localhost:3000', // ← l'URL del tuo frontend
-    allowedHeaders: ['Authorization', 'Content-Type'] // ← fondamentale
+    origin: 'http://localhost:3000',
+    allowedHeaders: ['Authorization', 'Content-Type']
 }));
 
 // ==========================================
 // CONFIGURAZIONE AMBIENTE
 // ==========================================
-// Mappa in-memory per tracciare lo stato online degli utenti
-const activeUsers = new Map();
-const HEARTBEAT_TIMEOUT = 20000; // 20 secondi prima di considerare offline
 
-// ==========================================
+// Mappa in-memory userId -> timestamp dell'ultimo heartbeat ricevuto
+const activeUsers = new Map();
+const HEARTBEAT_TIMEOUT = 20000; // ms senza heartbeat prima di segnare l'utente come offline
+
 const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
-const ROOT = path.join(__dirname, '..', 'frontend');
+const HOST = '0.0.0.0';                                      // Ascolta su tutte le interfacce di rete
+const ROOT = path.join(__dirname, '..', 'frontend');          // Cartella root dei file statici
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 // ==========================================
 // INIZIALIZZAZIONE SUPABASE
 // ==========================================
+// Usa la Service Role Key (accesso admin, bypass RLS) — NON esporre mai al client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-module.exports = { supabase }; // ← aggiungi questa riga
+module.exports = { supabase }; // Esportato per essere usato da altri moduli (es. auth.js)
 
 
 // ==========================================
-// INIZIALIZZAZIONE OPENROUTER (lazy ESM import)
+// AUTENTICAZIONE & OPENROUTER
 // ==========================================
-// @openrouter/sdk è un modulo ESM-only: viene importato dinamicamente
-// al primo utilizzo e poi riutilizzato tramite questa variabile.
+
+// Middleware Express che verifica il JWT Supabase nell'header Authorization
 const verificaToken = require('./auth');
 
+// @openrouter/sdk è ESM-only: non può essere importato con require().
+// Viene importato dinamicamente al primo utilizzo e poi riutilizzato (pattern singleton).
 let openrouter = null;
 async function getOpenRouter() {
     if (!openrouter) {
@@ -114,10 +127,11 @@ async function getOpenRouter() {
  */
 
 // ==========================================
-// MIDDLEWARE (ordine corretto: parsing prima di static)
+// MIDDLEWARE
 // ==========================================
-app.use(express.json());
-app.use(express.static(ROOT));
+// ORDINE IMPORTANTE: il parsing del body deve avvenire PRIMA del serving statico
+app.use(express.json());        // Parsa automaticamente il body JSON delle richieste POST/PUT
+app.use(express.static(ROOT));  // Serve i file statici dalla cartella frontend/
 
 // ==========================================
 // ROTTE DI NAVIGAZIONE (GET)
@@ -157,10 +171,9 @@ app.get('/match', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'match_page.html'));
 });
 
-// Rotta per servire la pagina del profilo di qualsiasi utente
+// Profilo pubblico di un utente specifico (es. /profilo/mario123)
+// Il parametro :username viene ignorato qui — il frontend lo legge dall'URL e chiama /api/profilo/:id
 app.get('/profilo/:username', (req, res) => {
-    // Invia il file HTML del profilo. 
-    // ATTENZIONE: adatta il percorso 'public/profile.html' alla tua vera cartella!
     res.sendFile(path.join(ROOT, 'src', 'pages', 'profile_page.html'));
 });
 
@@ -968,13 +981,32 @@ app.get('/api/missioni/:id', async (req, res) => {
  * Body: { modalita, risultato, exp_guadagnata }
  * Richiede autenticazione (Bearer token).
  */
-// Helper per salvare la partita nel database
-// Helper per salvare la partita nel database
+// ==========================================
+// HELPER: SALVATAGGIO PARTITA
+// ==========================================
+
+/**
+ * Crea una partita completa nel DB (tabelle `partita` + `partecipazione`) e
+ * aggiorna le statistiche dei giocatori coinvolti.
+ *
+ * Usata principalmente per le partite singleplayer salvate via API REST.
+ * Le partite multiplayer usano invece il flusso Socket.io (startMatchmaking / acceptChallenge).
+ *
+ * @param {string}  mioId               - UUID del giocatore "casa"
+ * @param {string}  modalita            - 'singleplayer' | 'multiplayer'
+ * @param {string}  risultato           - 'vittoria' | 'sconfitta' | 'pareggio'
+ * @param {number}  exp_guadagnata      - EXP da assegnare al giocatore casa
+ * @param {string}  [id_utente_trasferta] - UUID avversario (solo multiplayer)
+ * @param {string}  [risultato_avv]     - Risultato avversario (default: inverso)
+ * @param {number}  [exp_avv]           - EXP avversario (default: calcolato)
+ * @param {number}  [trophy_casa]       - Variazione trofei giocatore casa
+ * @param {number}  [trophy_trasferta]  - Variazione trofei avversario
+ */
 async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_utente_trasferta = null, risultato_avv = null, exp_avv = null, trophy_casa = 0, trophy_trasferta = 0) {
     try {
         const isMultiplayer = modalita === 'multiplayer' && id_utente_trasferta;
 
-        // 1. Creiamo la riga nella tabella partita (una sola per match)
+        // 1. Inserisce la riga nella tabella `partita`
         const { data: partitaData, error: partitaError } = await supabase
             .from('partita')
             .insert([{
@@ -990,7 +1022,7 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
         if (partitaError) throw partitaError;
         const idPartita = partitaData.id_partita;
 
-        // 2. Creiamo le partecipazioni
+        // 2. Costruisce le partecipazioni (sempre il giocatore casa, + l'avversario se multiplayer)
         const partecipazioni = [{
             id_partita: idPartita,
             id_giocatore: mioId,
@@ -999,6 +1031,7 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
         }];
 
         if (isMultiplayer) {
+            // Se il risultato avversario non è fornito, lo si deduce per opposizione
             const risultatoAvv = risultato_avv !== null ? risultato_avv : (risultato === 'vittoria' ? 'sconfitta' : 'vittoria');
             const expAvv = exp_avv !== null ? exp_avv : (risultatoAvv === 'vittoria' ? 100 : -10);
             partecipazioni.push({
@@ -1011,7 +1044,7 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
 
         await supabase.from('partecipazione').insert(partecipazioni);
 
-        // 3. Aggiorniamo le statistiche
+        // 3. Aggiorna EXP, livello e trofei dei giocatori coinvolti
         const statsCasa = await updatePlayerStats(mioId, risultato, exp_guadagnata, trophy_casa);
         if (isMultiplayer) {
             const risultatoAvv = risultato_avv !== null ? risultato_avv : (risultato === 'vittoria' ? 'sconfitta' : 'vittoria');
@@ -1026,9 +1059,20 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
     }
 }
 
-// Funzione helper per aggiornare un giocatore
+/**
+ * Aggiorna EXP, livello e trofei di un giocatore nel DB.
+ * Il livello viene calcolato automaticamente come floor(exp / 1000) + 1.
+ * I trofei non scendono sotto 0.
+ *
+ * @param {string} playerId    - UUID del giocatore
+ * @param {string} result      - 'vittoria' | 'sconfitta' | 'pareggio' (non usato direttamente qui)
+ * @param {number} addedExp    - EXP da aggiungere (può essere negativa)
+ * @param {number} trophyChange - Variazione trofei (può essere negativa)
+ * @returns {Object|null} - Nuovi valori { nuovaExp, nuovoLivello, nuoviTrofei, trophyChange }
+ */
 async function updatePlayerStats(playerId, result, addedExp, trophyChange = 0) {
     try {
+        // Legge i valori correnti del giocatore
         const { data: prof, error: readErr } = await supabase
             .from('giocatore')
             .select('exp, livello, trophies')
@@ -1037,11 +1081,10 @@ async function updatePlayerStats(playerId, result, addedExp, trophyChange = 0) {
 
         if (readErr) return null;
 
-        const EXP_PER_LEVEL = 1000;
-        const nuovaExp = Math.max(0, (prof.exp || 0) + addedExp);
+        const EXP_PER_LEVEL = 1000; // Soglia EXP per avanzare di livello
+        const nuovaExp = Math.max(0, (prof.exp || 0) + addedExp); // L'EXP non va mai sotto 0
         const nuovoLivello = Math.floor(nuovaExp / EXP_PER_LEVEL) + 1;
-
-        const nuoviTrofei = Math.max(0, (prof.trophies || 0) + trophyChange);
+        const nuoviTrofei = Math.max(0, (prof.trophies || 0) + trophyChange); // I trofei non vanno sotto 0
 
         await supabase
             .from('giocatore')
@@ -1181,41 +1224,32 @@ app.get('/api/partita/:id', verificaToken, async (req, res) => {
 });
 
 
+/**
+ * GET /api/search/:nome
+ * Cerca giocatori per nickname (ricerca prefisso, case-insensitive).
+ * Restituisce un array con i profili che corrispondono (max 10).
+ */
 app.get('/api/search/:nome', async (req, res) => {
-    // Nota: ho chiamato il parametro "nome" invece di "id" per maggiore chiarezza
     const testoRicerca = req.params.nome;
 
     try {
         const { data, error } = await supabase
             .from('giocatore')
-            .select('id_giocatore, nickname, livello, exp, avatar_url') // Prendi i campi che ti servono
-            .ilike('nickname', `${testoRicerca}%`) // Cerca i nickname che INIZIANO con il testo cercato
-            .limit(10); // Consiglio: metti un limite per non scaricare troppi dati se l'utente digita solo "A"
+            .select('id_giocatore, nickname, livello, exp, avatar_url')
+            .ilike('nickname', `${testoRicerca}%`) // Cerca nickname che iniziano con il testo
+            .limit(10);
 
         if (error) throw error;
 
-        // Formattiamo i dati in modo che il frontend (la funzione buildResultItem) li legga correttamente
+        // Mappa i dati nel formato atteso dal frontend
+        const risultati = data.map(gioc => ({
+            userid: gioc.id_giocatore,
+            user: gioc.nickname,
+            avatar_url: gioc.avatar_url,
+            avatarSeed: gioc.nickname,
+            livello: gioc.livello
+        }));
 
-        const risultati = []; // Inizializziamo un array vuoto prima del ciclo
-
-        // Scorriamo tutto l'array 'data' restituito dal database
-        for (let i = 0; i < data.length; i++) {
-            const gioc = data[i]; // Prendiamo il singolo giocatore dell'iterazione corrente
-
-            // Creiamo un nuovo oggetto formattato per il frontend
-            const giocatoreFormattato = {
-                userid: gioc.id_giocatore,          // Utilizziamo l'ID del giocatore
-                user: gioc.nickname,
-                avatar_url: gioc.avatar_url,
-                avatarSeed: gioc.nickname,    // Genera l'avatar in base al nickname
-                livello: gioc.livello         // Dati extra se ti servono in futuro
-            };
-
-            // Aggiungiamo l'oggetto appena creato all'array dei risultati
-            risultati.push(giocatoreFormattato);
-        }
-
-        // Restituiamo un array (JSON)
         res.status(200).json(risultati);
 
     } catch (err) {
@@ -1375,8 +1409,10 @@ app.post('/api/reset_password', async (req, res) => {
 });
 
 // ==========================================
-// COSTANTI GITHUB (Spostate dal Frontend)
+// COSTANTI GITHUB
 // ==========================================
+
+// Mappa estensione file -> nome linguaggio per Monaco Editor
 const EXT_TO_MONACO = {
     js: 'javascript', ts: 'typescript', jsx: 'javascript', tsx: 'typescript',
     py: 'python', rb: 'ruby', java: 'java', cpp: 'cpp', cc: 'cpp', cxx: 'cpp',
@@ -1386,9 +1422,8 @@ const EXT_TO_MONACO = {
     json: 'json', yml: 'yaml', yaml: 'yaml', xml: 'xml', md: 'markdown'
 };
 
-// ==========================================
-// COSTANTI GITHUB
-// ==========================================
+// Query predefinite per la ricerca su GitHub Code Search.
+// Ogni entry specifica la query testuale e l'estensione del file da cercare.
 const GITHUB_QUERIES = [
     { q: 'leetcode solutions language:python', ext: 'py' },
     { q: 'leetcode problems language:java', ext: 'java' },
@@ -1407,6 +1442,7 @@ const GITHUB_QUERIES = [
     { q: 'leetcode depth first search language:py', ext: 'py' }
 ];
 
+// Snippet di fallback locali, usati quando GitHub API non è disponibile o ha esaurito il rate limit
 const FALLBACK_SNIPPETS = [
     {
         code: `function twoSum(nums, target) {\n  const seen = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const need = target - nums[i];\n    if (seen.has(need)) return [seen.get(need), i];\n    seen.set(nums[i], i);\n  }\n  return [];\n}`,
@@ -1434,8 +1470,12 @@ const FALLBACK_SNIPPETS = [
     }
 ];
 
-let lastPublicSnippetCode = null;
+let lastPublicSnippetCode = null; // Tiene traccia dell'ultimo snippet servito (evita ripetizioni)
 
+/**
+ * Restituisce uno snippet di fallback casuale dal pool locale.
+ * Se viene passato un previousCode, esclude quello snippet per evitare ripetizioni.
+ */
 function buildFallbackSnippet(previousCode = null) {
     const pool = previousCode
         ? FALLBACK_SNIPPETS.filter(s => s.code !== previousCode)
@@ -1446,6 +1486,11 @@ function buildFallbackSnippet(previousCode = null) {
     return { ...choice };
 }
 
+/**
+ * Tenta di ottenere uno snippet da GitHub (fino a 5 tentativi).
+ * Se tutti i tentativi falliscono, ricade sul pool di fallback locale.
+ * Garantisce sempre che lo snippet restituito sia diverso dal precedente.
+ */
 async function getRoundSnippet(previousCode = null) {
     let firstSnippet = null;
 
@@ -1479,11 +1524,19 @@ async function getRoundSnippet(previousCode = null) {
  * GET /api/random-snippet
  * Cerca un file di codice casuale su GitHub e lo formatta per il frontend.
  */
+/**
+ * Esegue una ricerca su GitHub Code Search, scarica un file casuale dai risultati
+ * e lo ritorna come oggetto snippet.
+ *
+ * Il file viene troncato a 40 righe partendo dalla prima riga non vuota.
+ * Lancia un'eccezione se GITHUB_TOKEN non è configurato o se la ricerca fallisce.
+ */
 async function getRandomSnippet() {
     if (!process.env.GITHUB_TOKEN) {
         throw new Error('GITHUB_TOKEN non configurato');
     }
 
+    // Sceglie una query casuale dall'array e una pagina casuale (1-3) per variare i risultati
     const queryObj = GITHUB_QUERIES[Math.floor(Math.random() * GITHUB_QUERIES.length)];
     const page = Math.floor(Math.random() * 3) + 1;
 
@@ -1496,6 +1549,7 @@ async function getRandomSnippet() {
 
     const keywords = queryObj.q.split('language:')[0].trim();
     const codeSearchQuery = `${keywords} extension:${queryObj.ext}`;
+    // Esegue la ricerca per codice (GitHub Code Search API)
     const codeSearchUrl = `https://api.github.com/search/code?q=${encodeURIComponent(codeSearchQuery)}&per_page=30&page=${page}`;
 
     const codeRes = await fetch(codeSearchUrl, { headers });
@@ -1506,6 +1560,7 @@ async function getRandomSnippet() {
         throw new Error(`Nessun file trovato per la query: ${codeSearchQuery}`);
     }
 
+    // Sceglie un file casuale tra i risultati e ne scarica il contenuto
     const file = codeData.items[Math.floor(Math.random() * codeData.items.length)];
     const repoFullName = file.repository.full_name;
 
@@ -1513,6 +1568,7 @@ async function getRandomSnippet() {
     if (!contentRes.ok) throw new Error(`Content fetch failed: ${contentRes.status}`);
     const contentData = await contentRes.json();
 
+    // Decodifica il contenuto base64 e tronca a max 40 righe (dalla prima non vuota)
     let rawCode = Buffer.from(contentData.content, 'base64').toString('utf-8');
     const lines = rawCode.split('\n');
     if (lines.length > 40) {
@@ -1545,14 +1601,13 @@ app.get('/api/random-snippet', async (req, res) => {
 });
 
 // ==========================================
-// DIPENDENZE (aggiungi in cima, dopo require esistenti)
+// UPLOAD IMMAGINI PROFILO
 // ==========================================
-const multer = require('multer');
 
-// multer in memory: il file arriva come Buffer, non viene salvato su disco
+// Configurazione multer: memoria RAM (no disco), max 5MB, solo immagini
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 }, // max 5MB
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         allowed.includes(file.mimetype)
@@ -1561,19 +1616,14 @@ const upload = multer({
     }
 });
 
-// ==========================================
-// API UPLOAD IMMAGINI PROFILO (POST)
-// ==========================================
-
 /**
- * POST /api/upload/avatar
- * POST /api/upload/banner
- * Riceve un'immagine via multipart/form-data, la carica su Supabase Storage
- * e restituisce la URL pubblica.
+ * Factory che restituisce un array di middleware per gestire l'upload di un'immagine
+ * su un bucket Supabase Storage specifico.
  *
- * Form field: "immagine" (file)
- * Richiede autenticazione (Bearer token).
- * Risposta: { url: string }
+ * Il file viene sempre salvato come `{userId}.{ext}` (sovrascrive il precedente, upsert=true).
+ * Il bucket deve essere configurato come pubblico su Supabase.
+ *
+ * @param {string} bucket - Nome del bucket Supabase ('user_avatars' | 'user_banners')
  */
 function handleImageUpload(bucket) {
     return [
@@ -1696,12 +1746,22 @@ app.post('/api/valuta-risposta', async (req, res) => {
 // LOGICA MULTIPLAYER (Socket.io)
 // ==========================================
 
+// Code di giocatori in attesa di avversario per il matchmaking automatico
 const matchmakingQueue = [];
-const privateRooms = new Map(); // codice -> { idPartita, giocatori: [], unranked: false }
-const activeMatches = new Map(); // roomCode -> { players: [], unranked: false }
+// Stanze create con codice numerico (2 giocatori, ranked)
+const privateRooms = new Map(); // codice -> { host, giocatori: [], unranked: false }
+// Partite attive in memoria, indicizzate per roomCode
+const activeMatches = new Map(); // roomCode -> { players, partita_id, answers, ... }
+// Inviti sfida tra amici in attesa di risposta
 const pendingFriendInvites = new Map(); // inviteId -> { challengerId, friendId, timeoutId }
-const disconnectedMatches = new Map(); // roomCode -> { partita_id, disconnectTime, suspensionTimeout, disconnectedUserId }
+// Partite con almeno un giocatore disconnesso (in attesa di riconnessione)
+const disconnectedMatches = new Map(); // roomCode -> { partita_id, disconnectTime, suspensionTimeout, disconnectedUserIds }
 
+/**
+ * Cerca il socket attivo di un utente dato il suo UUID.
+ * Scorre tutti i socket connessi e restituisce quello che appartiene all'utente.
+ * Restituisce null se l'utente non è online.
+ */
 function getSocketByUserId(userId) {
     for (const s of io.sockets.sockets.values()) {
         if (s.userId === userId) return s;
@@ -1709,7 +1769,12 @@ function getSocketByUserId(userId) {
     return null;
 }
 
-// Middleware per autenticazione socket
+// ==========================================
+// MIDDLEWARE SOCKET.IO
+// ==========================================
+// Ogni connessione socket viene autenticata tramite il JWT Supabase.
+// L'ID utente e il profilo vengono attaccati direttamente all'oggetto socket
+// per essere disponibili in tutti gli handler successivi.
 io.use(async (socket, next) => {
     try {
         const token = socket.handshake.auth.token;
@@ -1744,43 +1809,43 @@ io.use(async (socket, next) => {
 io.on('connection', (socket) => {
     console.log(`[Socket] Utente connesso: ${socket.nickname} (${socket.userId})`);
 
-    // Invia il numero di giocatori online
+    // Aggiorna il contatore giocatori online per tutti i client
     io.emit('statsUpdate', { onlinePlayers: io.engine.clientsCount });
 
     // ========================================
-    // AUTO-REJOIN: Se l'utente aveva una partita sospesa, fa il rejoin automatico
+    // AUTO-REJOIN
     // ========================================
+    // Se l'utente si riconnette (es. refresh pagina) mentre era in una partita sospesa,
+    // lo si reinserisce automaticamente nella room socket senza aspettare 'joinRoom'.
     for (const [roomCode, match] of activeMatches.entries()) {
         if (match.players.some(p => p.id === socket.userId)) {
             const suspended = disconnectedMatches.get(roomCode);
             if (suspended?.disconnectedUserIds?.includes(socket.userId)) {
                 console.log(`[Match] Auto-rejoin rilevato: ${socket.nickname} sta ritornando a ${roomCode}`);
-                
-                // Rimuovi da disconnected
+
+                // Rimuovi questo utente dalla lista dei disconnessi
                 suspended.disconnectedUserIds = suspended.disconnectedUserIds.filter(id => id !== socket.userId);
-                
-                // Se tutti sono ritornati, cancella il timeout
+
+                // Se tutti i giocatori sono rientrati, cancella il timeout di abbandono
                 if (suspended.disconnectedUserIds.length === 0) {
                     clearTimeout(suspended.suspensionTimeout);
                     disconnectedMatches.delete(roomCode);
                     console.log(`[Match] ✓ Sospensione cancellata per ${roomCode} - Tutti i giocatori sono ritornati`);
                 }
-                
-                // Aggiungi il socket alla room
+
                 socket.join(roomCode);
-                
-                // Comunica il rejoin agli altri in room
-                io.to(roomCode).emit('opponentRejoined', {
-                    playerName: socket.nickname,
-                    roomCode
-                });
-                
+                io.to(roomCode).emit('opponentRejoined', { playerName: socket.nickname, roomCode });
                 console.log(`[Match] ✓ ${socket.nickname} è stato automaticamente riaggiunto a ${roomCode}`);
             }
         }
     }
 
-    // 1. MATCHMAKING ONLINE (Gioca Online)
+    // ========================================
+    // 1. MATCHMAKING AUTOMATICO
+    // ========================================
+    // Il primo giocatore che arriva viene messo in coda.
+    // Il secondo giocatore trova la coda non vuota: vengono abbinati,
+    // viene creata la partita nel DB e la room socket, e si emette 'matchFound' a entrambi.
     socket.on('startMatchmaking', async () => {
         console.log(`[Matchmaking] ${socket.nickname} è entrato in coda.`);
 
@@ -1863,12 +1928,17 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Rimuove il giocatore dalla coda se si cancella prima di trovare un avversario
     socket.on('cancelMatchmaking', () => {
         const idx = matchmakingQueue.findIndex(s => s.id === socket.id);
         if (idx !== -1) matchmakingQueue.splice(idx, 1);
     });
 
-    // 2. STANZA PRIVATA (Codice a 5 cifre)
+    // ========================================
+    // 2. STANZA PRIVATA (Codice 5 cifre, ranked)
+    // ========================================
+    // L'host crea la stanza e riceve un codice numerico da condividere.
+    // Il secondo giocatore entra con quel codice e la partita inizia automaticamente.
     socket.on('createPrivateRoom', () => {
         const code = Math.floor(10000 + Math.random() * 90000).toString();
         privateRooms.set(code, {
@@ -1929,10 +1999,11 @@ io.on('connection', (socket) => {
         console.log(`[Room] ${socket.nickname} è entrato nella stanza ${code}`);
     });
 
-    // 3. SFIDA AMICI (Unranked)
-    // Nota: Questa logica viene solitamente attivata da un invito.
-    // Per ora creiamo una stanza speciale unranked.
-    // --- Sincronizzazione Match ---
+    // ========================================
+    // 3. JOIN ROOM (sincronizzazione match)
+    // ========================================
+    // Evento emesso dal client quando entra nella pagina di match.
+    // Aggiorna lo stato del giocatore e avvia la partita quando entrambi sono pronti.
     socket.on('joinRoom', (code) => {
         const match = activeMatches.get(code);
         if (match) {
@@ -1962,13 +2033,17 @@ io.on('connection', (socket) => {
         }
     });
 
+    /**
+     * Avvia un round: scarica uno snippet da GitHub (o fallback),
+     * lo invia ai client e imposta un timer di sicurezza da 90s.
+     */
     async function startMultiplayerRound(roomCode) {
         const match = activeMatches.get(roomCode);
         if (!match) return;
 
         console.log(`[Match] Inizio Round ${match.currentRound} per ${roomCode}, partita_id=${match.partita_id}`);
-        
-        // Marca il match come iniziato (per evitare false sospensioni prima del primo round)
+
+        // Segna il match come ufficialmente iniziato (blocca la sospensione per disconnect prematuro)
         if (!match.started) {
             match.started = true;
             console.log(`[Match] ✓ Match ${roomCode} ufficialmente iniziato (started=true)`);
@@ -2016,17 +2091,22 @@ io.on('connection', (socket) => {
         }
     }
 
+    /**
+     * Riceve la risposta di un giocatore per il round corrente.
+     * Se il giocatore avversario è disconnesso, gli assegna automaticamente risposta vuota (score 0).
+     * Quando entrambi hanno risposto, lancia immediatamente la valutazione.
+     */
     socket.on('submitMultiplayerAnswer', async (data) => {
         const { roomCode, answer } = data;
         const match = activeMatches.get(roomCode);
         if (!match || !match.started || match.evaluating) return;
 
-        // Salva la risposta
+        // Registra la risposta del giocatore corrente
         match.answers[socket.userId] = answer;
 
         const suspended = disconnectedMatches.get(roomCode);
-        
-        // Se un giocatore è disconnesso e l'altro ha inviato la risposta, assegna 0 all'assente
+
+        // Se un avversario è disconnesso, assegna risposta vuota per non bloccare il round
         if (suspended?.disconnectedUserIds && suspended.disconnectedUserIds.length > 0) {
             for (const disconnectedId of suspended.disconnectedUserIds) {
                 if (!match.answers[disconnectedId]) {
@@ -2035,17 +2115,23 @@ io.on('connection', (socket) => {
             }
         }
 
-        // Se entrambi hanno risposto (o uno è disconnesso), valutiamo
+        // Avvia la valutazione appena entrambi i giocatori hanno risposto
         if (Object.keys(match.answers).length === 2) {
             evaluateMultiplayerRound(roomCode);
         }
     });
 
+    /**
+     * Valuta le risposte di entrambi i giocatori tramite AI.
+     * Calcola i danni in base alla differenza di punteggio e aggiorna gli HP.
+     * Se qualcuno ha 0 HP o si è raggiunto il numero massimo di round, termina la partita.
+     * Il flag `evaluating` previene chiamate concorrenti (es. timer + risposta simultanea).
+     */
     async function evaluateMultiplayerRound(roomCode) {
         const match = activeMatches.get(roomCode);
         if (!match || match.evaluating) return;
 
-        match.evaluating = true; // Blocca altre chiamate simultanee
+        match.evaluating = true; // Blocca altre chiamate concorrenti
         if (match.timer) clearTimeout(match.timer);
         match.timer = null;
 
@@ -2053,7 +2139,7 @@ io.on('connection', (socket) => {
         const pIds = match.players.map(p => p.id);
 
         try {
-            // Valuta entrambe le risposte in parallelo
+            // Valuta entrambe le risposte in parallelo con Promise.all per ridurre la latenza
             const evaluations = await Promise.all(pIds.map(async (id) => {
                 const score = await evaluateAnswer(match.currentSnippet.code, match.answers[id] || "");
                 return { id, score };
@@ -2080,12 +2166,12 @@ io.on('connection', (socket) => {
                     [p2.id]: p2.health
                 },
                 damage: damage,
-                winnerId: diff > 0 ? p1.id : (diff < 0 ? p2.id : null)
+                winnerId: diff > 0 ? p1.id : (diff < 0 ? p2.id : null) // null = pareggio di round
             };
 
             io.to(roomCode).emit('roundResult', roundResult);
 
-            // Controlla fine partita o prossimo round
+            // Fine partita se: qualcuno ha 0 HP oppure si è raggiunto il numero massimo di round
             if (p1.health <= 0 || p2.health <= 0 || match.currentRound >= match.maxRounds) {
                 setTimeout(() => finishMultiplayerMatch(roomCode), 3000);
             } else {
@@ -2099,6 +2185,19 @@ io.on('connection', (socket) => {
         }
     }
 
+    /**
+     * Chiude la partita multiplayer: determina il vincitore, aggiorna il DB in 3 step atomici
+     * (partecipazione P1, partecipazione P2, stato partita) e aggiorna le statistiche se ranked.
+     *
+     * Calcolo EXP:
+     *   - Vittoria: 100 + floor(hp/2)
+     *   - Sconfitta: -10 - floor(hp_avversario/2)
+     *   - Pareggio: 20
+     *
+     * Calcolo trofei (solo ranked):
+     *   - Vittoria: random(30-40) + floor(hp/2)
+     *   - Sconfitta: -(random(20-30) + floor(hp_avversario/2))
+     */
     async function finishMultiplayerMatch(roomCode) {
         const match = activeMatches.get(roomCode);
         if (!match) {
@@ -2235,6 +2334,12 @@ io.on('connection', (socket) => {
         console.log(`[Match] Match ${roomCode} rimosso da activeMatches e disconnectedMatches`);
     }
 
+    // ========================================
+    // 4. SFIDA TRA AMICI (unranked)
+    // ========================================
+    // Il challenger invia l'invito tramite 'challengeFriend'.
+    // Il destinatario risponde con 'respondToChallenge' (accepted: true/false).
+    // Se accetta, viene creata la partita nel DB (unranked=true) e inizia il match.
     socket.on('challengeFriend', (payload) => {
         const friendId = typeof payload === 'string' ? payload : payload?.friendId;
 
@@ -2408,6 +2513,13 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ========================================
+    // DISCONNECT
+    // ========================================
+    // Se un giocatore si disconnette DURANTE una partita (dopo l'inizio),
+    // la partita viene sospesa per 120 secondi. Se ritorna entro quel tempo,
+    // la partita riprende. Altrimenti il timeout scade e la partita continua senza di lui
+    // (l'altro giocatore vincerà automaticamente al prossimo round).
     socket.on('disconnect', () => {
         const idx = matchmakingQueue.findIndex(s => s.id === socket.id);
         if (idx !== -1) matchmakingQueue.splice(idx, 1);
@@ -2488,6 +2600,11 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ========================================
+    // REJOIN MANUALE
+    // ========================================
+    // Evento emesso dal client quando torna intenzionalmente in una partita sospesa.
+    // Differisce dall'auto-rejoin perché viene triggerato esplicitamente dal frontend.
     socket.on('rejoinMatch', async ({ roomCode }) => {
         const match = activeMatches.get(roomCode);
         const suspended = disconnectedMatches.get(roomCode);
