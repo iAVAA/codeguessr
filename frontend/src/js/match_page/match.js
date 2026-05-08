@@ -9,6 +9,7 @@ const SETTINGS_KEY = 'codeguessr-settings';
 let timerInterval = null;
 let timeRemaining = ROUND_SECONDS;
 let currentRound = 1;
+let totalRounds = TOTAL_ROUNDS;
 let myHealth = 100;
 let oppHealth = 100;
 let matchSaved = false;
@@ -19,6 +20,9 @@ let isMultiplayer = false;
 let roomCode = null;
 let socket = null;
 let opponentData = null;
+let countdownInterval = null;
+let countdownPromise = null;
+let lastServerRoundProcessed = 0;
 
 // ─── Bot Difficulty ─────────────────────────────────────────────────────────
 /**
@@ -133,6 +137,10 @@ function initMonacoEditor(snippet) {
 
 function startTimer() {
   const timerEl = document.getElementById('match-timer');
+  clearInterval(timerInterval);
+  timerInterval = null;
+  if (!timerEl) return;
+
   timeRemaining = ROUND_SECONDS;
   timerEl.textContent = `00:${ROUND_SECONDS.toString().padStart(2, '0')}`;
   timerEl.classList.remove('hurry');
@@ -154,14 +162,31 @@ function startTimer() {
 
 function stopTimer() {
   clearInterval(timerInterval);
-  document.getElementById('match-timer').classList.remove('hurry');
+  timerInterval = null;
+  const timerEl = document.getElementById('match-timer');
+  if (timerEl) timerEl.classList.remove('hurry');
+}
+
+function stopCountdown() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  const overlay = document.getElementById('match-countdown-overlay');
+  if (overlay) {
+    overlay.style.opacity = '0';
+    overlay.style.visibility = 'hidden';
+  }
+
+  countdownPromise = null;
 }
 
 // ─── UI Helpers ──────────────────────────────────────────────────────────────
 
 function updateRoundLabel() {
   const el = document.getElementById('match-round');
-  if (el) el.textContent = `Round ${currentRound}/${TOTAL_ROUNDS}`;
+  if (el) el.textContent = `Round ${currentRound}/${totalRounds}`;
 }
 
 function reduceHealth(player, amount) {
@@ -239,6 +264,7 @@ async function saveMatchResult(risultato, expGuadagnata) {
 // ─── End Game ────────────────────────────────────────────────────────────────
 
 function showEndGame() {
+  stopCountdown();
   stopTimer();
   setFormEnabled(false);
 
@@ -342,13 +368,21 @@ async function loadRoundSnippet() {
  * Restituisce una Promise che si risolve quando il countdown è finito.
  */
 function runCountdown() {
-  return new Promise((resolve) => {
+  if (countdownPromise) return countdownPromise;
+
+  countdownPromise = new Promise((resolve) => {
     const overlay = document.getElementById('match-countdown-overlay');
     const cdText = document.getElementById('match-countdown-text');
 
     if (!overlay || !cdText) {
+      countdownPromise = null;
       resolve();
       return;
+    }
+
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
     }
 
     // Reimposta l'overlay (potrebbe essere stato nascosto)
@@ -360,7 +394,7 @@ function runCountdown() {
 
     let val = 3;
 
-    const iv = setInterval(() => {
+    countdownInterval = setInterval(() => {
       val--;
       if (val > 0) {
         cdText.textContent = String(val);
@@ -368,19 +402,26 @@ function runCountdown() {
         cdText.textContent = 'VIA!';
         cdText.style.color = 'rgb(var(--darcula-blue))';
       } else {
-        clearInterval(iv);
+        clearInterval(countdownInterval);
+        countdownInterval = null;
         overlay.style.opacity = '0';
         overlay.style.visibility = 'hidden';
-        setTimeout(resolve, 400);
+        setTimeout(() => {
+          countdownPromise = null;
+          resolve();
+        }, 400);
       }
     }, 1000);
   });
+
+  return countdownPromise;
 }
 
 /**
  * Avvia il round corrente: mostra il countdown, poi attiva il form e il timer.
  */
 async function startRound() {
+  totalRounds = TOTAL_ROUNDS;
   updateRoundLabel();
   setFeedback('Attesa risposta...');
   setFormEnabled(false);
@@ -599,6 +640,10 @@ async function loadProfiles() {
 async function init() {
   console.log('[Match] Inizializzazione partita...');
 
+  // L'overlay countdown e presente nell'HTML con testo "3": nascondilo subito.
+  // Verra mostrato solo quando un round parte davvero con runCountdown().
+  stopCountdown();
+
   const urlParams = new URLSearchParams(window.location.search);
   roomCode = urlParams.get('room');
   isMultiplayer = !!roomCode;
@@ -621,9 +666,23 @@ async function init() {
     });
 
     socket.on('startRound', async (data) => {
+      if (!data || typeof data.round !== 'number') return;
+
+      // Difesa contro eventi startRound duplicati che possono rilanciare il countdown.
+      if (data.round <= lastServerRoundProcessed) {
+        return;
+      }
+      lastServerRoundProcessed = data.round;
+
+      stopCountdown();
+      stopTimer();
+
       console.log("🚀 Inizio Round Multiplayer:", data.round);
       currentRound = data.round;
-      currentSnippet = data.snippet;
+      if (typeof data.totalRounds === 'number' && data.totalRounds > 0) {
+        totalRounds = data.totalRounds;
+      }
+      currentSnippet = data?.snippet?.code ? data.snippet : fallbackSnippet;
       updateRoundLabel();
 
       // Reset UI per il nuovo round
@@ -682,6 +741,7 @@ async function init() {
     });
 
     socket.on('matchFinished', (data) => {
+      stopCountdown();
       showEndGameMultiplayer(data);
     });
 
@@ -720,6 +780,7 @@ function showEndGameMultiplayer(data) {
   const session = getSession();
   const isWinner = data.winner === session.idGiocatore || data.winner === null;
 
+  stopCountdown();
   stopTimer();
   setFormEnabled(false);
 

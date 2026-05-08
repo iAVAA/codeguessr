@@ -262,10 +262,11 @@ function initSidebarActions() {
         const friendName = friendItem.querySelector('.friend-name')?.textContent || 'Avversario';
         const friendId = friendItem.id.replace('sidebar-rel-', '');
         if (typeof showToast === 'function') {
-          showToast(`Sfida avviata contro ${friendName}!`, 'blue');
+          showToast(`Invio sfida a ${friendName}...`, 'blue');
         }
-        // Reindirizza al match passandogli l'avversario
-        window.location.href = `/match?opponent=${friendId}`;
+        window.dispatchEvent(new CustomEvent('cg:challenge-friend', {
+          detail: { friendId }
+        }));
       }
       return;
     }
