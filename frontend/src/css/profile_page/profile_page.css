@@ -25,7 +25,7 @@
   width: 100%;
   background-size: cover;
   background-position: center;
-  background-color: rgb(var(--darcula-blue)); /* Fallback */
+  background-image: url('/src/assets/img/banner_profile.webp');
   position: relative;
 }
 

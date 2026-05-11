@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Profilo utente CodeGuessr - Statistiche, storico partite e amici." />
     <meta name="theme-color" content="#313335" />
+
     <title>CodeGuessr - Profilo</title>
+
     <link rel="icon" type="image/webp" href="/src/assets/icons/logo.ico" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         crossorigin="anonymous">
@@ -17,44 +19,40 @@
     <link rel="stylesheet" href="/src/css/style.css" />
     <link rel="stylesheet" href="/src/css/profile_page/profile_page.css" />
 
-    <style id="anti-flash">
-        /* Rimuove l'apparizione del contenuto della pagina prima del loader.js */
-        body.loader-open>*:not(#globalLoader):not(#noscript-wall):not(script):not(style) {
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-    </style>
-
     <script>
-        // Fissa la profile_page.html per evitare il caricamento di altre pagine
+        // Reindirizza alla pagina di login se l'utente non è autenticato
         if (localStorage.getItem('isLoggedIn') !== 'true') {
             window.location.replace('/index.html');
         }
     </script>
+
     <script id="fouc-prevention">
         // Anti-FOUC: applica il tema dal localStorage prima che il CSS venga parsato
-        (function () {
-            var t = localStorage.getItem('codeguessr-theme');
-            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (t === 'light' || (!t && !prefersDark)) {
-                document.documentElement.classList.add('light-mode');
-            }
-        })();
+        const theme = localStorage.getItem('codeguessr-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (theme === 'light' || (!theme && !prefersDark)) {
+            document.documentElement.classList.add('light-mode');
+        }
     </script>
 
 </head>
 
 <body>
+    <!-- ===================== NOSCRIPT ===================== -->
+    <!-- Mostra un’interfaccia di avviso quando JavaScript è disabilitato nel browser -->
     <noscript>
         <div id="noscript-wall" role="alert" aria-live="assertive">
             <div class="ns-logo">
-                <img src="/src/assets/img/logo.webp" alt="CodeGuessr Logo" onerror="this.style.display='none'">
+                <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" onerror="this.style.display='none'">
                 <span>Code<b>Guessr</b></span>
             </div>
             <div class="ns-icon-wrap" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>
             <h1 class="ns-title">JavaScript <span>disabilitato</span></h1>
-            <p class="ns-desc">CodeGuessr richiede JavaScript per funzionare. Senza di esso non è possibile caricare le
-                partite, il profilo o le classifiche.</p>
+            <p class="ns-desc">
+                CodeGuessr richiede JavaScript per funzionare. Senza di esso non è possibile
+                caricare le partite, il profilo o le classifiche.
+            </p>
             <div class="ns-code" aria-label="Istruzioni per abilitare JavaScript">
                 <span class="c-dim"># Come abilitare JavaScript</span><br>
                 <span class="c-kw">Chrome</span> → Impostazioni > Privacy > JavaScript → <span
@@ -65,8 +63,9 @@
                         class="bi bi-check"></i></span>
             </div>
             <div class="ns-links">
-                <a class="ns-link" href="https://enable-javascript.com/it/" target="_blank">Guida dettagliata per il tuo
-                    browser</a>
+                <a class="ns-link" href="https://enable-javascript.com/it/" target="_blank">
+                    Guida dettagliata per il tuo browser
+                </a>
             </div>
         </div>
     </noscript>
@@ -78,34 +77,44 @@
 
     <!-- ===================== HEADER ===================== -->
     <header class="navbar-codeguessr d-flex align-items-center justify-content-between">
-        <!-- == Left Side: Brand Logo == -->
+        <!-- == Lato sinistro: Brand Logo == -->
         <a href="/home" class="navbar-brand-logo" id="nav-brand">
             <img src="/src/assets/img/logo.webp" alt="CodeGuessr Logo" class="logo-img" />
             <span class="brand-text">Code<span class="brand-accent">Guessr</span></span>
         </a>
-        <!-- == Right Side: Profile == -->
+
+        <!-- == Lato destro: Sezione Profilo == -->
         <div class="d-flex align-items-center gap-3">
+            <!-- Contenitore del menù a tendina -->
             <div class="profile-dropdown-wrapper" id="profile-dropdown-wrapper">
                 <div class="profile-widget" id="profile-widget" tabindex="0">
+                    <!-- Nome utente e statistiche -->
                     <div class="profile-info">
                         <span class="profile-name" id="player-name"></span>
                         <div class="profile-stats">
                             <span class="stat-tier">LV <span id="player-level"></span></span>
                             <span class="stat-divider">&bull;</span>
-                            <span class="profile-cups"><i class="bi bi-trophy-fill"></i> <span
-                                    id="player-cups"></span></span>
+                            <span class="profile-cups">
+                                <i class="bi bi-trophy-fill"></i><span id="player-cups"></span>
+                            </span>
                         </div>
                     </div>
+
+                    <!-- Avatar con Anello di XP dinamico -->
                     <div class="profile-avatar-wrapper">
                         <svg class="xp-ring" viewBox="0 0 36 36">
                             <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
-                            <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"
-                                style="stroke-dashoffset: 0;"></circle>
+                            <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"></circle>
                         </svg>
-                        <img alt="Avatar" class="profile-avatar" id="player-avatar" />
+                        <img src="/frontend/src/assets/img/user_profile.webp"
+                            alt="Player Avatar" class="profile-avatar" id="player-avatar" />
                     </div>
+
+                    <!-- Icona di Freccia verso il basso -->
                     <i class="bi bi-chevron-down profile-chevron" id="profile-chevron"></i>
                 </div>
+
+                <!-- Menù a tendina nascosto -->
                 <div class="profile-dropdown-menu" id="profile-dropdown">
                     <a href="/home" class="dropdown-item"><i class="bi bi-house-door-fill"></i> Torna alla Lobby</a>
                     <a href="/classifica" class="dropdown-item"><i class="bi bi-award-fill"></i> Classifica</a>
@@ -122,35 +131,54 @@
         </div>
     </header>
 
-    <!-- ===================== MAIN ===================== -->
+    <!-- ===================== MAIN (max-width: 1100px) ===================== -->
     <main class="profile-page-wrapper py-5">
         <div class="container" style="max-width: 1100px;">
+
+            <!-- ===== Container del Profilo (Banner, Immagine profilo e informazioni) ===== -->
             <div class="profile-header-card mb-4">
-                <div class="profile-banner"
-                    style="background-image: url('/src/assets/img/banner_profile.webp');">
-                </div>
+                <!-- Banner del profilo (dietro rispetto all'immagine profilo)-->
+                <div class="profile-banner"></div>
+
+                <!-- Contenuto del profilo -->
                 <div class="profile-header-content">
                     <div class="d-flex flex-column flex-md-row align-items-start justify-content-between w-100 gap-3">
                         <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-4">
+
+                            <!-- Immagine profilo dell'utente -->
                             <div class="profile-main-avatar-wrapper">
-                                <img src="https://api.dicebear.com/8.x/bottts-neutral/svg?seed=codeguessr&backgroundColor=1e1f21"
+                                <img src="/frontend/src/assets/img/user_profile.webp"
                                     alt="Main Avatar" class="profile-main-avatar" id="page-avatar">
                             </div>
+
+                            <!-- Informazioni dell'utente -->
                             <div class="profile-main-info text-center text-sm-start mt-2 mt-sm-0">
+
+                                <!-- Nome utente -->
                                 <h1 class="profile-main-name mb-1">
                                     <span id="page-name"></span>
                                 </h1>
                                 <div class="profile-main-meta mb-3">
-                                    <span class="badge text-bg-secondary"><i class="bi bi-hash"></i><span
-                                            id="page-userid"></span></span>
-                                    <span class="ms-2 text-darcula-comment"><i class="bi bi-calendar-event"></i>
-                                        Iscritto da <span id="page-joindate"></span></span>
+                                    <!-- TODO: Da rimuovere lo userid nel frontend -->
+                                    <span claspanss="badge text-bg-secondary">
+                                        <i class="bi bi-hash"></i><span id="page-userid"></span>
+                                    </span>
+
+                                    <!-- Data di iscrizione -->
+                                    <span class="ms-2 text-darcula-comment">
+                                        <i class="bi bi-calendar-event"></i>
+                                        Iscritto dal <span id="page-joindate"></span>
+                                    </span>
                                 </div>
+
+                                <!-- Biografia dell'utente -->
                                 <p class="profile-main-bio">
                                     <span id="page-bio"></span>
                                 </p>
                             </div>
                         </div>
+
+                        <!-- TODO: Sono qui-->
                         <div class="profile-actions mt-3 mt-md-0 align-self-md-center">
                             <button class="profile-btn-edit" id="btn-edit-profile">
                                 <i class="bi bi-pencil-square"></i> Modifica Profilo
