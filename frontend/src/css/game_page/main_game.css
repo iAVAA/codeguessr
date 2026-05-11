@@ -349,6 +349,194 @@
 .btn-multiplayer .btn-play-icon { background: rgba(255,255,255,0.2); }
 
 /* ===========================
+   BTN PANEL ACTION (toggle missioni completate)
+   =========================== */
+
+.btn-panel-action {
+  background: transparent;
+  border: 1px solid rgba(var(--darcula-comment), 0.25);
+  border-radius: 8px;
+  color: rgb(var(--darcula-comment));
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-panel-action:hover {
+  border-color: rgba(var(--darcula-blue), 0.5);
+  color: rgb(var(--darcula-blue));
+}
+
+/* ===========================
+   MISSION DETAIL MODAL
+   =========================== */
+.cg-mission-detail-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+/* Stato aperto: l'overlay diventa visibile e cliccabile */
+.cg-mission-detail-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cg-mission-detail-modal {
+  width: min(560px, 100%);
+  background: rgba(var(--darcula-current), 0.92);
+  border: 1px solid rgba(var(--darcula-comment), 0.25);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  transform: translateY(14px) scale(0.98);
+  transition: transform 0.22s ease;
+}
+
+.cg-mission-detail-overlay.open .cg-mission-detail-modal {
+  transform: translateY(0) scale(1);
+}
+
+.cg-mission-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid rgba(var(--darcula-comment), 0.2);
+}
+
+.cg-mission-detail-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.cg-mission-detail-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--darcula-yellow));
+  background: rgba(var(--darcula-yellow), 0.14);
+  border: 1px solid rgba(var(--darcula-yellow), 0.32);
+}
+
+.cg-mission-detail-title {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: rgb(var(--darcula-fg));
+}
+
+.cg-mission-detail-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(var(--darcula-comment), 0.35);
+  border-radius: 10px;
+  background: rgba(var(--darcula-bg), 0.65);
+  color: rgb(var(--darcula-fg));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cg-mission-detail-close:hover {
+  border-color: rgba(var(--darcula-red), 0.45);
+  color: rgb(var(--darcula-red));
+}
+
+.cg-mission-detail-body {
+  padding: 1rem 1.15rem 1.15rem;
+}
+
+.cg-mission-detail-name {
+  color: rgb(var(--darcula-fg));
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.cg-mission-detail-desc {
+  color: rgba(var(--darcula-comment), 0.95);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+/* Blocco contenitore della barra di progresso */
+.cg-mission-detail-progress-block {
+  background: rgba(var(--darcula-bg), 0.65);
+  border: 1px solid rgba(var(--darcula-comment), 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Header del blocco progresso: etichetta + valore corrente */
+.cg-mission-detail-progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cg-mission-detail-progress-label {
+  color: rgb(var(--darcula-comment));
+}
+
+.cg-mission-detail-progress-value {
+  color: rgb(var(--darcula-fg));
+}
+
+/* Override altezza della barra progresso nel modal (più alta di quella della lista) */
+.cg-mission-detail-progress-bar {
+  height: 8px;
+  margin-bottom: 0;
+}
+
+/* Riga inferiore: etichetta Ricompensa + valore XP */
+.cg-mission-detail-reward-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.cg-mission-detail-reward-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgb(var(--darcula-comment));
+}
+
+.cg-mission-detail-reward-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* ===========================
    FRIEND SEARCH MODAL
    =========================== */
 
