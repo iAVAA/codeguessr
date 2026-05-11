@@ -1,3 +1,9 @@
+<!--
+    FILE: profile_page.html
+    DESCRIPTION: Pagina del profilo (Profilo personale /profilo o profilo altri utenti /profilo/{nome_utente})
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+-->
+
 <!DOCTYPE html>
 <html lang="it">
 
@@ -178,7 +184,7 @@
                             </div>
                         </div>
 
-                        <!-- TODO: Sono qui-->
+                        <!-- Bottone di Modifica del profilo -->
                         <div class="profile-actions mt-3 mt-md-0 align-self-md-center">
                             <button class="profile-btn-edit" id="btn-edit-profile">
                                 <i class="bi bi-pencil-square"></i> Modifica Profilo
@@ -187,7 +193,10 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ===== Container di Statistiche delle partite ===== -->
             <div class="row g-3 mb-4">
+                <!-- Partite Giocate -->
                 <div class="col-6 col-md-3">
                     <div class="stat-box">
                         <div class="stat-box-icon text-darcula-blue"><i class="bi bi-controller"></i></div>
@@ -197,6 +206,8 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Partite Vinte -->
                 <div class="col-6 col-md-3">
                     <div class="stat-box">
                         <div class="stat-box-icon text-darcula-green"><i class="bi bi-trophy-fill"></i></div>
@@ -206,6 +217,8 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Partite Perse -->
                 <div class="col-6 col-md-3">
                     <div class="stat-box">
                         <div class="stat-box-icon text-darcula-red"><i class="bi bi-x-circle-fill"></i></div>
@@ -215,6 +228,8 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Rapporto Vittorie / Sconfitte -->
                 <div class="col-6 col-md-3">
                     <div class="stat-box">
                         <div class="stat-box-icon text-darcula-yellow"><i class="bi bi-pie-chart-fill"></i></div>
@@ -225,62 +240,42 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ===== Container di Storico delle partite e Amici (2 colonne) ===== -->
             <div class="row gy-4">
+
+                <!-- Storico delle partite -->
                 <div class="col-12 col-lg-8">
                     <div class="profile-side-panel w-100">
                         <div class="profile-panel-title">
                             <i class="bi bi-clock-history"></i> Storico Partite
                         </div>
-                        <div class="profile-history-list d-flex flex-column gap-3 mt-2">
-                            <!-- Popolato dinamicamente da JavaScript -->
-                        </div>
+
+                        <!-- Lista Partite (Massimo 10) -->
+                        <div class="profile-history-list d-flex flex-column gap-3 mt-2"></div>
                     </div>
                 </div>
+
+                <!-- Container degli amici -->
                 <div class="col-12 col-lg-4">
                     <div class="profile-side-panel w-100">
                         <div class="profile-panel-title d-flex justify-content-between align-items-center">
                             <span><i class="bi bi-people"></i> Amici</span>
+                        </div>
 
-                        </div>
-                        <div class="profile-friends-list">
-                            <div class="profile-side-item profile-friend-item">
-                                <div class="profile-friend-info">
-                                    <div class="profile-friend-avatar-wrapper">
-                                        <img src="https://api.dicebear.com/8.x/bottts-neutral/svg?seed=mike" alt="Mike"
-                                            class="profile-friend-avatar">
-                                        <div class="profile-status-dot online"></div>
-                                    </div>
-                                    <div class="profile-friend-details">
-                                        <span class="profile-friend-name">MikeCoder</span>
-                                        <span class="profile-friend-status-text text-darcula-green">Online</span>
-                                    </div>
-                                </div>
-                                <button class="profile-btn-challenge"><i class="bi bi-swords"></i> Sfida</button>
-                            </div>
-                            <div class="profile-side-item profile-friend-item profile-offline-item">
-                                <div class="profile-friend-info">
-                                    <div class="profile-friend-avatar-wrapper">
-                                        <img src="https://api.dicebear.com/8.x/bottts-neutral/svg?seed=anna" alt="Anna"
-                                            class="profile-friend-avatar" style="filter:grayscale(100%);opacity:0.7;">
-                                        <div class="profile-status-dot offline"></div>
-                                    </div>
-                                    <div class="profile-friend-details">
-                                        <span class="profile-friend-name">AnnaDev</span>
-                                        <span class="profile-friend-status-text text-darcula-comment">Offline</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Lista degli Amici -->
+                        <div class="profile-friends-list"></div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- ===================== SETTINGS ===================== -->
+    <!-- ===== INIZIO FINESTRA MODALE: Impostazioni ===== -->
     <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true"
         aria-labelledby="settings-title">
         <div class="cg-settings-modal" id="settings-modal">
+            <!-- Header delle impostazioni -->
             <div class="cg-settings-header">
                 <div class="cg-settings-title-group">
                     <div class="cg-settings-icon-wrap">
@@ -289,12 +284,13 @@
                     <h2 class="cg-settings-title" id="settings-title">Impostazioni</h2>
                 </div>
 
+                <!-- Bottone di chiusura della finestra modale -->
                 <button class="cg-settings-close" id="settings-close" aria-label="Chiudi impostazioni">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
 
-            <!-- Settings Section -->
+            <!-- Sezioni delle impostazioni -->
             <div class="cg-settings-body">
                 <!-- Audio -->
                 <section class="cg-settings-section">
@@ -328,7 +324,7 @@
                     </div>
                 </section>
 
-                <!-- Appearance -->
+                <!-- Opzioni del Tema -->
                 <section class="cg-settings-section">
                     <div class="cg-settings-section-label"><i class="bi bi-palette-fill"></i> Aspetto</div>
                     <div class="cg-settings-row">
@@ -349,6 +345,7 @@
                         </div>
                     </div>
 
+                    <!-- Opzioni di riduzione delle animazioni -->
                     <div class="cg-settings-row">
                         <div class="cg-settings-row-info">
                             <span class="cg-settings-row-name">Animazioni ridotte</span>
@@ -360,7 +357,8 @@
                         </label>
                     </div>
                 </section>
-                <!-- Gameplay -->
+
+                <!-- Opzioni di Difficoltà -->
                 <section class="cg-settings-section">
                     <div class="cg-settings-section-label"><i class="bi bi-controller"></i> Gameplay</div>
                     <div class="cg-settings-row">
@@ -378,7 +376,8 @@
                         </div>
                     </div>
                 </section>
-                <!-- Danger Zone -->
+
+                <!-- Danger Zone: bottone di Eliminazione del profilo -->
                 <section class="cg-settings-section" style="border-bottom: none;">
                     <div class="cg-settings-section-label text-danger"><i class="bi bi-exclamation-triangle-fill"></i>
                         Zona Pericolosa</div>
@@ -388,6 +387,8 @@
                             <span class="cg-settings-row-desc">Questa azione è irreversibile. Tutti i tuoi dati andranno
                                 persi.</span>
                         </div>
+
+                        <!-- Bottone di eliminazione del profilo -->
                         <button class="cg-btn-danger" id="btn-delete-profile">
                             <i class="bi bi-trash3-fill"></i> Elimina
                         </button>
@@ -395,9 +396,9 @@
                 </section>
             </div>
 
-            <!-- Footer -->
+            <!-- Footer: bottoni Annulla / Applica -->
             <div class="cg-settings-footer">
-                <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0-alpha</span>
+                <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0</span>
                 <div class="d-flex gap-2">
                     <button class="cg-btn-secondary" id="settings-cancel">Annulla</button>
                     <button class="cg-btn-primary" id="settings-save">Applica</button>
@@ -405,13 +406,17 @@
             </div>
         </div>
     </div>
+    <!-- ===== FINE FINESTRA MODALE: Impostazioni ===== -->
 
-    <!-- ===================== EDIT PROFILE MODAL ===================== -->
+    <!-- ===== INIZIO FINESTRA MODALE: Modifica Profilo ===== -->
     <div class="cg-settings-overlay" id="edit-profile-overlay" aria-hidden="true" role="dialog" aria-modal="true"
         aria-labelledby="edit-profile-title">
         <div class="cg-settings-modal" id="edit-profile-modal">
-            <!-- Header -->
+
+            <!-- Header della finestra -->
             <div class="cg-settings-header">
+
+                <!-- Titolo della finestra e bottone di chiusura -->
                 <div class="cg-settings-title-group">
                     <div class="cg-settings-icon-wrap"><i class="bi bi-person-lines-fill"></i></div>
                     <h2 class="cg-settings-title" id="edit-profile-title">Modifica Profilo</h2>
@@ -420,31 +425,42 @@
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-            <!-- Body -->
+
+            <!-- Body della finestra -->
             <div class="cg-settings-body" style="padding: 1.5rem;">
                 <section class="cg-settings-section" style="border: none; margin: 0; padding: 0;">
+
+                    <!-- Modifica Nome Utente -->
                     <div class="cg-settings-row-edit">
                         <label for="edit-username" class="cg-settings-row-name mb-2 d-block">Nome Utente</label>
                         <input type="text" id="edit-username" class="cg-input-text w-100"
                             placeholder="Il tuo nome utente">
                     </div>
+
+                    <!-- Modifica Biografia -->
                     <div class="cg-settings-row-edit mt-3">
                         <label for="edit-bio" class="cg-settings-row-name mb-2 d-block">Biografia</label>
                         <textarea id="edit-bio" class="cg-input-text w-100" rows="3"
                             placeholder="Scrivi qualcosa su di te..."></textarea>
                     </div>
+
+                    <!-- Modifica Immagine Profilo -->
                     <div class="cg-settings-row-edit mt-3">
                         <label for="edit-avatar" class="cg-settings-row-name mb-2 d-block">Immagine Profilo</label>
                         <input type="file" id="edit-avatar" class="cg-input-file w-100" accept="image/*">
                     </div>
+
+                    <!-- Modifica Immagine del Banner -->
                     <div class="cg-settings-row-edit mt-3">
                         <label for="edit-banner" class="cg-settings-row-name mb-2 d-block">Immagine Banner</label>
                         <input type="file" id="edit-banner" class="cg-input-file w-100" accept="image/*">
                     </div>
                 </section>
             </div>
-            <!-- Footer -->
-            <div class="cg-settings-footer justify-content-end">
+
+            <!-- Footer della pagina modale -->
+            <div class="cg-settings-footer">
+                <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0</span>
                 <div class="d-flex gap-2">
                     <button class="cg-btn-secondary" id="edit-profile-cancel">Annulla</button>
                     <button class="cg-btn-primary" id="edit-profile-save">Salva</button>
@@ -457,7 +473,7 @@
     <footer class="site-footer" id="site-footer">
         <div class="container">
             <div class="footer-bottom">
-                <!-- Left Side -->
+                <!-- LATO SINISTRO -->
                 <div class="footer-copy">
                     <span class="footer-brand">
                         <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
@@ -470,9 +486,10 @@
                     <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
                         class="footer-license">Licenza MIT</a>
                     <span class="footer-sep" aria-hidden="true">&bull;</span>
-                    <span class="footer-version">v1.0.0-alpha</span>
+                    <span class="footer-version">v1.0.0</span>
                 </div>
-                <!-- Right Side -->
+
+                <!-- LATO DESTRO -->
                 <div class="footer-links-inline">
                     <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
                         title="GitHub">
@@ -491,9 +508,14 @@
         </div>
     </footer>
 
+    <!-- IMPORTANTE:
+        blocca il layout e mostra il loader fino a quando initLoader()
+        non completa il fetch dei dati
+    -->
     <script>
         document.body.classList.add('loader-open');
     </script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
         </script>
