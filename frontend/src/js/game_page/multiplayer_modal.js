@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const optMatchmaking = document.getElementById('multi-opt-matchmaking');
     const optPrivate = document.getElementById('multi-opt-private');
-    const optFriends = document.getElementById('multi-opt-friends');
     
     const codeSection = document.getElementById('multi-code-section');
     const inputCode = document.getElementById('multi-room-code');
@@ -217,11 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isHidden = window.getComputedStyle(codeSection).display === 'none';
         codeSection.style.display = isHidden ? 'flex' : 'none';
         if (isHidden) inputCode.focus();
-    });
-
-    optFriends.addEventListener('click', () => {
-        if (typeof showToast === 'function') showToast("Seleziona un amico online dalla barra laterale!", "green");
-        closeModal();
     });
 
     window.addEventListener('cg:challenge-friend', (event) => {
