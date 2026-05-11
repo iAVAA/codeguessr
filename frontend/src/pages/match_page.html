@@ -1,184 +1,237 @@
+<!--
+    FILE: match_page.html
+    DESCRIPTION: Pagina di match (singleplayer + multiplayer)
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+-->
+
 <!DOCTYPE html>
 <html lang="it">
+
     <head>
         <meta charset="UTF-8" />
-        <script>
-            if (localStorage.getItem('isLoggedIn') !== 'true') {
-              window.location.replace('/index.html');
-            }
-        </script>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#313335" />
+
         <title>CodeGuessr - Partita</title>
-        <link rel="icon" type="image/webp" href="src/assets/img/logo.webp" />
-        <!-- Anti-FOUC -->
-        <script id="fouc-prevention">
-            (function () {
-              var t = localStorage.getItem('codeguessr-theme');
-              var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-              if (t === 'light' || (!t && !prefersDark)) {
-                document.documentElement.classList.add('light-mode');
-              }
-            })();
-        </script>
+
+        <link rel="icon" type="image/webp" href="src/assets/icons/logo.ico" />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        <link
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
             rel="stylesheet" />
         <link rel="stylesheet" href="src/css/style.css" />
         <link rel="stylesheet" href="src/css/match_page/match_page.css" />
-        <style id="anti-flash">
-            body.loader-open>*:not(#globalLoader):not(#noscript-wall):not(script):not(style) {
-            opacity: 0 !important;
-            pointer-events: none !important;
+
+        <script>
+            // Reindirizza alla pagina di login se l'utente non è autenticato
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.replace('/index.html');
             }
-        </style>
-        <style>
-            /* Prevent scrolling on desktop, locking the UI perfectly into the viewport */
-            @media (min-width: 992px) {
-            body {
-            height: 100vh;
-            overflow: hidden !important;
+        </script>
+
+        <script id="fouc-prevention">
+            // Anti-FOUC: applica il tema dal localStorage prima che il CSS venga parsato
+            const theme = localStorage.getItem('codeguessr-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (theme === 'light' || (!theme && !prefersDark)) {
+                document.documentElement.classList.add('light-mode');
             }
-            .match-main,
-            .match-main > .container-fluid {
-            min-height: 0 !important;
-            }
-            }
-        </style>
+        </script>
     </head>
+
     <body>
+        <!-- ===================== NOSCRIPT ===================== -->
+        <!-- Mostra un’interfaccia di avviso quando JavaScript è disabilitato nel browser -->
+        <noscript>
+            <div id="noscript-wall" role="alert" aria-live="assertive">
+                <div class="ns-logo">
+                    <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" onerror="this.style.display='none'">
+                    <span>Code<b>Guessr</b></span>
+                </div>
+                <div class="ns-icon-wrap" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <h1 class="ns-title">JavaScript <span>disabilitato</span></h1>
+                <p class="ns-desc">
+                    CodeGuessr richiede JavaScript per funzionare. Senza di esso non è possibile
+                    caricare le partite, il profilo o le classifiche.
+                </p>
+                <div class="ns-code" aria-label="Istruzioni per abilitare JavaScript">
+                    <span class="c-dim"># Come abilitare JavaScript</span><br>
+                    <span class="c-kw">Chrome</span> → Impostazioni > Privacy > JavaScript → <span
+                        class="c-val">Consentito</span><br>
+                    <span class="c-kw">Firefox</span> → <span class="c-val">about:config</span> > javascript.enabled → <span
+                        class="c-val">true</span><br>
+                    <span class="c-kw">Safari</span> → Preferenze > Sicurezza > Abilita JavaScript → <span class="c-val"><i
+                            class="bi bi-check"></i></span>
+                </div>
+                <div class="ns-links">
+                    <a class="ns-link" href="https://enable-javascript.com/it/" target="_blank">
+                        Guida dettagliata per il tuo browser
+                    </a>
+                </div>
+            </div>
+        </noscript>
+
+        <!-- Inizializzazione del sistema di caricamento iniziale della pagina -->
         <script type="module">
             import { initLoader } from '/src/js/loader.js';
             initLoader();
         </script>
-        <!-- Countdown Overlay -->
-        <div id="match-countdown-overlay" class="match-countdown-overlay d-flex flex-column align-items-center justify-content-center">
+
+        <!-- Schermata di Conto alla rovescia -->
+        <div id="match-countdown-overlay"
+            class="match-countdown-overlay d-flex flex-column align-items-center justify-content-center">
             <div class="match-countdown-title mb-3">Preparati!</div>
             <div id="match-countdown-text" class="match-countdown-text">3</div>
         </div>
+
+        <!-- ===================== AREA DI GIOCO PRINCIPALE (main) ===================== -->
         <main class="match-main flex-grow-1 d-flex flex-column" id="match-main">
-            <div class="container-fluid w-100 p-3 p-lg-4 d-flex flex-column flex-grow-1"
-                style="max-width: 1400px;">
-                <!-- MATCH HEADER -->
+            <div class="container-fluid w-100 p-3 p-lg-4 d-flex flex-column flex-grow-1 match-layout-container">
+                <!-- Header della pagina (Si trova dentro al main per non esternarlo troppo) -->
                 <div class="match-header w-100 d-flex justify-content-between align-items-center mb-2 px-2">
-                    <!-- Left: Leave btn -->
-                    <a href="/home" class="btn btn-danger rounded-pill d-flex align-items-center gap-2 shadow match-leave-btn">
-                    <i class="bi bi-box-arrow-left"></i> Abbandona
+                    <!-- Lato Sinistro: Abbandona partita -->
+                    <a href="/home"
+                        class="btn btn-danger rounded-pill d-flex align-items-center gap-2 shadow match-leave-btn">
+                        <i class="bi bi-box-arrow-left"></i> Abbandona
                     </a>
-                    <!-- Right: Settings and Info -->
+                    <!-- Lato destro: Informazioni e Impostazioni -->
                     <div class="d-flex gap-2">
-                        <a href="https://github.com/iAVAA/codeguessr#readme" target="_blank" class="btn btn-dark rounded-circle shadow d-flex align-items-center justify-content-center match-header-btn" title="Informazioni">
-                        <i class="bi bi-question-lg fs-5"></i>
+                        <a href="https://github.com/iAVAA/codeguessr#readme" target="_blank"
+                            class="btn btn-dark rounded-circle shadow d-flex align-items-center justify-content-center match-header-btn"
+                            title="Informazioni">
+                            <i class="bi bi-question-lg fs-5"></i>
                         </a>
-                        <button id="menu-btn-settings" class="btn btn-dark rounded-circle shadow d-flex align-items-center justify-content-center match-header-btn" title="Impostazioni">
-                        <i class="bi bi-gear-fill fs-5"></i>
+                        <button id="menu-btn-settings"
+                            class="btn btn-dark rounded-circle shadow d-flex align-items-center justify-content-center match-header-btn"
+                            title="Impostazioni">
+                            <i class="bi bi-gear-fill fs-5"></i>
                         </button>
                     </div>
                 </div>
-                <!-- TOP: SCOREBOARD -->
+
+                <!-- ===== SCOREBOARD ===== -->
                 <div class="match-scoreboard row align-items-stretch mb-2 mt-2 px-2 gx-2 gx-lg-5">
-                    <!-- Player 1 -->
+                    <!-- Player 1 (Giocatore) -->
                     <div class="col-12 col-md-4 d-flex mb-3 mb-md-0">
                         <div class="match-player-card w-100 h-100 d-flex flex-column justify-content-center">
                             <div class="d-flex align-items-center gap-3">
-                                <img src="" alt="Player" class="match-avatar" id="match-p1-avatar">
+                                <img src="/frontend/src/assets/img/user_profile.webp" alt="Player" class="match-avatar" id="match-p1-avatar">
+
+                                <!-- Username e Statistiche del Player 1-->
                                 <div class="match-player-info">
-                                    <div class="match-player-name text-truncate" id="match-p1-name" style="max-width: 150px;">Caricamento...
+                                    <div class="match-player-name text-truncate" id="match-p1-name">
                                     </div>
                                     <div class="match-player-stats">
-                                        <span class="stat-tier">LVL <span id="match-p1-lvl">--</span></span>
+                                        <span class="stat-tier">LV <span id="match-p1-lvl"></span></span>
                                         <span class="stat-divider">&bull;</span>
                                         <span class="profile-cups">
-                                        <i class="bi bi-trophy-fill"></i> <span id="match-p1-cups">--</span>
+                                            <i class="bi bi-trophy-fill"></i> <span id="match-p1-cups"></span>
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Health Bar -->
+
+                            <!-- Barra di vita del Player 1 -->
                             <div class="match-health-wrap mt-2">
-                                <div class="progress"
-                                    style="height: 12px; background: rgba(var(--darcula-bg), 0.8); border: 1px solid rgba(var(--darcula-comment), 0.3); border-radius: 6px;">
-                                    <div class="progress-bar health-fill" id="match-p1-health" role="progressbar" style="width: 100%; border-radius: 6px;"
-                                        aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress match-hp-bar">
+                                    <div class="progress-bar health-fill" id="match-p1-health" role="progressbar"
+                                        aria-valuenow="100" aria-valuemin="0"
+                                        aria-valuemax="100"></div>
                                 </div>
-                                <div class="health-text text-end mt-1 fw-bold"
-                                    style="font-size: 0.8rem; color: rgb(var(--darcula-fg)); font-family: 'JetBrains Mono', monospace;">
+                                <div class="health-text text-end mt-1 fw-bold">
                                     <span id="match-p1-hp">100</span>/100
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Center Data -->
-                    <div
-                        class="col-12 col-md-4 d-flex align-items-stretch justify-content-center mb-3 mb-md-0">
-                        <div class="match-timer-container h-100 d-flex flex-column align-items-center justify-content-center">
+
+                    <!-- Dati della partita (Round e Timer)-->
+                    <div class="col-12 col-md-4 d-flex align-items-stretch justify-content-center mb-3 mb-md-0">
+                        <div
+                            class="match-timer-container h-100 d-flex flex-column align-items-center justify-content-center">
                             <div class="match-round-text mb-1" id="match-round">Round 1/5</div>
-                            <div class="match-timer" id="match-timer">00:30</div>
+                            <div class="match-timer" id="match-timer">00:60</div>
                         </div>
                     </div>
-                    <!-- Player 2 -->
+
+                    <!-- Player 2 (Bot o avversario online) -->
                     <div class="col-12 col-md-4 d-flex mb-3 mb-md-0">
-                        <div class="match-player-card match-opponent-card text-end w-100 h-100 d-flex flex-column justify-content-center">
+                        <div
+                            class="match-player-card match-opponent-card text-end w-100 h-100 d-flex flex-column justify-content-center">
                             <div class="d-flex align-items-center gap-3 flex-row-reverse">
-                                <img src="" alt="Opponent" class="match-avatar" id="match-p2-avatar">
+                                <img src="/frontend/src/assets/img/user_profile.webp" alt="Opponent" class="match-avatar" id="match-p2-avatar">
                                 <div class="match-player-info">
-                                    <div class="match-player-name text-truncate" id="match-p2-name" style="max-width: 150px;">Caricamento...
-                                    </div>
+
+                                    <!-- Username e Statistiche del Player 2-->
+                                    <div class="match-player-name text-truncate" id="match-p2-name"></div>
                                     <div class="match-player-stats justify-content-end">
                                         <span class="profile-cups">
-                                        <i class="bi bi-trophy-fill"></i> <span id="match-p2-cups">--</span>
+                                            <i class="bi bi-trophy-fill"></i> <span id="match-p2-cups"></span>
                                         </span>
                                         <span class="stat-divider">&bull;</span>
-                                        <span class="stat-tier">LVL <span id="match-p2-lvl">--</span></span>
+                                        <span class="stat-tier">LV <span id="match-p2-lvl"></span></span>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Health Bar -->
+
+                            <!-- Barra di vita del Player 2 -->
                             <div class="match-health-wrap mt-2">
-                                <div class="progress"
-                                    style="height: 12px; background: rgba(var(--darcula-bg), 0.8); border: 1px solid rgba(var(--darcula-comment), 0.3); border-radius: 6px;">
-                                    <div class="progress-bar health-fill" id="match-p2-health" role="progressbar" style="width: 100%; border-radius: 6px;"
-                                        aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress match-hp-bar">
+                                    <div class="progress-bar health-fill" id="match-p2-health" role="progressbar"
+                                        aria-valuenow="100" aria-valuemin="0"
+                                        aria-valuemax="100"></div>
                                 </div>
-                                <div class="health-text text-start mt-1 fw-bold"
-                                    style="font-size: 0.8rem; color: rgb(var(--darcula-fg)); font-family: 'JetBrains Mono', monospace;">
+                                <div class="health-text text-start mt-1 fw-bold">
                                     <span id="match-p2-hp">100</span>/100
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- MIDDLE: PLAY AREA (Code + Guess) -->
+
+                <!-- ===== Sezione di codice e di risposta ===== -->
                 <div class="row flex-grow-1 justify-content-center align-items-stretch pb-2">
                     <div class="col-12 col-xl-12 d-flex flex-column">
                         <div class="play-area-container p-3 p-md-4 d-flex flex-column flex-lg-row gap-4 gap-lg-5 flex-grow-1">
-                            <!-- CODE WINDOW -->
+                            <!-- == Sezione di Codice == -->
                             <div class="vscode-match-window vscode-match-window--responsive shadow-lg d-flex flex-column">
-                                <!-- Fake Titlebar -->
+
+                                <!-- Titolo codice di Monaco Editor (VSCode) -->
                                 <div class="vscode-titlebar">
                                     <div class="vscode-mac-btns">
                                         <span class="mac-btn close"></span>
                                         <span class="mac-btn minimize"></span>
                                         <span class="mac-btn maximize"></span>
                                     </div>
-                                    <div class="vscode-title"><i class="bi bi-file-earmark-code"></i> snippet.txt - Visual Studio Code</div>
+                                    <div class="vscode-title"><i class="bi bi-file-earmark-code"></i></div>
                                 </div>
-                                <!-- Editor -->
-                                <div class="vscode-editor-body p-0 flex-grow-1 match-editor-body" style="display: flex; flex-direction: column;">
+
+                                <!-- Sezione dello script di Monaco Editor (VSCode) -->
+                                <div class="vscode-editor-body p-0 flex-grow-1 match-editor-body">
                                     <div id="monaco-container" class="match-monaco-container"></div>
                                 </div>
                             </div>
-                            <!-- GUESS BOX -->
+
+                            <!-- == Sezione di risposta == -->
                             <div class="match-guess-wrapper d-flex flex-column justify-content-center">
-                                <div class="match-guess-container p-4 w-100 d-flex flex-column justify-content-center h-100" style="min-height: 200px;">
-                                    <h5 class="guess-label mb-3 text-center">Spiega la tua soluzione qui</h5>
+                                <div class="match-guess-container p-4 w-100 d-flex flex-column justify-content-center h-100">
+                                    <h5 class="guess-label mb-3 text-center">Spiega la tua soluzione qui!</h5>
+
+                                    <!-- Form di consegna della risposta per API -->
                                     <form id="guess-form" class="d-flex flex-column gap-3 mt-auto mb-auto">
                                         <textarea class="form-control guess-input w-100 text-center" id="guess-input"
-                                            placeholder="Scrivi qui..." required style="resize: horizontal; min-height: 80px;"></textarea>
-                                        <button type="submit" class="btn btn-primary guess-btn w-100 py-2"><i class="bi bi-send-fill"></i> Invia</button>
+                                            placeholder="Scrivi la tua risposta..." required></textarea>
+                                        
+                                        <!-- Bottone di invio per API-->
+                                        <button type="submit" class="btn btn-primary guess-btn w-100 py-2">
+                                            <i class="bi bi-send-fill"></i> Invia
+                                        </button>
                                     </form>
-                                    <div id="guess-feedback" class="mt-3 text-center text-darcula-comment"
-                                        style="min-height: 24px; font-weight:500;">Attesa risposta...</div>
+
+                                    <!-- Risposta dell AI (in 100-esimi) -->
+                                    <div id="guess-feedback" class="guess-feedback mt-3 text-center text-darcula-comment">Attesa risposta...</div>
                                 </div>
                             </div>
                         </div>
@@ -186,10 +239,12 @@
                 </div>
             </div>
         </main>
-        <!-- ===================== SETTINGS ===================== -->
+
+        <!-- ===== INIZIO FINESTRA MODALE: Impostazioni ===== -->
         <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true"
             aria-labelledby="settings-title">
             <div class="cg-settings-modal" id="settings-modal">
+                <!-- Header delle impostazioni -->
                 <div class="cg-settings-header">
                     <div class="cg-settings-title-group">
                         <div class="cg-settings-icon-wrap">
@@ -197,11 +252,14 @@
                         </div>
                         <h2 class="cg-settings-title" id="settings-title">Impostazioni</h2>
                     </div>
+
+                    <!-- Bottone di chiusura della finestra modale -->
                     <button class="cg-settings-close" id="settings-close" aria-label="Chiudi impostazioni">
-                    <i class="bi bi-x-lg"></i>
+                        <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
-                <!-- Settings Section -->
+
+                <!-- Sezioni delle impostazioni -->
                 <div class="cg-settings-body">
                     <!-- Audio -->
                     <section class="cg-settings-section">
@@ -219,6 +277,7 @@
                                 <span class="cg-slider-value" id="volume-music-val">100%</span>
                             </div>
                         </div>
+
                         <div class="cg-settings-row">
                             <div class="cg-settings-row-info">
                                 <span class="cg-settings-row-name">Volume effetti</span>
@@ -233,7 +292,8 @@
                             </div>
                         </div>
                     </section>
-                    <!-- Appearance -->
+
+                    <!-- Opzioni del Tema -->
                     <section class="cg-settings-section">
                         <div class="cg-settings-section-label"><i class="bi bi-palette-fill"></i> Aspetto</div>
                         <div class="cg-settings-row">
@@ -243,28 +303,31 @@
                             </div>
                             <div class="cg-theme-picker" id="theme-picker" role="group" aria-label="Seleziona tema">
                                 <button class="cg-theme-btn" data-theme="dark" aria-pressed="true">
-                                <i class="bi bi-moon-stars-fill"></i> Dark
+                                    <i class="bi bi-moon-stars-fill"></i> Dark
                                 </button>
                                 <button class="cg-theme-btn" data-theme="light" aria-pressed="false">
-                                <i class="bi bi-sun-fill"></i> Light
+                                    <i class="bi bi-sun-fill"></i> Light
                                 </button>
                                 <button class="cg-theme-btn" data-theme="system" aria-pressed="false">
-                                <i class="bi bi-display"></i> Sistema
+                                    <i class="bi bi-display"></i> Sistema
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Opzioni di riduzione delle animazioni -->
                         <div class="cg-settings-row">
                             <div class="cg-settings-row-info">
                                 <span class="cg-settings-row-name">Animazioni ridotte</span>
                                 <span class="cg-settings-row-desc">Disabilita le transizioni</span>
                             </div>
                             <label class="cg-toggle" aria-label="Animazioni ridotte">
-                            <input type="checkbox" id="toggle-animations" role="switch">
-                            <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
+                                <input type="checkbox" id="toggle-animations" role="switch">
+                                <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
                             </label>
                         </div>
                     </section>
-                    <!-- Gameplay -->
+
+                    <!-- Opzioni di Difficoltà -->
                     <section class="cg-settings-section">
                         <div class="cg-settings-section-label"><i class="bi bi-controller"></i> Gameplay</div>
                         <div class="cg-settings-row">
@@ -273,29 +336,38 @@
                                 <span class="cg-settings-row-desc">Difficoltà del Bot in Single Player</span>
                             </div>
                             <div class="cg-theme-picker" id="difficulty-picker" role="group" aria-label="Difficoltà">
-                                <button class="cg-theme-btn cg-diff-btn" data-diff="easy" aria-pressed="false">Facile</button>
-                                <button class="cg-theme-btn cg-diff-btn" data-diff="normal" aria-pressed="true">Normale</button>
-                                <button class="cg-theme-btn cg-diff-btn" data-diff="hard" aria-pressed="false">Difficile</button>
+                                <button class="cg-theme-btn cg-diff-btn" data-diff="easy"
+                                    aria-pressed="false">Facile</button>
+                                <button class="cg-theme-btn cg-diff-btn" data-diff="normal"
+                                    aria-pressed="true">Normale</button>
+                                <button class="cg-theme-btn cg-diff-btn" data-diff="hard"
+                                    aria-pressed="false">Difficile</button>
                             </div>
                         </div>
                     </section>
-                    <!-- Danger Zone -->
+
+                    <!-- Danger Zone: bottone di Eliminazione del profilo -->
                     <section class="cg-settings-section" style="border-bottom: none;">
-                        <div class="cg-settings-section-label text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Zona Pericolosa</div>
+                        <div class="cg-settings-section-label text-danger"><i class="bi bi-exclamation-triangle-fill"></i>
+                            Zona Pericolosa</div>
                         <div class="cg-settings-row">
                             <div class="cg-settings-row-info">
                                 <span class="cg-settings-row-name text-danger">Elimina Profilo</span>
-                                <span class="cg-settings-row-desc">Questa azione è irreversibile. Tutti i tuoi dati andranno persi.</span>
+                                <span class="cg-settings-row-desc">Questa azione è irreversibile. Tutti i tuoi dati andranno
+                                    persi.</span>
                             </div>
+
+                            <!-- Bottone di eliminazione del profilo -->
                             <button class="cg-btn-danger" id="btn-delete-profile">
-                            <i class="bi bi-trash3-fill"></i> Elimina
+                                <i class="bi bi-trash3-fill"></i> Elimina
                             </button>
                         </div>
                     </section>
                 </div>
-                <!-- Footer -->
+
+                <!-- Footer: bottoni Annulla / Applica -->
                 <div class="cg-settings-footer">
-                    <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0-alpha</span>
+                    <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0</span>
                     <div class="d-flex gap-2">
                         <button class="cg-btn-secondary" id="settings-cancel">Annulla</button>
                         <button class="cg-btn-primary" id="settings-save">Applica</button>
@@ -303,44 +375,50 @@
                 </div>
             </div>
         </div>
+        <!-- ===== FINE FINESTRA MODALE: Impostazioni ===== -->
+
         <!-- ===================== FOOTER ===================== -->
         <footer class="site-footer" id="site-footer">
             <div class="container">
                 <div class="footer-bottom">
-                    <!-- Left Side -->
+                    <!-- LATO SINISTRO -->
                     <div class="footer-copy">
                         <span class="footer-brand">
-                        <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
+                            <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
                         </span>
                         <span class="footer-sep" aria-hidden="true">&mdash;</span>
                         <span class="footer-authors">
-                        Salvatore Iavarone &amp; Michele Pio Forlani
+                            Salvatore Iavarone &amp; Michele Pio Forlani
                         </span>
                         <span class="footer-sep" aria-hidden="true">&bull;</span>
-                        <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank" class="footer-license">Licenza MIT</a>
+                        <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
+                            class="footer-license">Licenza MIT</a>
                         <span class="footer-sep" aria-hidden="true">&bull;</span>
-                        <span class="footer-version">v1.0.0-alpha</span>
+                        <span class="footer-version">v1.0.0</span>
                     </div>
-                    <!-- Right Side -->
+
+                    <!-- LATO DESTRO -->
                     <div class="footer-links-inline">
                         <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
                             title="GitHub">
-                        <i class="bi bi-github"></i>
+                            <i class="bi bi-github"></i>
                         </a>
-                        <a href="https://www.linkedin.com/in/salvatoreiavarone" target="_blank" class="social-btn" aria-label="LinkedIn"
-                            title="LinkedIn">
-                        <i class="bi bi-linkedin"></i>
+                        <a href="https://www.linkedin.com/in/salvatoreiavarone" target="_blank" class="social-btn"
+                            aria-label="LinkedIn" title="LinkedIn">
+                            <i class="bi bi-linkedin"></i>
                         </a>
                         <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr"
                             target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
-                        <i class="bi bi-envelope-fill"></i>
+                            <i class="bi bi-envelope-fill"></i>
                         </a>
                     </div>
                 </div>
             </div>
         </footer>
 
-        <script src="https://cdn.socket.io/4.8.3/socket.io.min.js" integrity="sha384-kzavj5fiMwLKzzD1f8S7TeoVIEi7uKHvbTA3ueZkrzYq75pNQUiUi6Dy98Q3fxb0" crossorigin="anonymous"></script>
+        <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"
+            integrity="sha384-kzavj5fiMwLKzzD1f8S7TeoVIEi7uKHvbTA3ueZkrzYq75pNQUiUi6Dy98Q3fxb0"
+            crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
         <script src="/src/js/managers/theme.js"></script>
@@ -348,4 +426,5 @@
         <script src="/src/js/managers/settings.js"></script>
         <script type="module" src="/src/js/match_page/match.js"></script>
     </body>
+
 </html>

@@ -829,6 +829,10 @@ body.loader-open { overflow: hidden !important; }
 .cg-settings-section {
   padding: 1rem 1.5rem 0.5rem;
 }
+/* Modifier: rimuove il bordo inferiore (usato per l'ultima sezione, es. Danger Zone) */
+.cg-settings-section--no-border {
+  border-bottom: none !important;
+}
 .cg-settings-section + .cg-settings-section {
   border-top: 1px solid rgba(var(--darcula-comment,128,128,128), 0.1);
   margin-top: 0.25rem;
