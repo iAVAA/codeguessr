@@ -5,3 +5,4 @@ leaderboard_page.html
 match_page.html
 profile_page.html: 1 TODO MANCANTE
 css/game_page
+css/leaderboard_page
