@@ -1,0 +1,71 @@
+/*
+    FILE: profile_stats.css
+    DESCRIPTION: Stili per i box delle statistiche nella pagina profilo
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   1. BOX STATISTICHE MAIN
+   =========================== */
+
+.stat-box {
+    background: rgba(var(--darcula-current), 0.6);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: var(--border-radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.stat-box:hover {
+    transform: translateY(-4px);
+    border-color: rgba(var(--darcula-comment), 0.4);
+}
+
+.stat-box-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(var(--darcula-bg), 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-box-data {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-box-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: rgb(var(--darcula-fg));
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-box-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgb(var(--darcula-comment));
+}
+
+/* ===========================
+   2. RESPONSIVITÀ
+   =========================== */
+
+@media (max-width: 576px) {
+    .stat-box {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+}
