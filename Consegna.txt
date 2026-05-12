@@ -2,3 +2,8 @@ FILE PRONTI PER LA CONSEGNA
 game_page.html
 leaderboard_page.html
 match_page.html
+index.html
+
+
+File Javascript
+index.Javascript

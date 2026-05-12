@@ -1,3 +1,8 @@
+/*
+    FILE: match_page.html
+    DESCRIPTION: Pagina di match (singleplayer + multiplayer)
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('registrationForm');
     const loginBtn = document.getElementById('btn_login');
@@ -45,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => alertBox.classList.add('d-none'), 5000);
 
         }else{
-            alert('Ha funzionato !: ' + risultato.messaggio);
             //TODO:
             //reinderizzo utente in home page
             localStorage.setItem('id_giocatore', risultato.user); // Salvo l'ID utente per sessioni future
@@ -59,7 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (errore){
         console.error("Errore di rete:", errore);
-        alert("Impossibile connettersi al server.");
+        const alertBox = document.getElementById('modalErrorAlert');
+        alertBox.classList.remove('d-none');
+        alertBox.textContent = "Impossibile connettersi al server.";
+        setTimeout(() => alertBox.classList.add('d-none'), 5000);
     }
 
     });
