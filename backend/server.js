@@ -144,6 +144,9 @@ app.use(express.static(ROOT));  // Serve i file statici dalla cartella frontend/
 app.get('/', (req, res) => {
     res.sendFile(path.join(ROOT, 'index.html'));
 });
+app.get('/reset_password_completo', (req, res) => {
+    res.sendFile(path.join(ROOT, 'src', 'pages', 'reset_password_completo.html'));
+});
 
 // Pagina di gioco principale
 app.get('/home', (req, res) => {
@@ -175,8 +178,37 @@ app.get('/match', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'match_page.html'));
 });
 
+
+
+app.post('/api/reset_password_completo', verificaToken, async (req, res) => {
+    const password = req.body.password;
+
+    try {
+        // METODO UFFICIALE SUPABASE:
+        // Usa la funzione "admin" per aggiornare la password dell'utente
+        // nel sistema di autenticazione di Supabase
+        const { data, error } = await supabase.auth.admin.updateUserById(
+            req.utenteId, // L'ID dell'utente che hai estratto col tuo middleware
+            { password: password }
+        );
+
+        if (error) throw error;
+
+        // NOTA: Non serve aggiornare la password nella tabella 'giocatore'.
+        // È molto più sicuro lasciare che sia solo Supabase a gestirla!
+
+        res.status(200).json({ messaggio: 'Password aggiornata con successo!' });
+
+    } catch (err) {
+        console.error("Errore aggiornamento password:", err);
+        // È utile restituire l'errore di Supabase al frontend per capire se la password
+        // è troppo corta o non rispetta i requisiti di sicurezza
+        res.status(400).json({ messaggio: err.message || 'Errore interno del server.' });
+    }
+});
 // Profilo pubblico di un utente specifico (es. /profilo/mario123)
 // Il parametro :username viene ignorato qui — il frontend lo legge dall'URL e chiama /api/profilo/:id
+
 app.get('/profilo/:username', (req, res) => {
     res.sendFile(path.join(ROOT, 'src', 'pages', 'profile_page.html'));
 });
@@ -1403,7 +1435,7 @@ app.post('/api/reset_password', async (req, res) => {
 
     try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${BASE_URL}/login`  // Usa la variabile d'ambiente, sicuro anche in produzione
+            redirectTo: `${BASE_URL}/reset_password_completo`  // Usa la variabile d'ambiente, sicuro anche in produzione
         });
 
         if (error) throw error;
