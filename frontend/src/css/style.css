@@ -120,6 +120,11 @@ body {
   overflow-x: hidden;
 }
 
+/* Assicura che il footer rimanga in fondo alla pagina */
+main {
+  flex: 1 0 auto;
+}
+
 /* ===========================
    SCROLLBAR
    =========================== */
@@ -389,6 +394,7 @@ body {
 }
 .profile-cups i {
   color: rgb(var(--darcula-yellow));
+  margin-right: 4px;
 }
 
 
