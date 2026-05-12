@@ -1,5 +1,7 @@
 FILE PRONTI PER LA CONSEGNA
+TODO html: Sistemare path user_profile.webp per gli html
 game_page.html
 leaderboard_page.html
 match_page.html
 profile_page.html: 1 TODO MANCANTE
+css/game_page

@@ -28,9 +28,11 @@
             rel="stylesheet" />
 
         <link rel="stylesheet" href="src/css/style.css" />
-        <link rel="stylesheet" href="src/css/game_page/main_game.css" />
+        <link rel="stylesheet" href="src/css/game_page/game_page.css" />
         <link rel="stylesheet" href="src/css/game_page/code_block.css" />
-        <link rel="stylesheet" href="src/css/game_page/multiplayer_modal.css" />
+        <link rel="stylesheet" href="src/css/game_page/mission_panel.css" />
+        <link rel="stylesheet" href="src/css/game_page/friend_panel.css" />
+        <link rel="stylesheet" href="src/css/game_page/multiplayer_modal_panel.css" />
 
         <script>
             // Reindirizza alla pagina di login se l'utente non è autenticato
@@ -162,8 +164,8 @@
                                 <div><i class="bi bi-card-checklist"></i> Missioni</div>
 
                                 <!-- Bottone per visualizzare le missioni completate (non modale) -->
-                                <button id="btn-toggle-missions" class="btn-panel-action" title="Mostra completate">
-                                    <i class="bi bi-archive"></i>
+                                <button id="btn-toggle-missions" class="btn-completed-missions" title="Mostra completate">
+                                    <i class="bi bi-archive-fill"></i>
                                 </button>
                             </div>
                             <!-- Le missioni vengono caricate automaticamente dal DB -->
