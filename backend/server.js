@@ -96,6 +96,7 @@ async function getOpenRouter() {
     * @property {string} bio - (Text) Descrizione personale del giocatore.
     * @property {string} avatar_url - (Text) Immagine profilo in formato Base64 o URL esterno.
     * @property {string} banner_url - (Text) Immagine banner profilo in formato Base64 o URL esterno.
+    * @property {number} trophies - (Int4) Numero di trofei vinti dal giocatore (usato per la classifica).
  */
 
 /**
@@ -106,6 +107,8 @@ async function getOpenRouter() {
     * @property {string} stato - (Enum: stato_partita) Lo stato corrente della partita (es. in corso, terminata).
     * @property {string} data_inizio - (Timestamptz) Orario di avvio della partita.
     * @property {string} data_fine - (Timestamptz) Orario di conclusione della partita.
+    * @property {string} id_utente_casa
+    * @property {string} id_utente_trasferta
  */
 
 /**
@@ -115,6 +118,7 @@ async function getOpenRouter() {
     * @property {string} id_utente_b - (UUID) Composite Primary Key / Foreign Key -> `giocatore.id_giocatore`.
     * @property {string} stato - (Enum: stato_amicizia) Lo stato della relazione (es. in_attesa, accettata, rifiutata).
     * @property {string} data_creazione - (Timestamptz) Data di invio della richiesta di amicizia.
+    * 
  */
 
 /**
@@ -183,7 +187,7 @@ app.get('/api/profilo/nickname/:username', verificaToken, async (req, res) => {
     try {
         const { data: profilo, error } = await supabase
             .from('giocatore')
-            .select('id_giocatore') // Aggiungi qui gli altri campi che ti servono
+            .select('id_giocatore') 
             .eq('nickname', nicknameCercato)
             .single(); // Ne aspettiamo solo uno
 
@@ -194,7 +198,7 @@ app.get('/api/profilo/nickname/:username', verificaToken, async (req, res) => {
         // Lo formattiamo per il frontend
         res.status(200).json({
             userid: profilo.id_giocatore,
-            user: profilo.nickname,
+            user: profilo.nicknameCercato,
         });
 
     } catch (err) {
@@ -432,6 +436,8 @@ setInterval(async () => {
  * }
  */
 // La rotta non ha più ":id". Diventa fissa!
+
+//// ! TODO : avatar_url è ancora usato?
 app.get('/api/mie-amicizie', verificaToken, async (req, res) => {
 
     const mioId = req.utenteId; // ← arriva già verificato dal middleware
@@ -569,14 +575,16 @@ app.get('/api/leaderboard', async (req, res) => {
 
         if (error) throw error;
 
+        /* Non funziona
         // Aggiungiamo lo stato online in tempo reale basato sulla mappa activeUsers
         const dataConStato = data.map(p => ({
             ...p,
             online: activeUsers.has(p.id_giocatore)
         }));
+        */
 
         res.status(200).json({
-            players: dataConStato,
+            players: data,
             total: count,
             page,
             totalPages: Math.min(100, Math.ceil(count / limit))

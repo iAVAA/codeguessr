@@ -1,21 +1,18 @@
 // Lista delle parole da inserire nella griglia
-const words2 = [
+const words = [
     'MAIN', 'THIS', 'PUBLIC', 'PRIVATE', 'INT', 'FLOAT',
     'CLASS', 'VOID', 'RETURN', 'STATIC', 'STRING', 'BOOLEAN',
     'TRUE', 'FALSE', 'NULL', 'FUNCTION', 'CONST', 'LET', 'IF', 'ELSE',
     'ARRAY', 'OBJECT', 'PROMISE', 'AWAIT', 'ASYNC'
 ];
 
-const words= [
-    'IAVA'
-];
 
-const INTERVALLO_INSERIMENTO = 800;
+const INTERVALLO_INSERIMENTO = 1400;
 // Elemento HTML che contiene tutte le celle
 const container = document.getElementById('codeTrack');
 
 // Dimensione in pixel di ogni cella quadrata
-const cellSize = 45;
+const cellSize = 100;
 
 // Numero di colonne e righe della griglia (calcolati in base allo schermo)
 let cols = 0;
