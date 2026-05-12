@@ -22,6 +22,8 @@
             rel="stylesheet" />
         <link rel="stylesheet" href="src/css/style.css" />
         <link rel="stylesheet" href="src/css/match_page/match_page.css" />
+        <link rel="stylesheet" href="src/css/match_page/win_lose_modal_page.css" />
+        <link rel="stylesheet" href="src/css/match_page/countdown_page.css" />
 
         <script>
             // Reindirizza alla pagina di login se l'utente non è autenticato
@@ -112,12 +114,13 @@
                 </div>
 
                 <!-- ===== SCOREBOARD ===== -->
-                <div class="match-scoreboard row align-items-stretch mb-2 mt-2 px-2 gx-2 gx-lg-5">
+                <div class="row align-items-stretch mb-2 mt-2 px-2 gx-2 gx-lg-5">
                     <!-- Player 1 (Giocatore) -->
                     <div class="col-12 col-md-4 d-flex mb-3 mb-md-0">
                         <div class="match-player-card w-100 h-100 d-flex flex-column justify-content-center">
                             <div class="d-flex align-items-center gap-3">
-                                <img src="/frontend/src/assets/img/user_profile.webp" alt="Player" class="match-avatar" id="match-p1-avatar">
+                                <img src="/frontend/src/assets/img/user_profile.webp" alt="Player" class="match-avatar"
+                                    id="match-p1-avatar">
 
                                 <!-- Username e Statistiche del Player 1-->
                                 <div class="match-player-info">
@@ -137,8 +140,7 @@
                             <div class="match-health-wrap mt-2">
                                 <div class="progress match-hp-bar">
                                     <div class="progress-bar health-fill" id="match-p1-health" role="progressbar"
-                                        aria-valuenow="100" aria-valuemin="0"
-                                        aria-valuemax="100"></div>
+                                        aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                                 <div class="health-text text-end mt-1 fw-bold">
                                     <span id="match-p1-hp">100</span>/100
@@ -161,7 +163,8 @@
                         <div
                             class="match-player-card match-opponent-card text-end w-100 h-100 d-flex flex-column justify-content-center">
                             <div class="d-flex align-items-center gap-3 flex-row-reverse">
-                                <img src="/frontend/src/assets/img/user_profile.webp" alt="Opponent" class="match-avatar" id="match-p2-avatar">
+                                <img src="/frontend/src/assets/img/user_profile.webp" alt="Opponent" class="match-avatar"
+                                    id="match-p2-avatar">
                                 <div class="match-player-info">
 
                                     <!-- Username e Statistiche del Player 2-->
@@ -180,8 +183,7 @@
                             <div class="match-health-wrap mt-2">
                                 <div class="progress match-hp-bar">
                                     <div class="progress-bar health-fill" id="match-p2-health" role="progressbar"
-                                        aria-valuenow="100" aria-valuemin="0"
-                                        aria-valuemax="100"></div>
+                                        aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                                 <div class="health-text text-start mt-1 fw-bold">
                                     <span id="match-p2-hp">100</span>/100
@@ -194,7 +196,8 @@
                 <!-- ===== Sezione di codice e di risposta ===== -->
                 <div class="row flex-grow-1 justify-content-center align-items-stretch pb-2">
                     <div class="col-12 col-xl-12 d-flex flex-column">
-                        <div class="play-area-container p-3 p-md-4 d-flex flex-column flex-lg-row gap-4 gap-lg-5 flex-grow-1">
+                        <div
+                            class="play-area-container p-3 p-md-4 d-flex flex-column flex-lg-row gap-4 gap-lg-5 flex-grow-1">
                             <!-- == Sezione di Codice == -->
                             <div class="vscode-match-window vscode-match-window--responsive shadow-lg d-flex flex-column">
 
@@ -216,14 +219,15 @@
 
                             <!-- == Sezione di risposta == -->
                             <div class="match-guess-wrapper d-flex flex-column justify-content-center">
-                                <div class="match-guess-container p-4 w-100 d-flex flex-column justify-content-center h-100">
+                                <div
+                                    class="match-guess-container p-4 w-100 d-flex flex-column justify-content-center h-100">
                                     <h5 class="guess-label mb-3 text-center">Spiega la tua soluzione qui!</h5>
 
                                     <!-- Form di consegna della risposta per API -->
                                     <form id="guess-form" class="d-flex flex-column gap-3 mt-auto mb-auto">
                                         <textarea class="form-control guess-input w-100 text-center" id="guess-input"
                                             placeholder="Scrivi la tua risposta..." required></textarea>
-                                        
+
                                         <!-- Bottone di invio per API-->
                                         <button type="submit" class="btn btn-primary guess-btn w-100 py-2">
                                             <i class="bi bi-send-fill"></i> Invia
@@ -231,7 +235,8 @@
                                     </form>
 
                                     <!-- Risposta dell AI (in 100-esimi) -->
-                                    <div id="guess-feedback" class="guess-feedback mt-3 text-center text-darcula-comment">Attesa risposta...</div>
+                                    <div id="guess-feedback" class="guess-feedback mt-3 text-center text-darcula-comment">
+                                        Attesa risposta...</div>
                                 </div>
                             </div>
                         </div>
@@ -376,45 +381,6 @@
             </div>
         </div>
         <!-- ===== FINE FINESTRA MODALE: Impostazioni ===== -->
-
-        <!-- ===================== FOOTER ===================== -->
-        <footer class="site-footer" id="site-footer">
-            <div class="container">
-                <div class="footer-bottom">
-                    <!-- LATO SINISTRO -->
-                    <div class="footer-copy">
-                        <span class="footer-brand">
-                            <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
-                        </span>
-                        <span class="footer-sep" aria-hidden="true">&mdash;</span>
-                        <span class="footer-authors">
-                            Salvatore Iavarone &amp; Michele Pio Forlani
-                        </span>
-                        <span class="footer-sep" aria-hidden="true">&bull;</span>
-                        <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
-                            class="footer-license">Licenza MIT</a>
-                        <span class="footer-sep" aria-hidden="true">&bull;</span>
-                        <span class="footer-version">v1.0.0</span>
-                    </div>
-
-                    <!-- LATO DESTRO -->
-                    <div class="footer-links-inline">
-                        <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
-                            title="GitHub">
-                            <i class="bi bi-github"></i>
-                        </a>
-                        <a href="https://www.linkedin.com/in/salvatoreiavarone" target="_blank" class="social-btn"
-                            aria-label="LinkedIn" title="LinkedIn">
-                            <i class="bi bi-linkedin"></i>
-                        </a>
-                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr"
-                            target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
-                            <i class="bi bi-envelope-fill"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </footer>
 
         <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"
             integrity="sha384-kzavj5fiMwLKzzD1f8S7TeoVIEi7uKHvbTA3ueZkrzYq75pNQUiUi6Dy98Q3fxb0"

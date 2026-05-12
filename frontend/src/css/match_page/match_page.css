@@ -1,614 +1,410 @@
+/*
+    FILE: match_page.css
+    DESCRIPTION: Stili per la pagina della partita (Singleplayer e Multiplayer)
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
 /* ===========================
-   MATCH PAGE
+   1. LAYOUT PRINCIPALE DELLA PAGINA DI MATCH
    =========================== */
 
-/* Prevent scrolling on desktop, locking the UI perfectly into the viewport */
-@media (min-width: 992px) {
-  body {
-    height: 100vh;
-    overflow: hidden !important;
-  }
-  .match-main, .match-main > .container-fluid {
-    min-height: 0 !important;
-  }
-}
-
-.match-main {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Contenitore principale del layout di gioco: limita la larghezza massima
-   per garantire leggibilità su schermi molto larghi */
+/* Contenitore principale del layout di gioco */
 .match-layout-container {
-  max-width: 1400px;
+    max-width: 1400px;
 }
+
+/* Area principale che racchiude editor e risposta */
+.play-area-container {
+    background: rgba(var(--darcula-current), 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: 24px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+
+/* ===========================
+   2. SCOREBOARD & CONTAINER GIOCATORI
+   =========================== */
 
 .match-player-card {
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 20px;
-  padding: 0.5rem 1.25rem;
-  min-width: 200px;
+    background: rgba(var(--darcula-current), 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: 20px;
+    padding: 0.5rem 1.25rem;
+    min-width: 200px;
 }
 
 .match-avatar {
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  background: #1e1f21;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    background: #1e1f21;
 }
 
 .match-player-name {
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 1rem;
-  color: rgb(var(--darcula-fg));
-  /* Larghezza massima per evitare overflow con username lunghi */
-  max-width: 150px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: rgb(var(--darcula-fg));
+    max-width: 150px;
 }
 
 .match-player-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  color: rgba(var(--darcula-fg), 0.7);
-  font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: rgba(var(--darcula-fg), 0.7);
+    font-family: 'JetBrains Mono', monospace;
 }
 
-/* Barra di vita: contenitore Bootstrap .progress sovrascritta
-   con dimensioni e colori del tema Darcula */
+/* Barre della salute (HP) */
 .match-hp-bar {
-  height: 12px;
-  background: rgba(var(--darcula-bg), 0.8);
-  border: 1px solid rgba(var(--darcula-comment), 0.3);
-  border-radius: 6px;
+    height: 12px;
+    background: rgba(var(--darcula-bg), 0.8);
+    border: 1px solid rgba(var(--darcula-comment), 0.3);
+    border-radius: 6px;
 }
 
-/* Riempimento della barra HP: larghezza iniziale al 100%,
-   angoli arrotondati coerenti con il contenitore */
 .health-fill {
-  width: 100%;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #28a745, #5cb85c);
-  transition: width 0.5s ease-in-out, background-color 0.5s ease;
-  box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+    width: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #28a745, #5cb85c);
+    transition: width 0.5s ease-in-out, background-color 0.5s ease;
 }
 
-/* Testo numerico affiancato alla barra HP (es. "75/100").
-   Usa JetBrains Mono per allineamento monospaziato coerente */
 .health-text {
-  font-size: 0.8rem;
-  color: rgb(var(--darcula-fg));
-  font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: rgb(var(--darcula-fg));
+    font-family: 'JetBrains Mono', monospace;
 }
 
+/* Stati salute */
 .health-fill.warning {
-  background: linear-gradient(90deg, #ffc107, #ffcd39);
-  box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+    background: linear-gradient(90deg, #ffc107, #ffcd39);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
 }
 
 .health-fill.danger {
-  background: linear-gradient(90deg, #dc3545, #e4606d);
-  box-shadow: 0 0 10px rgba(220, 53, 69, 0.4);
+    background: linear-gradient(90deg, #dc3545, #e4606d);
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.4);
+}
+
+
+/* ===========================
+   3. TIMER E INFORMAZIONI PARTITA
+   =========================== */
+
+.match-timer-container {
+    background: rgba(var(--darcula-current), 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(var(--darcula-comment), 0.3);
+    border-radius: 20px;
+    padding: 0.25rem 1.8rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    display: inline-block;
 }
 
 .match-round-text {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 600;
-  color: rgba(var(--darcula-fg), 0.7);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 0px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: rgba(var(--darcula-fg), 0.7);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 .match-timer {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 2.2rem;
-  font-weight: 700;
-  line-height: 1;
-  color: #fff;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 40px rgba(52, 152, 219, 0.4);
-  transition: all 0.3s ease;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 40px rgba(52, 152, 219, 0.4);
+    transition: all 0.3s ease;
 }
 
+/* Stato di scadenza timer (rosso lampeggiante e vibrante) */
 .match-timer.hurry {
-  color: #ff5f56;
-  text-shadow: 0 0 20px rgba(255, 95, 86, 0.8), 0 0 40px rgba(255, 95, 86, 0.4);
-  animation: pulseTimer 1s infinite;
+    color: #ff5f56;
+    text-shadow: 0 0 20px rgba(255, 95, 86, 0.8), 0 0 40px rgba(255, 95, 86, 0.4);
+    animation: cg-match-pulseTimer 1s infinite, cg-match-timerShake 0.1s infinite;
 }
 
-@keyframes pulseTimer {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.05); }
-  100% { transform: scale(1); }
+@keyframes cg-match-pulseTimer {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
 }
+
+@keyframes cg-match-timerShake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(1px, -1px); }
+    50% { transform: translate(-1px, 1px); }
+    75% { transform: translate(1px, 1px); }
+    100% { transform: translate(-1px, -1px); }
+}
+
+
+/* ===========================
+   4. FINESTRA CODICE (Lato Sinistro)
+   =========================== */
 
 .vscode-match-window {
-  background: rgba(var(--darcula-bg), 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 12px;
-  overflow: hidden;
-  height: 500px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px rgba(var(--darcula-green), 0.1);
+    background: rgba(var(--darcula-bg), 0.85);
+    border: 1px solid rgba(var(--darcula-comment), 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
 }
 
 .vscode-titlebar {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background: rgba(var(--darcula-bg), 0.9);
-  border-bottom: 1px solid rgba(var(--darcula-comment), 0.2);
-  position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: rgba(var(--darcula-bg), 0.9);
+    border-bottom: 1px solid rgba(var(--darcula-comment), 0.2);
+    position: relative;
 }
 
+/* Pulsanti stile Mac (presi da code_block.css) */
 .vscode-mac-btns {
-  display: flex;
-  gap: 8px;
-  position: absolute;
-  left: 1rem;
+    display: flex;
+    gap: 8px;
+    position: absolute;
+    left: 1rem;
 }
 
 .vscode-mac-btns .mac-btn {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
 }
+
 .vscode-mac-btns .close { background-color: #ff5f56; box-shadow: inset 0 0 0 1px #e0443e; }
 .vscode-mac-btns .minimize { background-color: #ffbd2e; box-shadow: inset 0 0 0 1px #dea123; }
 .vscode-mac-btns .maximize { background-color: #27c93f; box-shadow: inset 0 0 0 1px #1aab29; }
 
 .vscode-title {
-  width: 100%;
-  text-align: center;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  color: rgba(var(--darcula-fg), 0.5);
+    width: 100%;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    color: rgba(var(--darcula-fg), 0.5);
 }
 
 .vscode-editor-body {
-  flex-grow: 1;
-  padding: 1.5rem;
-  overflow-y: auto;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.95rem;
-  color: rgb(var(--darcula-fg));
+    flex-grow: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    color: rgb(var(--darcula-fg));
 }
 
-.vscode-editor-body pre {
-  margin: 0;
-}
+
+/* ===========================
+   5. CONTENITORE RISPOSTA (Lato destro)
+   =========================== */
 
 .match-guess-container {
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 20px;
+    background: rgba(var(--darcula-current), 0.6);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: 20px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
 }
 
 .guess-label {
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  color: rgb(var(--darcula-fg));
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: rgb(var(--darcula-fg));
 }
 
 .guess-input {
-  background: rgba(var(--darcula-bg), 0.6) !important;
-  border: 1px solid rgba(var(--darcula-comment), 0.3) !important;
-  color: rgb(var(--darcula-fg)) !important;
-  border-radius: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  padding: 0.8rem 1.2rem;
+    background: rgba(var(--darcula-bg), 0.6) !important;
+    border: 1px solid rgba(var(--darcula-comment), 0.3) !important;
+    color: rgb(var(--darcula-fg)) !important;
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0.8rem 1.2rem;
+    resize: none;
+    height: 250px;
 }
 
 .guess-input:focus {
-  border-color: rgb(var(--darcula-green)) !important;
-  box-shadow: 0 0 15px rgba(var(--darcula-green), 0.4) !important;
-  outline: none;
+    border-color: rgb(var(--darcula-green)) !important;
+    box-shadow: 0 0 15px rgba(var(--darcula-green), 0.4) !important;
+    outline: none;
 }
 
 .guess-btn {
-  background: linear-gradient(135deg, rgb(var(--darcula-green)), #2eb872) !important;
-  border: none !important;
-  border-radius: 12px;
-  font-weight: 600;
-  padding: 0 2rem;
-  color: #fff !important;
-  box-shadow: 0 4px 15px rgba(var(--darcula-green), 0.4);
-  transition: all 0.2s ease;
+    background: linear-gradient(135deg, rgb(var(--darcula-green)), #2eb872) !important;
+    border: none !important;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0 2rem;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(var(--darcula-green), 0.4);
+    transition: all 0.2s ease;
 }
 
 .guess-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(var(--darcula-green), 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(var(--darcula-green), 0.6);
 }
 
-/* ===========================
-   NEW MATCH PAGE STYLES
-   =========================== */
-
-/* Play Area Single Container */
-.play-area-container {
-  background: rgba(var(--darcula-current), 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 24px;
-  box-shadow: 0 15px 45px rgba(0,0,0,0.25);
-  overflow: hidden;
-}
-
-/* Timer Styling Upgrade */
-.match-timer-container {
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(var(--darcula-comment), 0.3);
-  border-radius: 20px;
-  padding: 0.25rem 1.8rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  display: inline-block;
-}
-
-/* ===========================
-   EDITOR BODY
-   =========================== */
-
-/* Il body dell'editor Monaco deve essere un flex-column per permettere
-   al Monaco container figlio di occupare tutto lo spazio verticale */
-.match-editor-body {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  height: 100%;
-}
-
-/* ===========================
-   GUESS BOX
-   =========================== */
-
-/* Altezza minima del riquadro risposta per garantire usabilità
-   anche quando il contenuto è scarso */
-.match-guess-container {
-  min-height: 200px;
-  background: rgba(var(--darcula-current), 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 20px;
-}
-
-/* Textarea di risposta: ridimensionabile orizzontalmente
-   con un'altezza minima per la comodità di scrittura */
-.guess-input {
-  resize: horizontal;
-  min-height: 80px;
-}
-
-/* Feedback testuale sotto il form di risposta:
-   altezza minima fissa per evitare layout shift */
 .guess-feedback {
-  min-height: 24px;
-  font-weight: 500;
+    min-height: 24px;
+    font-weight: 500;
 }
 
-/* Countdown Overlay */
-.match-countdown-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1050;
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  background: rgba(var(--darcula-bg), 0.65);
-  transition: opacity 0.5s ease, visibility 0.5s ease;
-}
-
-.match-countdown-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: rgb(var(--darcula-fg));
-  text-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
-  letter-spacing: 1px;
-}
-
-.match-countdown-text {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8rem;
-  font-weight: 800;
-  color: rgb(var(--darcula-green));
-  text-shadow: 0 0 50px rgba(var(--darcula-green), 0.7);
-  animation: countdownPulse 1s ease-in-out infinite;
-  line-height: 1;
-}
-
-@keyframes countdownPulse {
-  0% { transform: scale(0.8); opacity: 0; }
-  20% { transform: scale(1.1); opacity: 1; }
-  80% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(0.8); opacity: 0; }
-}
 
 /* ===========================
-   MATCH HEADER
+   7. NAVBAR AZIONI PARTITA
    =========================== */
 
 .match-header {
-  height: 60px;
+    height: 60px;
 }
 
 .match-leave-btn {
-  padding: 0.5rem 1.4rem;
-  font-weight: 700;
-  transition: all 0.2s ease;
-  background: rgba(var(--darcula-red), 0.9);
-  border: none;
+    padding: 0.5rem 1.4rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    background: rgba(var(--darcula-red), 0.9);
+    border: none;
 }
 
 .match-leave-btn:hover {
-  background: rgb(var(--darcula-red));
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(var(--darcula-red), 0.4) !important;
+    background: rgb(var(--darcula-red));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(var(--darcula-red), 0.4) !important;
 }
 
 .match-header-btn {
-  width: 44px;
-  height: 44px;
-  background: rgba(var(--darcula-current), 0.8) !important;
-  color: rgb(var(--darcula-fg)) !important;
-  border: 1px solid rgba(var(--darcula-comment), 0.2) !important;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
+    width: 44px;
+    height: 44px;
+    background: rgba(var(--darcula-current), 0.8) !important;
+    color: rgb(var(--darcula-fg)) !important;
+    border: 1px solid rgba(var(--darcula-comment), 0.2) !important;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
 }
 
 .match-header-btn:hover {
-  background: rgb(var(--darcula-blue)) !important;
-  border-color: rgb(var(--darcula-blue)) !important;
-  color: #fff !important;
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 15px rgba(var(--darcula-blue), 0.4) !important;
+    background: rgb(var(--darcula-blue)) !important;
+    border-color: rgb(var(--darcula-blue)) !important;
+    color: #fff !important;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 15px rgba(var(--darcula-blue), 0.4) !important;
 }
 
 .match-header-btn i {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .match-header-btn:hover i {
-  transform: rotate(15deg);
+    transform: rotate(15deg);
 }
 
+
 /* ===========================
-   MOBILE EDITOR FIX
+   8. RESPONSIVITÀ & MOBILE
    =========================== */
 
-/* Mobile: altezza esplicita in pixel sull'intero blocco editor + Monaco.
-   Monaco richiede un'altezza pixel concreta nel parent per renderizzarsi
-   correttamente — su mobile flex-column senza altezza esplicita collassa a 0. */
+/* Fix Monaco Editor su Mobile */
 .vscode-match-window--responsive {
-  height: 380px;
-  min-height: 380px;
-  flex-shrink: 0;
+    height: 380px;
+    min-height: 380px;
+    flex-shrink: 0;
 }
 
 .match-editor-body {
-  flex-grow: 1;
-  height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100%;
 }
 
 .match-monaco-container {
-  width: 100%;
-  height: 100%;
-  display: block;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
-/* Desktop: torniamo al flex naturale che occupa tutto lo spazio disponibile */
+/* Desktop più piccolo (tablet o laptop con schermo piccolo) */
 @media (min-width: 992px) {
-  .vscode-match-window--responsive {
-    height: auto;
-    min-height: 0;
-    flex-grow: 1;
-    flex-basis: 0;
-    flex-shrink: 1;
-  }
-  .match-editor-body {
-    flex-grow: 1;
-    min-height: 0;
-  }
-  .match-monaco-container {
-    min-height: 0;
-  }
+    .vscode-match-window--responsive {
+        height: auto;
+        min-height: 0;
+        flex-grow: 1;
+        flex-basis: 0;
+        flex-shrink: 1;
+    }
+	.match-guess-wrapper {
+        min-width: 300px;
+        max-width: 380px;
+        width: 380px;
+        flex-shrink: 0;
+    }
+    .match-editor-body {
+        flex-grow: 1;
+        min-height: 0;
+    }
+    .match-monaco-container {
+        min-height: 0;
+    }
 }
 
-/* Box risposta: larghezza piena su mobile, colonna fissa su desktop */
-.match-guess-wrapper {
-  width: 100%;
-}
-
-@media (min-width: 992px) {
-  .match-guess-wrapper {
-    min-width: 300px;
-    max-width: 380px;
-    width: 380px;
-    flex-shrink: 0;
-  }
-}
 
 /* ===========================
-   END-GAME MODAL
+   9. LIGHT MODE
    =========================== */
 
-/* Overlay — stesso schema di .cg-settings-overlay */
-.end-game-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.end-game-overlay.visible {
-  opacity: 1;
-  pointer-events: all;
-}
-
-/* Card — appare dal centro con scala */
-.end-game-card {
-  width: 100%;
-  max-width: 480px;
-  background: rgb(var(--darcula-bg));
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 24px;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  transform: scale(0.88);
-  opacity: 0;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-}
-
-.end-game-overlay.visible .end-game-card {
-  transform: scale(1);
-  opacity: 1;
-}
-
-/* Accent border per ogni risultato */
-.end-result--win  { border-top: 4px solid rgb(var(--darcula-green)); }
-.end-result--lose { border-top: 4px solid rgb(var(--darcula-red)); }
-
-/* Icona grande */
-.end-game-icon {
-  font-size: 3.5rem;
-  line-height: 1;
-}
-.end-result--win  .end-game-icon { color: rgb(var(--darcula-green)); filter: drop-shadow(0 0 18px rgba(var(--darcula-green), 0.55)); }
-.end-result--lose .end-game-icon { color: rgb(var(--darcula-red));   filter: drop-shadow(0 0 18px rgba(var(--darcula-red),   0.55)); }
-
-/* Titolo */
-.end-game-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 0;
-  color: rgb(var(--darcula-fg));
-}
-
-/* Sottotitolo */
-.end-game-subtitle {
-  font-size: 0.95rem;
-  color: rgb(var(--darcula-comment));
-  margin: 0;
-}
-
-/* HP row */
-.end-game-hp-row { gap: 2rem; }
-.end-hp-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-}
-.end-hp-label {
-  font-size: 0.7rem;
-  font-family: 'JetBrains Mono', monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgb(var(--darcula-comment));
-}
-.end-hp-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.3rem;
-  font-weight: 700;
-}
-.end-hp-sep {
-  font-size: 0.85rem;
-  color: rgb(var(--darcula-comment));
-  align-self: center;
-}
-
-/* EXP badge */
-.end-exp-badge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1rem;
-  font-weight: 700;
-  color: rgb(var(--darcula-yellow));
-  background: rgba(var(--darcula-yellow), 0.12);
-  border: 1px solid rgba(var(--darcula-yellow), 0.3);
-  border-radius: 20px;
-  padding: 0.35rem 1.2rem;
-}
-
-/* Light mode */
-.light-mode .end-game-card {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.18);
-}
-.light-mode .end-game-overlay { background: rgba(255, 255, 255, 0.75); }
-
-/* Nuovi fix contrasto White Mode per la pagina match */
 .light-mode .match-timer {
-  color: rgb(var(--darcula-fg));
-  text-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    color: rgb(var(--darcula-fg));
+    text-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
 }
+
+.light-mode .match-timer.hurry {
+    color: #ff5f56;
+    text-shadow: 0 0 20px rgba(255, 95, 86, 0.8), 0 0 40px rgba(255, 95, 86, 0.4);
+    animation: cg-match-pulseTimer 1s infinite;
+}
+
 .light-mode .vscode-match-window {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  background: #ffffff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    background: #ffffff;
 }
+
 .light-mode .vscode-titlebar {
-  background: #f3f4f6;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: #f3f4f6;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
+
 .light-mode .play-area-container {
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.05);
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
 }
+
 .light-mode .match-player-card,
 .light-mode .match-timer-container,
 .light-mode .match-guess-container {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
+
 .light-mode .guess-input {
-  background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
 }
-.light-mode .match-countdown-overlay {
-  background: rgba(255, 255, 255, 0.85);
-}
-.light-mode .match-countdown-title {
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
-}
-.light-mode .end-game-card .btn-outline-light {
-  color: rgb(var(--darcula-fg));
-  border-color: rgba(var(--darcula-comment), 0.6);
-}
-.light-mode .end-game-card .btn-outline-light:hover {
-  background-color: rgb(var(--darcula-fg));
-  color: #ffffff;
-  border-color: rgb(var(--darcula-fg));
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .end-game-card { border-radius: 18px; }
-  .end-game-title { font-size: 1.6rem; }
-  .end-game-icon { font-size: 2.8rem; }
-}
-
