@@ -1,21 +1,48 @@
+/*
+    FILE: leaderboard_page.css
+    DESCRIPTION: Stili per la pagina della classifica globale
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
 /* ===========================
-   LEADERBOARD PAGE STYLES
+   1. LAYOUT & ANIMAZIONI DI PAGINA
    =========================== */
 
+/* Contenitore principale della pagina */
 .leaderboard-wrapper {
-    min-height: 80vh;
-    animation: fadeIn 0.6s ease-out;
+    flex: 1;
+    animation: cg-lb-fadeIn 0.6s ease-out;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Animazione di apparizione della pagina */
+@keyframes cg-lb-fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }
+
+/* Animazione per lo skeleton loading */
+@keyframes cg-lb-skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+
+/* ===========================
+   2. SEZIONE PRINCIPALE DELLA PAGINA (MAIN)
+   =========================== */
 
 .leaderboard-header {
     margin-bottom: 3rem;
+    text-align: center;
 }
 
+/* Icona grande della classifica */
 .leaderboard-icon-main {
     font-size: 3.5rem;
     color: rgb(var(--darcula-yellow));
@@ -28,47 +55,55 @@
     border-radius: 30px;
     border: 1px solid rgba(var(--darcula-yellow), 0.2);
     box-shadow: 0 10px 40px rgba(var(--darcula-yellow), 0.15);
-    animation: float 4s ease-in-out infinite;
+    margin-bottom: 1.5rem;
 }
 
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
+/* Titolo principale */
 .leaderboard-title {
     font-size: 2.5rem;
     font-weight: 800;
     letter-spacing: -1px;
+    margin-bottom: 0.5rem;
+    color: rgb(var(--darcula-fg));
 }
 
 .leaderboard-title span {
     color: rgb(var(--darcula-blue));
 }
 
+/* Sottotitolo */
 .leaderboard-subtitle {
     font-size: 1.1rem;
     max-width: 500px;
-    margin: 0.5rem auto 0;
+    margin: 0 auto;
+    color: rgba(var(--darcula-fg), 0.7);
 }
 
-/* ── Card & Table ─────────────────────────────────────────────────── */
 
+/* ===========================
+   3. LEADERBOARD CARD & CONTAINER
+   =========================== */
+
+/* Contenitore principale della tabella classifica */
 .leaderboard-card {
     background: rgba(var(--darcula-current), 0.5);
     border: 1px solid rgba(var(--darcula-comment), 0.15);
     border-radius: 24px;
     overflow: hidden;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
 }
 
+/* Header della tabella (Etichette colonne) */
 .leaderboard-table-header {
     background: rgba(var(--darcula-comment), 0.05);
     border-bottom: 1px solid rgba(var(--darcula-comment), 0.1);
     font-weight: 700;
     font-size: 0.85rem;
-    color: rgb(var(--darcula-comment));
+    color: rgba(var(--darcula-fg), 0.6);
+    padding: 1rem 1.5rem;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -78,8 +113,12 @@
     flex-direction: column;
 }
 
-/* ── Leaderboard Row ──────────────────────────────────────────────── */
 
+/* ===========================
+   4. Lista utenti della classifica
+   =========================== */
+
+/* Singola riga della classifica */
 .leaderboard-row {
     display: flex;
     align-items: center;
@@ -95,18 +134,21 @@
     border-bottom: none;
 }
 
+/* Effetto hover sulla riga */
 .leaderboard-row:hover {
     background: rgba(var(--darcula-blue), 0.08);
 }
 
+/* Stile speciale per la riga dell'utente corrente */
 .leaderboard-row.is-me {
     background: rgba(var(--darcula-green), 0.1);
     border-left: 4px solid rgb(var(--darcula-green));
 }
 
+/* Badge "IO" */
 .me-badge {
     background: rgb(var(--darcula-green));
-    color: white;
+    color: #fff;
     font-size: 0.6rem;
     font-weight: 800;
     padding: 2px 6px;
@@ -118,29 +160,39 @@
     display: inline-block;
 }
 
-/* Rank Column */
+
+/* ===========================
+   5. STILI DELLE COLONNE
+   =========================== */
+
+/* Colonna Posizione (Rank) */
 .rank-col {
-    font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
     font-size: 1.1rem;
-    color: rgb(var(--darcula-comment));
+    color: rgba(var(--darcula-fg), 0.8);
+    flex: 0 0 8.33%;
+    display: flex;
+    justify-content: center;
 }
 
-.rank-1 .rank-col { color: #FFD700; font-size: 1.5rem; } /* Gold */
-.rank-2 .rank-col { color: #C0C0C0; font-size: 1.4rem; } /* Silver */
-.rank-3 .rank-col { color: #CD7F32; font-size: 1.3rem; } /* Bronze */
+/* Colori speciali per il podio */
+.rank-1 .rank-col { color: #FFD700; font-size: 2rem; } /* Oro */
+.rank-2 .rank-col { color: #C0C0C0; font-size: 1.5rem; } /* Argento */
+.rank-3 .rank-col { color: #CD7F32; font-size: 1.3rem; } /* Bronzo */
 
-/* Player Column */
+/* Colonna Giocatore (Avatar + Nome) */
 .player-col {
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex: 0 0 50%;
 }
 
 .lb-avatar-wrapper {
     position: relative;
     width: 44px;
     height: 44px;
+    flex-shrink: 0;
 }
 
 .lb-avatar {
@@ -151,25 +203,10 @@
     border: 2px solid rgba(var(--darcula-comment), 0.2);
 }
 
+/* Bordi colorati per il podio nell'avatar */
 .rank-1 .lb-avatar { border-color: #FFD700; }
 .rank-2 .lb-avatar { border-color: #C0C0C0; }
 .rank-3 .lb-avatar { border-color: #CD7F32; }
-
-.lb-status-dot {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid rgb(var(--darcula-current));
-    background: #4b4b4b; /* offline */
-}
-
-.lb-status-dot.online {
-    background: #629755; /* online green */
-    box-shadow: 0 0 8px rgba(98, 151, 85, 0.6);
-}
 
 .player-info {
     display: flex;
@@ -184,12 +221,15 @@
 
 .player-meta {
     font-size: 0.75rem;
-    color: rgb(var(--darcula-comment));
+    color: rgba(var(--darcula-fg), 0.6);
 }
 
-/* Level Column */
+/* Colonna Livello */
 .level-col {
-    text-align: center;
+    flex: 0 0 15%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .level-badge {
@@ -202,7 +242,7 @@
     border: 1px solid rgba(var(--darcula-blue), 0.2);
 }
 
-/* Trophies Column */
+/* Colonna Trofei */
 .trophy-col {
     text-align: right;
     display: flex;
@@ -212,51 +252,28 @@
     font-weight: 800;
     font-size: 1.2rem;
     color: rgb(var(--darcula-yellow));
+    flex: 0 0 25%;
 }
 
 .trophy-col i {
     font-size: 1rem;
-    filter: drop-shadow(0 0 5px rgba(255, 198, 109, 0.3));
+    filter: drop-shadow(0 0 5px rgba(var(--darcula-yellow), 0.3));
 }
 
-/* ── Responsive ───────────────────────────────────────────────────── */
 
-@media (max-width: 768px) {
-    .leaderboard-title { font-size: 2rem; }
-    .leaderboard-icon-main { width: 80px; height: 80px; font-size: 2.5rem; }
-    
-    .leaderboard-row {
-        padding: 1rem;
-    }
-    
-    .rank-col { flex: 0 0 30px; }
-    .player-col { flex: 1; }
-    .level-col { display: none; }
-    .trophy-col { flex: 0 0 100px; }
-}
-
-/* Skeleton Loading Animation */
-.skeleton {
-    background: linear-gradient(90deg, 
-        rgba(var(--darcula-comment), 0.05) 25%, 
-        rgba(var(--darcula-comment), 0.1) 50%, 
-        rgba(var(--darcula-comment), 0.05) 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-}
-
-@keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-/* ── Pagination ────────────────────────────────────────────────────── */
+/* ===========================
+   6. PAGINAZIONE
+   =========================== */
 
 #leaderboard-pagination {
     margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
+/* Bottone singolo di paginazione */
 .pagination-btn {
     width: 40px;
     height: 40px;
@@ -266,9 +283,8 @@
     background: rgba(var(--darcula-current), 0.5);
     border: 1px solid rgba(var(--darcula-comment), 0.2);
     border-radius: 10px;
-    color: rgb(var(--darcula-comment));
+    color: rgba(var(--darcula-fg), 0.7);
     font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
     transition: all 0.2s ease;
     cursor: pointer;
     text-decoration: none;
@@ -280,20 +296,78 @@
     color: rgb(var(--darcula-blue));
 }
 
+/* Bottone attivo (pagina corrente) */
 .pagination-btn.active {
     background: rgb(var(--darcula-blue));
     border-color: rgb(var(--darcula-blue));
-    color: white;
+    color: #fff;
     box-shadow: 0 4px 15px rgba(var(--darcula-blue), 0.4);
 }
 
+/* Puntini di sospensione per tante pagine (...) */
 .pagination-btn.dots {
     cursor: default;
     border-color: transparent;
     background: transparent;
 }
 
+/* Bottone disabilitato */
 .pagination-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+}
+
+
+/* ===========================
+   7. UTILITY & SKELETON LOADING
+   =========================== */
+
+/* Stile per il caricamento della classifica (skeleton) */
+.skeleton {
+    background: linear-gradient(90deg, 
+        rgba(var(--darcula-comment), 0.05) 25%, 
+        rgba(var(--darcula-comment), 0.1) 50%, 
+        rgba(var(--darcula-comment), 0.05) 75%);
+    background-size: 200% 100%;
+    animation: cg-lb-skeleton 1.5s infinite;
+}
+
+
+/* ===========================
+   8. RESPONSIVITÀ
+   =========================== */
+
+@media (max-width: 768px) {
+    .leaderboard-title { 
+        font-size: 2rem; 
+    }
+    
+    .leaderboard-icon-main { 
+        width: 80px; 
+        height: 80px; 
+        font-size: 2.5rem; 
+    }
+    
+    .leaderboard-row {
+        padding: 1rem;
+    }
+    
+    /* Nasconde la colonna livello su mobile per risparmiare spazio */
+    .level-col { 
+        display: none; 
+    }
+    
+    .rank-col { 
+        flex: 0 0 8%; 
+        font-size: 1rem;
+    }
+
+    .player-col {
+        flex: 1;
+    }
+    
+    .trophy-col { 
+        flex: 0 0 25%; 
+        font-size: 1.1rem;
+    }
 }

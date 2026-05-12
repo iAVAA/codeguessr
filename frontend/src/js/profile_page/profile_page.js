@@ -124,7 +124,7 @@ function buildHistoryHTML(match) {
     if (match.trofei_cambiati !== 0) {
         const tColor = match.trofei_cambiati > 0 ? 'text-darcula-yellow' : 'text-darcula-red';
         const tPrefix = match.trofei_cambiati > 0 ? '+' : '';
-        trophiesHTML = `<span class="${tColor} ms-2" style="font-size: 0.8rem;"><i class="bi bi-trophy-fill"></i> ${tPrefix}${match.trofei_cambiati}</span>`;
+        trophiesHTML = `<span class="history-trophies ${tColor}"><i class="bi bi-trophy-fill"></i> ${tPrefix}${match.trofei_cambiati}</span>`;
     }
 
     return `
@@ -136,14 +136,14 @@ function buildHistoryHTML(match) {
                     <span class="history-lang text-darcula-fg fw-bold">${textResult}</span>
                     ${trophiesHTML}
                 </div>
-                <div class="history-meta text-darcula-comment" style="font-size: 0.75rem;">
+                <div class="history-meta">
                     ${modeLabel} ${opponentDisplay}
                 </div>
             </div>
         </div>
         <div class="text-end">
             <div class="history-xp ${xpColor} fw-bold">${xpPrefix}${match.exp_guadagnata} XP</div>
-            <div class="history-time text-darcula-comment" style="font-size: 0.7rem;">${timeAgo}</div>
+            <div class="history-time">${timeAgo}</div>
         </div>
     </div>`;
 }
@@ -163,21 +163,21 @@ function buildFriendHTML(friend) {
         textClass = online ? 'text-darcula-green' : 'text-darcula-comment';
         statusText = online ? 'Online' : 'Offline';
         rightContent = online
-            ? `<button class="profile-btn-challenge" aria-label="Sfida ${name}"><i class="bi bi-swords"></i> Sfida</button>`
+            ? `<button class="profile-btn-challenge" aria-label="Sfida ${name}"><i class="bi bi-swords"></i> <span>Sfida</span></button>`
             : '';
     } else if (type === 'ricevuta') {
         statusClass = 'online';
         textClass = 'text-warning';
         statusText = 'Nuova richiesta';
         rightContent = `
-            <div class="d-flex gap-1">
-                <button class="cg-search-add-btn" data-action="accetta" data-username="${name}" data-userid="${userid}" style="background-color: #198754; color: white; border: none; border-radius: 4px; padding: 2px 8px;" title="Accetta"><i class="bi bi-check-lg"></i></button>
-                <button class="cg-search-add-btn" data-action="rifiuta" data-username="${name}" data-userid="${userid}" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 2px 8px;" title="Rifiuta"><i class="bi bi-x-lg"></i></button>
+            <div class="d-flex gap-2">
+                <button class="profile-action-btn profile-action-btn--success" data-action="accetta" data-username="${name}" data-userid="${userid}" title="Accetta"><i class="bi bi-check-lg"></i></button>
+                <button class="profile-action-btn profile-action-btn--danger" data-action="rifiuta" data-username="${name}" data-userid="${userid}" title="Rifiuta"><i class="bi bi-x-lg"></i></button>
             </div>
         `;
     } else if (type === 'inviata') {
         statusText = 'In attesa...';
-        rightContent = `<button disabled style="opacity:0.6;cursor:not-allowed;padding:2px 8px;border:1px solid #555;background:transparent;color:#888;border-radius:4px;"><i class="bi bi-clock"></i></button>`;
+        rightContent = `<button class="profile-action-btn profile-action-btn--muted" disabled><i class="bi bi-clock"></i></button>`;
     }
 
     return `
@@ -204,9 +204,9 @@ function renderHistory(history) {
 
     if (!history || history.length === 0) {
         container.innerHTML = `
-            <div class="text-center text-darcula-comment py-4">
-                <i class="bi bi-controller" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>
-                Nessuna partita giocata ancora.<br>
+            <div class="profile-empty-state">
+                <i class="bi bi-controller"></i>
+                Nessuna partita giocata ancora.
                 <small>Gioca la tua prima partita!</small>
             </div>`;
         return;
@@ -221,9 +221,9 @@ function renderFriends(friends) {
 
     if (!friends || friends.length === 0) {
         container.innerHTML = `
-            <div class="text-center text-darcula-comment py-4">
-                <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>
-                Nessun amico ancora.<br>
+            <div class="profile-empty-state">
+                <i class="bi bi-people"></i>
+                Nessun amico ancora.
                 <small>Aggiungi qualcuno con il bottone +</small>
             </div>`;
         return;
@@ -240,6 +240,22 @@ function updateProfileUI(playerData) {
 
     // --- Profilo Principale ---
     setText('page-name', playerData.name);
+
+    // XP Ring (Solo se è il proprio profilo)
+    const session = getSession();
+    const isOwnProfile = playerData.id === session.idGiocatore;
+    const wrapper = document.querySelector('.profile-main-avatar-wrapper');
+    const ringSvg = document.querySelector('.profile-main-avatar-wrapper .xp-ring');
+
+    if (isOwnProfile) {
+        if (wrapper) wrapper.classList.remove('no-xp');
+        if (ringSvg) ringSvg.style.display = 'block';
+        const xpPercent = Math.min(100, (playerData.xp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
+        setXpProgress(xpPercent, 'xp-ring-progress-profile');
+    } else {
+        if (wrapper) wrapper.classList.add('no-xp');
+        if (ringSvg) ringSvg.style.display = 'none';
+    }
 
     const userIdEl = document.getElementById('page-userid');
     if (userIdEl) {
@@ -377,7 +393,7 @@ function initFriendActions() {
             return;
         }
 
-        const actionButton = event.target.closest('.cg-search-add-btn');
+        const actionButton = event.target.closest('.profile-action-btn');
         if (!actionButton || actionButton.disabled) return;
 
         const action = actionButton.dataset.action;

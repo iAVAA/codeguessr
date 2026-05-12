@@ -2,7 +2,7 @@ import { getSession, fetchAuth } from '../managers/auth.js';
 
 // ─── Costanti ───────────────────────────────────────────────────────────────
 const TOTAL_ROUNDS = 1;
-const ROUND_SECONDS = 60;
+const ROUND_SECONDS = 15;
 const SETTINGS_KEY = 'codeguessr-settings';
 
 // ─── Stato Partita ──────────────────────────────────────────────────────────
@@ -142,14 +142,24 @@ function startTimer() {
   if (!timerEl) return;
 
   timeRemaining = ROUND_SECONDS;
-  timerEl.textContent = `00:${ROUND_SECONDS.toString().padStart(2, '0')}`;
+  
+  // Imposta il testo iniziale (formato MM:SS)
+  const initialMins = Math.floor(timeRemaining / 60);
+  const initialSecs = timeRemaining % 60;
+  timerEl.textContent = `${initialMins.toString().padStart(2, '0')}:${initialSecs.toString().padStart(2, '0')}`;
   timerEl.classList.remove('hurry');
 
   timerInterval = setInterval(() => {
     timeRemaining--;
-    timerEl.textContent = `00:${timeRemaining.toString().padStart(2, '0')}`;
+    
+    const mins = Math.floor(timeRemaining / 60);
+    const secs = timeRemaining % 60;
+    timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-    if (timeRemaining <= 10 && timeRemaining > 0) timerEl.classList.add('hurry');
+    // Stato di urgenza (ultimi 10 secondi)
+    if (timeRemaining <= 10 && timeRemaining > 0) {
+      timerEl.classList.add('hurry');
+    }
 
     if (timeRemaining <= 0) {
       clearInterval(timerInterval);
@@ -404,12 +414,15 @@ function runCountdown() {
       } else {
         clearInterval(countdownInterval);
         countdownInterval = null;
+        
+        // Dissolvenza finale (usiamo il tempo della transition del CSS)
         overlay.style.opacity = '0';
         overlay.style.visibility = 'hidden';
+        
         setTimeout(() => {
           countdownPromise = null;
           resolve();
-        }, 400);
+        }, 500); // 500ms come definito nel CSS
       }
     }, 1000);
   });
@@ -640,9 +653,7 @@ async function loadProfiles() {
 async function init() {
   console.log('[Match] Inizializzazione partita...');
 
-  // L'overlay countdown e presente nell'HTML con testo "3": nascondilo subito.
-  // Verra mostrato solo quando un round parte davvero con runCountdown().
-  stopCountdown();
+
 
   const urlParams = new URLSearchParams(window.location.search);
   roomCode = urlParams.get('room');
