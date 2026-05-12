@@ -1,0 +1,428 @@
+/*
+    FILE: multiplayer_modal.css
+    DESCRIPTION: Stili per il modale della selezione modalità Multiplayer e inviti sfida
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   1. CONTAINER MODALE PRINCIPALE
+   =========================== */
+
+/* Overlay a tutto schermo */
+.cg-multi-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Stato aperto dell'overlay */
+.cg-multi-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Finestra modale principale */
+.cg-multi-modal {
+    width: 100%;
+    max-width: 650px;
+    background: rgb(var(--darcula-bg));
+    border: 1px solid rgba(var(--darcula-comment), 0.25);
+    border-radius: 24px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transform: translateY(30px) scale(0.95);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Animazione di entrata del modale */
+.cg-multi-overlay.open .cg-multi-modal {
+    transform: translateY(0) scale(1);
+}
+
+
+/* ===========================
+   2. HEADER DEL MODALE
+   =========================== */
+
+.cg-multi-header {
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(var(--darcula-comment), 0.15);
+}
+
+.cg-multi-title-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Icona dell'header */
+.cg-multi-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(var(--darcula-green), 0.15);
+    color: rgb(var(--darcula-green));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 0 15px rgba(var(--darcula-green), 0.1);
+}
+
+.cg-multi-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: rgb(var(--darcula-fg));
+}
+
+/* Bottone di chiusura (X) */
+.cg-multi-close {
+    background: transparent;
+    border: none;
+    color: rgb(var(--darcula-comment));
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cg-multi-close:hover {
+    color: rgb(var(--darcula-red));
+    transform: rotate(90deg);
+}
+
+
+/* ===========================
+   3. OPZIONI MULTIPLAYER
+   =========================== */
+
+.cg-multi-body {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Lista degli elementi */
+.cg-multi-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+/* Singola elemento opzione */
+.cg-multi-option {
+    background: rgba(var(--darcula-current), 0.4);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.cg-multi-option:hover {
+    background: rgba(var(--darcula-current), 0.7);
+    border-color: rgba(var(--darcula-blue), 0.4);
+    transform: translateX(6px);
+}
+
+/* Icona dell'elemento */
+.cg-multi-option-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: rgba(var(--darcula-bg), 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.cg-multi-option:hover .cg-multi-option-icon {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+/* Colori icone per modalità */
+.cg-multi-option.online .cg-multi-option-icon { color: rgb(var(--darcula-blue)); }
+.cg-multi-option.private .cg-multi-option-icon { color: rgb(var(--darcula-yellow)); }
+
+.cg-multi-option-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cg-multi-option-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: rgb(var(--darcula-fg));
+}
+
+.cg-multi-option-desc {
+    font-size: 0.85rem;
+    color: rgb(var(--darcula-comment));
+    line-height: 1.4;
+}
+
+/* Badge dell'opzione */
+.cg-multi-option-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(var(--darcula-blue), 0.15);
+    color: rgb(var(--darcula-blue));
+    letter-spacing: 0.5px;
+}
+
+
+/* ===========================
+   4. SEZIONE CODICE STANZA
+   =========================== */
+
+/* Appare quando si clicca "Stanza Privata" */
+.cg-multi-code-section {
+    margin-top: 0.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(var(--darcula-comment), 0.1);
+    display: none;
+    flex-direction: column;
+    gap: 1rem;
+    animation: cg-multi-fadeInDown 0.3s ease forwards;
+}
+
+.cg-multi-code-input-group {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Input del codice stanza */
+.cg-multi-code-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(var(--darcula-comment), 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: rgb(var(--darcula-fg));
+    font-family: inherit; /* Usa font di sistema JetBrains Mono */
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.cg-multi-code-input:focus {
+    outline: none;
+    border-color: rgb(var(--darcula-blue));
+    box-shadow: 0 0 0 3px rgba(var(--darcula-blue), 0.2);
+}
+
+/* Bottoni generali nel modale */
+.cg-multi-btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cg-multi-btn-primary {
+    background: rgb(var(--darcula-blue));
+    color: #fff;
+}
+
+.cg-multi-btn-primary:hover {
+    background: rgba(var(--darcula-blue), 0.8);
+    transform: translateY(-2px);
+}
+
+.cg-multi-btn-secondary {
+    background: rgba(var(--darcula-comment), 0.15);
+    color: rgb(var(--darcula-fg));
+    border: 1px solid rgba(var(--darcula-comment), 0.3);
+}
+
+.cg-multi-btn-secondary:hover {
+    background: rgba(var(--darcula-comment), 0.25);
+}
+
+
+/* ===========================
+   5. FOOTER & STATO SERVER
+   =========================== */
+
+.cg-multi-footer {
+    padding: 1rem 2rem;
+    background: rgba(var(--darcula-bg), 0.5);
+    border-top: 1px solid rgba(var(--darcula-comment), 0.1);
+    display: flex;
+    justify-content: center;
+}
+
+.cg-multi-status-text {
+    font-size: 0.8rem;
+    color: rgb(var(--darcula-comment));
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Pallino pulsante stato online */
+.cg-multi-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgb(var(--darcula-green));
+    box-shadow: 0 0 0 0 rgba(var(--darcula-green), 0.7);
+    animation: cg-multi-pulse 2s infinite;
+}
+
+
+/* ===========================
+   6. INVITO SFIDA (Notifica)
+   =========================== */
+
+/* Overlay per l'invito a una sfida */
+.cg-challenge-invite-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 11000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.cg-challenge-invite-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Card della notifica invito */
+.cg-challenge-invite-card {
+    width: min(420px, 100%);
+    background: rgb(var(--darcula-bg));
+    border: 1px solid rgba(var(--darcula-comment), 0.35);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    padding: 1.25rem;
+    text-align: center;
+    transform: translateY(10px) scale(0.98);
+    transition: transform 0.2s ease;
+}
+
+.cg-challenge-invite-overlay.open .cg-challenge-invite-card {
+    transform: translateY(0) scale(1);
+}
+
+/* Icona dell'invito */
+.cg-challenge-invite-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.75rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: rgb(var(--darcula-blue));
+    background: rgba(var(--darcula-blue), 0.15);
+}
+
+.cg-challenge-invite-title {
+    margin: 0;
+    font-size: 1.05rem;
+    color: rgb(var(--darcula-fg));
+}
+
+.cg-challenge-invite-text {
+    margin: 0.5rem 0 1rem;
+    color: rgb(var(--darcula-comment));
+    font-size: 0.9rem;
+}
+
+/* Azioni dell'invito (Accetta/Rifiuta) */
+.cg-challenge-invite-actions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+}
+
+.cg-challenge-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 0.55rem 1rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.cg-challenge-btn:hover {
+    transform: translateY(-1px);
+}
+
+.cg-challenge-btn--ghost {
+    background: rgba(var(--darcula-comment), 0.18);
+    color: rgb(var(--darcula-fg));
+}
+
+.cg-challenge-btn--accept {
+    background: rgb(var(--darcula-green));
+    color: rgb(var(--darcula-bg));
+}
+
+
+/* ===========================
+   7. ANIMAZIONI
+   =========================== */
+
+@keyframes cg-multi-fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cg-multi-pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--darcula-green), 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(var(--darcula-green), 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--darcula-green), 0); }
+}
