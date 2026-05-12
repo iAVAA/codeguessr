@@ -1,67 +1,74 @@
-/* ===========================
-   CODE SNIPPET DECORATION
-   =========================== */
+/*
+    FILE: code_block.css
+    DESCRIPTION: Blocco di codice randomico di estetica per la game_page.html
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
 
+/* Blocco di codice con font JetBrains Mono e "white-space: pre" per simulare uno codice reale */
 .code-decoration {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
-  background: rgba(var(--darcula-current), 0.6);
-  border: 1px solid rgba(var(--darcula-comment), 0.2);
-  border-radius: 20px;
-  padding: 2.4rem 1.4rem 0.9rem 1.4rem;
-  color: rgb(var(--darcula-comment));
-  backdrop-filter: blur(8px);
-  width: 550px;
-  max-width: 100%;
-  height: 240px;
-  overflow: hidden;
-  margin: 0 auto 2rem;
-  text-align: left;
-  white-space: pre;
-  position: relative;
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 0.85rem;
+	background: rgba(var(--darcula-current), 0.6);
+	border: 1px solid rgba(var(--darcula-comment), 0.2);
+	border-radius: 20px;
+	padding: 2.4rem 1.4rem 0.9rem 1.4rem;
+	color: rgb(var(--darcula-comment));
+	width: 550px;
+	height: 240px;
+	max-width: 100%;
+	overflow: hidden;
+	margin: 0 auto 2rem;
+	text-align: left;
+	white-space: pre;
+	position: relative;
+	user-select: none;
 }
 
+/* Grafica finestra come Macos */
 .code-decoration::before {
-  content: '';
-  position: absolute;
-  top: 16px;
-  left: 18px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: #ff5f56;
-  box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #27c93f;
+	content: '';
+	position: absolute;
+	top: 16px;
+	left: 18px;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background-color: #ff5f56;
+	box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #27c93f;
 }
 
+/* Titolo del codice simile alla finestra di Macos */
 .mac-window-title {
-  position: absolute;
-  top: 14px;
-  left: 80px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: rgba(var(--darcula-fg), 0.45);
-  pointer-events: none;
-  letter-spacing: 0.5px;
+	position: absolute;
+	top: 14px;
+	left: 80px;
+	font-family: 'Inter', sans-serif;
+	font-size: 0.72rem;
+	font-weight: 500;
+	color: rgba(var(--darcula-fg), 0.45);
+	pointer-events: none;
+	letter-spacing: 0.5px;
 }
 
+/* Simulatore del cursore di testo | */
 .code-decoration.typing-active::after {
-  content: '|';
-  color: rgb(var(--darcula-fg));
-  animation: cursorBlink 1s step-end infinite;
+	content: '|';
+	color: rgb(var(--darcula-fg));
+	animation: cursorBlink 1s step-end infinite;
 }
 
+/* Animazione blink del cursore di testo */
 @keyframes cursorBlink {
-  50% { opacity: 0; }
+	50% { opacity: 0; }
 }
 
-/* VSCode-like Rich Token Colors */
-.code-decoration .kw  { color: var(--vscode-kw); } /* Keywords */
-.code-decoration .cf  { color: var(--vscode-cf); } /* Control flow */
-.code-decoration .fn  { color: var(--vscode-fn); } /* Functions */
-.code-decoration .str { color: var(--vscode-str); } /* Strings */
-.code-decoration .num { color: var(--vscode-num); } /* Numbers */
-.code-decoration .ty  { color: var(--vscode-ty); } /* Types / Classes */
-.code-decoration .vbl { color: var(--vscode-vr); } /* Variables */
-.code-decoration .op  { color: var(--vscode-op); } /* Operators */
-.code-decoration .cm  { color: var(--vscode-cm); } /* Comments */
+/* Colori simili a VSCode nel blocco di codice */
+.code-decoration .kw  { color: var(--vscode-kw); } /* Parole chiave */
+.code-decoration .cf  { color: var(--vscode-cf); } /* Controllo di flusso */
+.code-decoration .fn  { color: var(--vscode-fn); } /* Funzioni */
+.code-decoration .str { color: var(--vscode-str); } /* Stringhe */
+.code-decoration .num { color: var(--vscode-num); } /* Numeri */
+.code-decoration .ty  { color: var(--vscode-ty); } /* Tipi / Classi */
+.code-decoration .vbl { color: var(--vscode-vr); } /* Variabili */
+.code-decoration .op  { color: var(--vscode-op); } /* Operatori */
+.code-decoration .cm  { color: var(--vscode-cm); } /* Commenti */

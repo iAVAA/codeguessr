@@ -58,6 +58,13 @@ function showToast(message, color = 'blue') {
 }
 
 // ─── Game Buttons ─────────────────────────────────────────────────────────────
+// temp da modificare per staticita bottone missioni completate
+document.querySelectorAll('.btn-completed-missions, .btn-panel-action')
+    .forEach(button => {
+        button.addEventListener('click', () => {
+            button.classList.toggle('active');
+        });
+    });
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-singleplayer')?.addEventListener('click', () => {
