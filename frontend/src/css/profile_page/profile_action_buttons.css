@@ -1,0 +1,124 @@
+/*
+    FILE: profile_action_buttons.css
+    DESCRIPTION: Stili per i bottoni di azione (aggiungi amico, sfida, ecc.) nella pagina profilo
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   1. BOTTONI DI AZIONE (Pills)
+   =========================== */
+
+.profile-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.45rem 1.1rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease,
+                background 0.18s ease, border-color 0.18s ease;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.profile-action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.profile-action-btn:active {
+    transform: translateY(0);
+}
+
+/* ── Variante Primary (Aggiungi Amico) ── */
+.profile-action-btn--primary {
+    background: rgba(var(--darcula-blue), 0.15);
+    border-color: rgba(var(--darcula-blue), 0.45);
+    color: rgb(var(--darcula-blue));
+}
+
+.profile-action-btn--primary:hover {
+    background: rgb(var(--darcula-blue));
+    border-color: rgb(var(--darcula-blue));
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(var(--darcula-blue), 0.35);
+}
+
+/* ── Variante Success (Accetta) ── */
+.profile-action-btn--success {
+    background: rgba(var(--darcula-green), 0.14);
+    border-color: rgba(var(--darcula-green), 0.45);
+    color: rgb(var(--darcula-green));
+}
+
+.profile-action-btn--success:hover {
+    background: rgb(var(--darcula-green));
+    border-color: rgb(var(--darcula-green));
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(var(--darcula-green), 0.35);
+}
+
+/* ── Variante Danger (Rimuovi / Rifiuta) ── */
+.profile-action-btn--danger {
+    background: rgba(var(--darcula-red), 0.12);
+    border-color: rgba(var(--darcula-red), 0.4);
+    color: rgb(var(--darcula-red));
+}
+
+.profile-action-btn--danger:hover {
+    background: rgb(var(--darcula-red));
+    border-color: rgb(var(--darcula-red));
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(var(--darcula-red), 0.35);
+}
+
+/* ── Variante Muted (Richiesta inviata / In attesa) ── */
+.profile-action-btn--muted {
+    background: rgba(var(--darcula-comment), 0.1);
+    border-color: rgba(var(--darcula-comment), 0.3);
+    color: rgb(var(--darcula-comment));
+    cursor: default;
+    opacity: 0.8;
+}
+
+.profile-action-btn--muted:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* ===========================
+   2. BOTTONE SFIDA (Challenge)
+   =========================== */
+.profile-btn-challenge {
+    background: rgba(var(--darcula-green), 0.1);
+    color: rgb(var(--darcula-green));
+    border: 1px solid rgba(var(--darcula-green), 0.3);
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.profile-btn-challenge:hover {
+    background: rgb(var(--darcula-green));
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(var(--darcula-green), 0.3);
+}
+
+/* ===========================
+   3. LIGHT MODE
+   =========================== */
+
+.light-mode .profile-action-btn--primary { background: rgba(var(--darcula-blue), 0.08); }
+.light-mode .profile-action-btn--success { background: rgba(var(--darcula-green), 0.08); }
+.light-mode .profile-action-btn--danger { background: rgba(var(--darcula-red), 0.06); }
+.light-mode .profile-action-btn--muted { background: rgba(var(--darcula-comment), 0.06); }

@@ -1,0 +1,128 @@
+/*
+    FILE: edit_profile_modal.css
+    DESCRIPTION: Stili per la finestra modale di modifica profilo
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   1. BOTTONE MODIFICA (Nell'Header)
+   =========================== */
+
+.profile-btn-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.45rem 1.25rem;
+    border-radius: 999px;
+    background: rgba(var(--darcula-blue), 0.15);
+    color: rgb(var(--darcula-blue));
+    border: 1px solid rgba(var(--darcula-blue), 0.45);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+}
+
+.profile-btn-edit i {
+    color: inherit;
+    transition: transform 0.2s;
+    font-size: 1rem;
+}
+
+.profile-btn-edit:hover {
+    background: rgb(var(--darcula-blue));
+    border-color: rgb(var(--darcula-blue));
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(var(--darcula-blue), 0.35);
+}
+
+.profile-btn-edit:hover i {
+    transform: scale(1.1);
+}
+
+/* ===========================
+   2. INPUT DELLA MODALE
+   =========================== */
+
+.cg-input-text {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(var(--darcula-comment), 0.3);
+    color: rgb(var(--darcula-fg));
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.cg-input-text:focus {
+    outline: none;
+    border-color: rgb(var(--darcula-blue));
+    background: rgba(var(--darcula-bg), 0.8);
+    box-shadow: 0 0 0 3px rgba(var(--darcula-blue), 0.15);
+}
+
+.cg-input-text::placeholder {
+    color: rgba(var(--darcula-comment), 0.6);
+}
+
+.cg-input-file {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px dashed rgba(var(--darcula-comment), 0.4);
+    color: rgb(var(--darcula-fg));
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.cg-input-file::file-selector-button {
+    background: rgba(var(--darcula-bg), 0.7);
+    color: rgb(var(--darcula-fg));
+    border: 1px solid rgba(var(--darcula-comment), 0.3);
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-right: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.cg-input-file::file-selector-button:hover {
+    background: rgba(var(--darcula-blue), 0.15);
+    border-color: rgba(var(--darcula-blue), 0.4);
+    color: rgb(var(--darcula-blue));
+}
+
+.cg-input-file:hover {
+    border-color: rgba(var(--darcula-blue), 0.5);
+}
+
+/* ===========================
+   3. RESPONSIVITÀ
+   =========================== */
+
+/* Laptop e Tablet */
+@media (max-width: 768px) {
+    .profile-actions {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+    .profile-actions {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .profile-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -24,6 +24,10 @@
         rel="stylesheet" />
     <link rel="stylesheet" href="/src/css/style.css" />
     <link rel="stylesheet" href="/src/css/profile_page/profile_page.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/profile_stats.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/profile_side_panels.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/profile_action_buttons.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/edit_profile_modal.css" />
 
     <script>
         // Reindirizza alla pagina di login se l'utente non è autenticato
@@ -153,6 +157,10 @@
 
                             <!-- Immagine profilo dell'utente -->
                             <div class="profile-main-avatar-wrapper">
+                                <svg class="xp-ring" viewBox="0 0 36 36">
+                                    <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
+                                    <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress-profile"></circle>
+                                </svg>
                                 <img src="/frontend/src/assets/img/user_profile.webp"
                                     alt="Main Avatar" class="profile-main-avatar" id="page-avatar">
                             </div>

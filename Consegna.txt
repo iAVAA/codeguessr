@@ -7,3 +7,4 @@ profile_page.html: 1 TODO MANCANTE
 css/game_page
 css/leaderboard_page
 css/match_page
+css/profile_page

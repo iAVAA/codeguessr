@@ -98,7 +98,6 @@
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 6px;
 }
 
 .btn-challenge:hover {
