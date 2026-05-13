@@ -1310,40 +1310,53 @@ app.get('/api/search/:nome', async (req, res) => {
 app.post('/api/registrazione', async (req, res) => {
     const { email, password, nickname } = req.body;
 
-    // Validazione campi obbligatori
     if (!email || !password || !nickname) {
         return res.status(400).json({ errore: 'Email, password e nickname sono obbligatori.' });
     }
 
-    try {
-        // Passo 1: Registrazione autenticazione su Supabase
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-            email,
-            password,
-        });
+    let nuovoIdGiocatore = null;
 
+    try {
+        // Check email già esistente
+        const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
         if (authError) throw authError;
 
-        const nuovoIdGiocatore = authData.user.id;
+        nuovoIdGiocatore = authData.user.id;
 
-        // Passo 2: Creazione profilo nella tabella giocatore
         const { error: dbError } = await supabase
             .from('giocatore')
-            .insert([{
-                id_giocatore: nuovoIdGiocatore,
-                nickname: nickname
-            }]);
+            .insert([{ id_giocatore: nuovoIdGiocatore, nickname }]);
 
-        if (dbError) throw dbError;
+        if (dbError) {
+            // ✅ Rollback: elimina l'utente appena creato nell'auth
+            await supabase.auth.admin.deleteUser(nuovoIdGiocatore);
 
-        res.status(201).json({
+            // Messaggio più specifico per nickname duplicato
+            if (dbError.code === '23505') {
+                return res.status(400).json({ errore: 'Nickname già in uso.' });
+            }
+            throw dbError;
+        }
+
+        const risposta = {
             messaggio: 'Registrazione completata con successo!',
             user: nuovoIdGiocatore,
-            token: data.session.access_token,
-            refresh_token: data.session.refresh_token
-        });
+        };
+
+        if (authData.session) {
+            risposta.token = authData.session.access_token;
+            risposta.refresh_token = authData.session.refresh_token;
+        } else {
+            risposta.messaggio = "Registrazione completata! Controlla la tua email per confermare l'account.";
+        }
+
+        res.status(201).json(risposta);
 
     } catch (errore) {
+        // ✅ Rollback anche in caso di errori inattesi
+        if (nuovoIdGiocatore) {
+            await supabase.auth.admin.deleteUser(nuovoIdGiocatore);
+        }
         console.error("Errore durante la registrazione:", errore.message);
         res.status(400).json({ errore: errore.message });
     }
