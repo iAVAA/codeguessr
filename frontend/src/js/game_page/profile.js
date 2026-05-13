@@ -4,32 +4,15 @@
  */
 
 import { getSession, fetchAuth } from '../managers/auth.js';
+import { setXpProgress, updateNavbarUI, XP_PER_LEVEL } from '../utils/ui_utils.js';
 
 
-const XP_PER_LEVEL = 500;
+// XP_PER_LEVEL is now imported
 
 // ─── XP Ring ─────────────────────────────────────────────────────────────────
 
 let lastPct = 0;
-function setXpProgress(pct) {
-  const ring = document.getElementById('xp-ring-progress');
-  if (!ring) return;
-  const r = 17;
-  const circumference = 2 * Math.PI * r;
-
-  if (pct < lastPct) {
-    // Evitiamo che l'animazione torni indietro in senso antiorario al level up
-    ring.style.transition = 'none';
-    ring.style.strokeDashoffset = circumference;
-    ring.getBoundingClientRect(); // Forza il reflow
-    ring.style.transition = ''; // Ripristina la transizione dal CSS
-  }
-  lastPct = pct;
-
-  setTimeout(() => {
-    ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
-  }, 2000);
-}
+// setXpProgress is now imported
 
 // ─── Missioni Dinamiche ───────────────────────────────────────────────────────
 
@@ -178,16 +161,17 @@ function showProfile() {
 
 function updateProfileUI({ name, level, cups, xpPercent, avatar, missions, friends }) {
   const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-
-  setText('player-name', name);
   setText('hero-welcome-name', name);
-  setText('player-level', level);
-  setText('player-cups', cups.toLocaleString('it-IT'));
 
-  const avatarEl = document.getElementById('player-avatar');
-  if (avatarEl) avatarEl.src = avatar;
+  // Aggiorna la navbar (gestisce anche setXpProgress dell'anello navbar)
+  updateNavbarUI({
+    user: name,
+    livello: level,
+    trophies: cups,
+    exp: (xpPercent * XP_PER_LEVEL) / 100, // Ricostruiamo l'exp per updateNavbarUI
+    avatar_url: avatar
+  });
 
-  setXpProgress(xpPercent);
   renderMissions(missions);
   renderFriends(friends);
 }

@@ -13,3 +13,4 @@ index.html
 
 File Javascript
 index.Javascript
+js/leaderboard_page
