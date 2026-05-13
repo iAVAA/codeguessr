@@ -108,7 +108,7 @@ async function renderFriendSearchResults(resultsNode, query) {
 
 /* Inizializza il modal di ricerca amici */
 function initAddFriendSearch() {
-    // 🚀 SCARICA LE AMICIZIE SUBITO ALL'AVVIO DELLA PAGINA!
+    // SCARICA LE AMICIZIE SUBITO ALL'AVVIO DELLA PAGINA!
     caricaRelazioni();
 
     const openBtn = document.getElementById('btn-add-friend');
