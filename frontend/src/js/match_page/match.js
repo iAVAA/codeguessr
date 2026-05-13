@@ -70,7 +70,7 @@ function updateTitleBar(snippet) {
   if (!titleEl) return;
 
   const fileName = snippet.source
-    ? snippet.source.split('—').pop().trim().split('/').pop()
+    ? snippet.source.split('-').pop().trim().split('/').pop()
     : `snippet.${snippet.monacoLang}`;
 
   titleEl.innerHTML =
@@ -78,7 +78,7 @@ function updateTitleBar(snippet) {
     ` &nbsp;<span style="color:rgb(var(--darcula-green));font-size:0.7em;font-family:'JetBrains Mono',monospace;` +
     `background:rgba(var(--darcula-green),0.12);border:1px solid rgba(var(--darcula-green),0.3);` +
     `border-radius:6px;padding:1px 7px;vertical-align:middle;">${snippet.monacoLang.toUpperCase()}</span>` +
-    ` &nbsp;— Visual Studio Code`;
+    ` &nbsp;- Visual Studio Code`;
 }
 
 function setEditorContent(snippet) {
@@ -283,7 +283,7 @@ function showEndGame() {
   if (myHealth >= oppHealth) {
     result = 'vittoria';
     title = 'VITTORIA!';
-    subtitle = myHealth === oppHealth ? `Entrambi con ${myHealth} HP — Vittoria per tutti!` : `Hai vinto con ${myHealth} HP rimasti!`;
+    subtitle = myHealth === oppHealth ? `Entrambi con ${myHealth} HP - Vittoria per tutti!` : `Hai vinto con ${myHealth} HP rimasti!`;
     icon = 'bi-trophy-fill';
     badgeClass = 'end-result--win';
     expEarned = 100 + Math.round(myHealth / 2);

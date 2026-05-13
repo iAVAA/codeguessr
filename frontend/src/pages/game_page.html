@@ -121,7 +121,7 @@
                                 <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
                                 <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"></circle>
                             </svg>
-                            <img src="/frontend/src/assets/img/user_profile.webp"
+                            <img src="/src/assets/img/user_profile.webp"
                                 alt="Player avatar" class="profile-avatar" id="player-avatar" />
                         </div>
 
@@ -134,7 +134,7 @@
                         <a href="/profilo" class="dropdown-item">
                             <i class="bi bi-person-fill"></i> Il mio Profilo
                         </a>
-                        <a href="/classifica" class="dropdown-item">
+                        <a href="/classifica" class="dropdown-item leaderboard">
                             <i class="bi bi-award-fill"></i> Classifica
                         </a>
                         <button class="dropdown-item" id="menu-btn-settings">
@@ -586,14 +586,14 @@
         </script>
 
         <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-        <script src="src/js/game_page/ui.js"></script>
+        <script type="module" src="src/js/game_page/ui.js"></script>
         <script src="src/js/game_page/typing.js"></script>
         <script src="src/js/managers/auth.js"></script>
         <script src="src/js/managers/theme.js"></script>
         <script src="src/js/managers/sound.js"></script>
         <script src="src/js/managers/settings.js"></script>
-        <script type="module" src="src/js/game_page/profile.js"></script>
-        <script type="module" src="src/js/game_page/multiplayer_modal.js"></script>
+        <script type="module" src="src/js/game_page/profile_page.js"></script>
+        <script type="module" src="src/js/game_page/multiplayer_ui.js"></script>
     </body>
 
 </html>
