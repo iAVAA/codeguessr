@@ -1,0 +1,141 @@
+/*
+	FILE: _noscript.css
+	DESCRIPTION: Pagina di fallback mostrata quando JavaScript è disabilitato.
+	AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   CONTENITORE PRINCIPALE
+   Fixed su tutta la viewport, z-index massimo per sovrastare tutto.
+   =========================== */
+#noscript-wall {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1.5rem;
+	background: rgb(var(--darcula-bg));
+	padding: 2rem;
+	text-align: center;
+	z-index: 999999;
+}
+
+/* Logo del sito */
+.ns-logo {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0.5rem;
+}
+
+.ns-logo img {
+	width: 40px;
+	height: 40px;
+}
+
+.ns-logo span {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 1.2rem;
+	font-weight: 700;
+	color: rgb(var(--darcula-fg));
+	letter-spacing: -0.02em;
+}
+
+.ns-logo span b {
+	color: rgb(var(--darcula-green));
+}
+
+/* Icona di avviso */
+.ns-icon-wrap {
+	width: 80px;
+	height: 80px;
+	border-radius: 30px;
+	background: rgba(var(--darcula-red), 0.12);
+	color: rgb(var(--darcula-red));
+	border: 1px solid rgba(var(--darcula-red), 0.35);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 2.2rem;
+}
+
+/* Titolo della pagina di errore */
+.ns-title {
+	font-size: 1.5rem;
+	font-weight: 800;
+	color: rgb(var(--darcula-fg));
+	margin: 0;
+	letter-spacing: -0.03em;
+}
+
+.ns-title span {
+	color: rgb(var(--darcula-red));
+}
+
+/* Descrizione  */
+.ns-desc {
+	max-width: 420px;
+	font-size: 0.95rem;
+	line-height: 1.7;
+	color: rgb(var(--darcula-comment));
+	margin: 0;
+}
+
+/* Blocco codice con istruzioni per abilitare JS */
+.ns-code {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 0.9rem;
+	background: rgba(var(--darcula-current), 0.5);
+	border: 1px solid rgba(var(--darcula-comment), 0.2);
+	border-left: 3px solid rgb(var(--darcula-red));
+	border-radius: 30px;
+	padding: 1rem 1.25rem;
+	color: rgb(var(--darcula-comment));
+	max-width: 420px;
+	text-align: left;
+	line-height: 1.8;
+}
+
+.ns-code .c-kw {
+	color: rgb(var(--darcula-orange));
+}
+
+/* Nome Browser */
+.ns-code .c-val {
+	color: rgb(var(--darcula-green));
+}
+
+/* Commento */
+.ns-code .c-dim {
+	color: rgba(var(--darcula-comment), 0.7);
+}
+
+/* Link a risorse esterne */
+.ns-links {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.ns-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.55rem 1.1rem;
+	border-radius: 10px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	text-decoration: none;
+	border: 1px solid rgba(var(--darcula-green), 0.35);
+	color: rgb(var(--darcula-green));
+	background: rgba(var(--darcula-green), 0.08);
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.ns-link:hover {
+	background: rgba(var(--darcula-green), 0.16);
+	border-color: rgba(var(--darcula-green), 0.55);
+}

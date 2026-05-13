@@ -1,0 +1,61 @@
+/*
+	FILE: _utilities.css
+	DESCRIPTION: Classi di utilità globali riutilizzabili (bottone danger, hover sui nomi amici, etc...)
+	AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* BOTTONE DANGER */
+.cg-btn-danger {
+	background: rgba(var(--darcula-red), 0.15);
+	color: rgb(var(--darcula-red));
+	border: 1px solid rgba(var(--darcula-red), 0.3);
+	border-radius: 8px;
+	padding: 8px 16px;
+	font-size: 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	transition: all 0.2s ease;
+}
+
+.cg-btn-danger:hover {
+	background: rgb(var(--darcula-red));
+	color: #fff;
+	box-shadow: 0 4px 12px rgba(var(--darcula-red), 0.3);
+}
+
+/* ===========================
+   HOVER NOMI - Amici & Risultati Ricerca
+   Nomi cliccabili con underline al hover.
+   =========================== */
+.friend-name,
+.profile-friend-name,
+.cg-search-result-name {
+	cursor: pointer;
+	transition: color 0.2s ease-in-out;
+}
+
+.friend-name:hover,
+.profile-friend-name:hover,
+.cg-search-result-name:hover {
+	text-decoration: underline;
+	color: rgb(var(--darcula-blue));
+}
+
+/* ===========================
+   Elementi flessibili che non devono uscire dalla viewport.
+   =========================== */
+.game-hero,
+.hero-content {
+	min-width: 0;
+	width: 100%;
+}
+
+/* Il blocco di codice decorativo deve avere overflow nascosto */
+.code-decoration {
+	box-sizing: border-box;
+	overflow-x: hidden;
+	overflow-y: hidden;
+}

@@ -1,0 +1,82 @@
+/*
+	FILE: _base.css
+	DESCRIPTION: box-model globale, body, scrollbar custom e supporto accessibilità per animazioni ridotte.
+	AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ===========================
+   BOX MODEL GLOBALE
+   Evita calcoli manuali di padding/border nella larghezza degli elementi.
+   Le transition globali garantiscono animazioni coerenti al cambio tema.
+   =========================== */
+*, *::before, *::after {
+	box-sizing: border-box;
+	transition:
+		background-color var(--transition-speed),
+		color var(--transition-speed),
+		border-color var(--transition-speed);
+}
+
+/* ===========================
+   ANIMAZIONI RIDOTTE (Accessibilità)
+   Azzera durata di animazioni e transizioni quando l'utente
+   attiva "Animazioni ridotte" nelle impostazioni.
+   =========================== */
+:root.reduced-animations *,
+:root.reduced-animations *::before,
+:root.reduced-animations *::after {
+	animation-duration: 0s !important;
+	animation-iteration-count: 1 !important;
+	transition-duration: 0s !important;
+	scroll-behavior: auto !important;
+}
+
+/*
+	Fix specifico per il dropdown di profilo con animazioni ridotte:
+	mantiene un piccolo delay sulla visibilità per evitare un flash
+	immediato che potrebbe disorientare l'utente.
+*/
+:root.reduced-animations .profile-dropdown-menu {
+	transition: visibility 0s 0.15s, opacity 0s 0.15s, transform 0s 0.15s !important;
+}
+:root.reduced-animations .profile-dropdown-wrapper:hover .profile-dropdown-menu,
+:root.reduced-animations .profile-dropdown-wrapper.active .profile-dropdown-menu {
+	transition-delay: 0s !important;
+}
+
+/* ===========================
+   HTML E BODY
+   =========================== */
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	font-family: 'Inter', sans-serif;
+	background-color: rgb(var(--darcula-bg));
+	color: rgb(var(--darcula-fg));
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	overflow-x: hidden;
+}
+
+/* Assicura che il footer rimanga sempre in fondo alla pagina (flex layout) */
+main {
+	flex: 1 0 auto;
+}
+
+/* ===========================
+   Scrollbar sottile e tematica per browser Chromium/Safari.
+   =========================== */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: rgb(var(--darcula-bg)); }
+::-webkit-scrollbar-thumb {
+	background: rgba(var(--darcula-comment), 0.5);
+	border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(var(--darcula-blue), 0.4);
+}
