@@ -1,0 +1,124 @@
+/*
+	FILE: _footer.css
+	DESCRIPTION: Stili per il footer del sito: layout, icone social, testo, etc...
+	AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   FOOTER PRINCIPALE
+   La pseudo-classe ::before aggiunge una linea di separazione superiore.
+   =========================== */
+.site-footer {
+	background: rgba(var(--darcula-current), 0.78);
+	padding: 1rem 2rem;
+	position: relative;
+}
+
+.site-footer::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: rgba(var(--darcula-comment), 0.2);
+}
+
+/* ===========================
+   LAYOUT
+   =========================== */
+.footer-bottom {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.footer-copy {
+	font-size: 0.78rem;
+	color: rgb(var(--darcula-comment));
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+
+/* Badge versione */
+.footer-version {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 0.68rem;
+	color: rgba(var(--darcula-green), 0.9);
+	background: rgba(var(--darcula-green), 0.08);
+	border: 1px solid rgba(var(--darcula-green), 0.25);
+	border-radius: 10px;
+	padding: 1px 8px;
+	letter-spacing: 0.4px;
+}
+
+.footer-links-inline {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+/* ===========================
+	TESTI
+   =========================== */
+.footer-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: rgb(var(--darcula-fg));
+	font-weight: 500;
+}
+
+.footer-brand strong {
+	color: rgb(var(--darcula-fg));
+	font-weight: 700;
+}
+
+.footer-authors {
+	color: rgb(var(--darcula-comment));
+}
+
+.footer-sep {
+	color: rgba(var(--darcula-comment), 0.4);
+}
+
+.footer-license {
+	color: rgb(var(--darcula-blue));
+	text-decoration: none;
+	transition: opacity 0.2s;
+}
+
+.footer-license:hover {
+	opacity: 0.8;
+	text-decoration: underline;
+}
+
+/* ===========================
+   ICONE SOCIAL
+   =========================== */
+.social-btn {
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	background: rgba(var(--darcula-bg), 0.5);
+	border: 1px solid rgba(var(--darcula-comment), 0.18);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: rgb(var(--darcula-comment));
+	font-size: 0.85rem;
+	text-decoration: none;
+	transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.social-btn:hover {
+	background: rgba(var(--darcula-blue), 0.18);
+	border-color: rgba(var(--darcula-blue), 0.55);
+	color: rgb(var(--darcula-blue));
+	transform: translateY(-2px) scale(1.08);
+	box-shadow: 0 4px 14px rgba(var(--darcula-blue), 0.25);
+}

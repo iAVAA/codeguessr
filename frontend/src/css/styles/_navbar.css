@@ -1,0 +1,280 @@
+/*
+	FILE: _navbar.css
+	DESCRIPTION: Stili per la navbar sticky, il widget del profilo con anello XP e il dropdown di navigazione.
+ 	AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+	NAVBAR
+	Barra di navigazione sticky con effetto blur.
+   =========================== */
+.navbar-codeguessr {
+	background: rgba(var(--darcula-current), 0.78);
+	backdrop-filter: blur(20px) saturate(180%);
+	-webkit-backdrop-filter: blur(20px) saturate(180%);
+	padding: 0.4rem 1.5rem;
+	position: sticky;
+	top: 0;
+	z-index: 1000;
+	border-bottom: 1px solid rgba(var(--darcula-comment), 0.15);
+}
+
+/* ===========================
+	LOGO
+   =========================== */
+.navbar-brand-logo {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	text-decoration: none;
+	margin-left: 10px;
+	transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.navbar-brand-logo:hover {
+	transform: translateY(-1px);
+	opacity: 0.9;
+}
+
+/* Immagine del logo con glow blue */
+.logo-img {
+	width: 38px;
+	height: 38px;
+	object-fit: contain;
+	flex-shrink: 0;
+}
+
+/* Testo "CodeGuessr" in JetBrains Mono */
+.brand-text {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: rgb(var(--darcula-fg));
+	letter-spacing: -0.5px;
+}
+
+/* Parte colorata del nome */
+.brand-accent {
+	color: rgb(var(--darcula-green));
+}
+
+/* ===========================
+	PROFILE WIDGET
+	Contenitore cliccabile per aprire il dropdown del profilo.
+   =========================== */
+.profile-widget {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	cursor: pointer;
+	padding: 6px 8px 6px 14px;
+	border-radius: 16px;
+	border: 1px solid transparent;
+	transition: background 0.2s, border-color 0.2s;
+	background: transparent;
+}
+
+.profile-widget:hover {
+	background: rgba(var(--darcula-comment), 0.1);
+	border-color: rgba(var(--darcula-comment), 0.2);
+}
+
+/* ===========================
+	AVATAR CON ANELLO XP
+	L'anello SVG circolare mostra il progresso XP del livello.
+   =========================== */
+.profile-avatar-wrapper {
+	position: relative;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+/* SVG dell'anello */
+.xp-ring {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	transform: rotate(-90deg);
+	pointer-events: none;
+}
+
+/* Traccia di fondo dell'anello */
+.xp-ring-bg {
+	fill: none;
+	stroke: rgba(var(--darcula-comment), 0.5);
+	stroke-width: 1.5;
+}
+
+/* Arco di riempimento (aggiornato via JS) */
+.xp-ring-fill {
+	fill: none;
+	stroke: rgb(var(--darcula-green));
+	stroke-width: 1.5;
+	stroke-linecap: round;
+	stroke-dasharray: 106.81;
+	stroke-dashoffset: 106.81; /* circumferenza r=17: 2pi*r = 106.81 */
+	transition: stroke-dashoffset 1s ease, stroke 0.3s ease;
+}
+
+/* Avatar circolare dell'utente */
+.profile-avatar {
+	width: 38px;
+	height: 38px;
+	border-radius: 50%;
+	object-fit: cover;
+	z-index: 1;
+}
+
+/* Freccia che ruota */
+.profile-chevron {
+	font-size: 0.7rem;
+	color: rgb(var(--darcula-comment));
+	transition: transform 0.3s ease;
+}
+
+/* ===========================
+	INFORMAZIONI PROFILO NELLA NAVBAR
+   =========================== */
+.profile-info {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+}
+
+.profile-name {
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: rgb(var(--darcula-fg));
+	line-height: 1.2;
+}
+
+.profile-stats {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.75rem;
+	color: rgb(var(--darcula-comment));
+	font-weight: 500;
+	margin-top: 2px;
+}
+
+.stat-tier {
+	color: rgb(var(--darcula-green));
+}
+
+.stat-divider {
+	color: rgba(var(--darcula-comment), 0.4);
+}
+
+/* Icona trofeo nel widget */
+.profile-cups i {
+	color: rgb(var(--darcula-yellow));
+	margin-right: 4px;
+}
+
+/* ===========================
+	PROFILE DROPDOWN
+	Menu a tendina che appare al hover (desktop) o click (mobile).
+   =========================== */
+.profile-dropdown-wrapper {
+	position: relative;
+}
+
+.profile-dropdown-menu {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	width: 200px;
+	background: rgb(var(--darcula-current));
+	border: 1px solid rgba(var(--darcula-comment), 0.2);
+	border-radius: 12px;
+	padding: 0.5rem;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+	z-index: 1050;
+
+	/* Stato iniziale: nascosto con animazione slide-down */
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-10px);
+	transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Apertura via classe .active (mobile / click JS) */
+.profile-dropdown-wrapper.active .profile-dropdown-menu {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+}
+
+.profile-dropdown-wrapper.active .profile-chevron {
+	transform: rotate(180deg);
+}
+
+/* CONTENUTO DEL DROPDOWN */
+.profile-dropdown-menu .dropdown-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 0.6rem 1rem;
+	font-size: 0.85rem;
+	font-weight: 500;
+	color: rgb(var(--darcula-fg));
+	border-radius: 8px;
+	text-decoration: none;
+	transition: background 0.2s, color 0.2s;
+	background: transparent;
+}
+
+.profile-dropdown-menu .dropdown-item i {
+	font-size: 1.05rem;
+	color: rgb(var(--darcula-comment));
+	transition: color 0.2s;
+}
+
+.profile-dropdown-menu .dropdown-item:hover {
+	background: rgba(var(--darcula-blue), 0.15);
+	color: rgb(var(--darcula-blue));
+}
+
+.profile-dropdown-menu .dropdown-item:hover i {
+	color: rgb(var(--darcula-blue));
+}
+
+/* Separatore orizzontale tra sezioni del dropdown */
+.profile-dropdown-menu .dropdown-divider {
+	height: 1px;
+	background: rgba(var(--darcula-comment), 0.15);
+	margin: 0.4rem 0;
+}
+
+/* Variante rossa - Logout */
+.profile-dropdown-menu .dropdown-item.text-danger { color: rgb(var(--darcula-red)) !important; }
+.profile-dropdown-menu .dropdown-item.text-danger i { color: rgb(var(--darcula-red)) !important; }
+.profile-dropdown-menu .dropdown-item.text-danger:hover { background: rgba(var(--darcula-red), 0.15) !important; }
+
+/* Variante gialla - Leaderboard */
+.profile-dropdown-menu .dropdown-item.leaderboard:hover i { color: rgb(var(--darcula-yellow)); }
+.profile-dropdown-menu .dropdown-item.leaderboard:hover {
+	color: rgb(var(--darcula-yellow));
+	background: rgba(var(--darcula-yellow), 0.15) !important;
+}
+
+/* Apertura al hover su dispositivi con mouse preciso (desktop) */
+@media (hover: hover) and (pointer: fine) {
+	.profile-dropdown-wrapper:hover .profile-dropdown-menu {
+		opacity: 1;
+		visibility: visible;
+		transform: translateY(0);
+	}
+
+	.profile-dropdown-wrapper:hover .profile-chevron {
+		transform: rotate(180deg);
+	}
+}

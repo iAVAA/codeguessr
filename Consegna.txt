@@ -4,13 +4,15 @@ game_page.html
 leaderboard_page.html
 match_page.html
 profile_page.html: 1 TODO MANCANTE
-css/game_page
-css/leaderboard_page
-css/match_page
-css/profile_page
+css/
 index.html
 
+FILE MANCANTI DI CSS
+index-background2.css
 
 File Javascript
 index.Javascript
 js/leaderboard_page
+js/game_page
+js/utils/ui_utils.js
+js/managers/multiplayer.js

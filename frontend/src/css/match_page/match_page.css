@@ -245,6 +245,11 @@
     outline: none;
 }
 
+.guess-input::placeholder {
+    color: rgba(var(--darcula-fg), 0.7);
+    transition: color 0.3s ease;
+}
+
 .guess-btn {
     background: linear-gradient(135deg, rgb(var(--darcula-green)), #2eb872) !important;
     border: none !important;
@@ -264,6 +269,8 @@
 .guess-feedback {
     min-height: 24px;
     font-weight: 500;
+    color: rgba(var(--darcula-comment), 0.8);
+    transition: color 0.3s ease;
 }
 
 
@@ -407,4 +414,12 @@
 .light-mode .guess-input {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
+.light-mode .guess-input::placeholder {
+    color: rgba(var(--darcula-fg), 0.5);
+}
+
+.light-mode .guess-feedback {
+    color: rgba(var(--darcula-fg), 0.7);
 }
