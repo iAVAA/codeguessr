@@ -1338,7 +1338,9 @@ app.post('/api/registrazione', async (req, res) => {
 
         res.status(201).json({
             messaggio: 'Registrazione completata con successo!',
-            user: nuovoIdGiocatore
+            user: nuovoIdGiocatore,
+            token: data.session.access_token,
+            refresh_token: data.session.refresh_token
         });
 
     } catch (errore) {
