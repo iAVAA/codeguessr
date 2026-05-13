@@ -1,152 +1,155 @@
-/**
- * CodeGuessr - typing.js
- * Animazione di digitazione per la decorazione di codice in lobby
- */
+/*
+    FILE: typing.js
+    DESCRIPTION: Gestore di snippet di codice centrale con simulazione di scrittura codice
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
 
+
+/**
+ * Array di snippet di codice da mostrare a rotazione.
+ * Ogni snippet ha un titolo (mostrato sulla finestra) e un array di "tokens".
+ * Ogni token ha:
+ *  - t: il testo da scrivere
+ *  - c: la classe CSS per il colore (es: 'kw' per keyword, 'fn' per function, ecc.)
+ */
 const SNIPPETS = [
-  {
-    title: 'App.js',
-    tokens: [
-      { t: 'function ', c: 'kw' }, { t: 'fizzBuzz', c: 'fn' }, { t: '(' },
-      { t: 'n', c: 'vbl' }, { t: ') {\n  ' }, { t: 'return ', c: 'cf' },
-      { t: 'Array', c: 'ty' }, { t: '.' }, { t: 'from', c: 'fn' },
-      { t: '({ ' }, { t: 'length', c: 'vbl' }, { t: ': ' }, { t: 'n', c: 'vbl' },
-      { t: ' }, (' }, { t: '_', c: 'vbl' }, { t: ', ' }, { t: 'i', c: 'vbl' },
-      { t: ') ' }, { t: '=>', c: 'cf' }, { t: ' ' }, { t: 'i', c: 'vbl' },
-      { t: ' + ' }, { t: '1', c: 'num' }, { t: ')\n    .' }, { t: 'map', c: 'fn' },
-      { t: '(' }, { t: 'x', c: 'vbl' }, { t: ' ' }, { t: '=>', c: 'cf' },
-      { t: ' {\n      ' }, { t: 'if ', c: 'cf' }, { t: '(' }, { t: 'x', c: 'vbl' },
-      { t: ' % ' }, { t: '15', c: 'num' }, { t: ' === ' }, { t: '0', c: 'num' },
-      { t: ') ' }, { t: 'return ', c: 'cf' }, { t: '"FizzBuzz"', c: 'str' },
-      { t: ';\n      ' }, { t: 'if ', c: 'cf' }, { t: '(' }, { t: 'x', c: 'vbl' },
-      { t: ' % ' }, { t: '3', c: 'num' }, { t: ' === ' }, { t: '0', c: 'num' },
-      { t: ') ' }, { t: 'return ', c: 'cf' }, { t: '"Fizz"', c: 'str' },
-      { t: ';\n      ' }, { t: 'if ', c: 'cf' }, { t: '(' }, { t: 'x', c: 'vbl' },
-      { t: ' % ' }, { t: '5', c: 'num' }, { t: ' === ' }, { t: '0', c: 'num' },
-      { t: ') ' }, { t: 'return ', c: 'cf' }, { t: '"Buzz"', c: 'str' },
-      { t: ';\n      ' }, { t: 'return ', c: 'cf' }, { t: 'x', c: 'vbl' },
-      { t: ';\n    });\n}' },
-    ],
-  },
-  {
-    title: 'api.py',
-    tokens: [
-      { t: 'def ', c: 'kw' }, { t: 'fetch_data', c: 'fn' }, { t: '(' },
-      { t: 'url', c: 'vbl' }, { t: '):\n  ' }, { t: 'response', c: 'vbl' },
-      { t: ' = ' }, { t: 'requests', c: 'vbl' }, { t: '.' },
-      { t: 'get', c: 'fn' }, { t: '(' }, { t: 'url', c: 'vbl' }, { t: ')\n  ' },
-      { t: 'if ', c: 'cf' }, { t: 'response', c: 'vbl' }, { t: '.' },
-      { t: 'status_code', c: 'vbl' }, { t: ' == ' }, { t: '200', c: 'num' },
-      { t: ':\n    ' }, { t: 'return ', c: 'cf' }, { t: 'response', c: 'vbl' },
-      { t: '.' }, { t: 'json', c: 'fn' }, { t: '()' },
-    ],
-  },
-  {
-    title: 'utils.js',
-    tokens: [
-      { t: 'const ', c: 'kw' }, { t: 'debounce', c: 'fn' }, { t: ' = (' },
-      { t: 'fn', c: 'vbl' }, { t: ', ' }, { t: 'delay', c: 'vbl' },
-      { t: ') ' }, { t: '=>', c: 'cf' }, { t: ' {\n  ' }, { t: 'let ', c: 'kw' },
-      { t: 'timer', c: 'vbl' }, { t: ';\n  ' }, { t: 'return ', c: 'cf' },
-      { t: '(...' }, { t: 'args', c: 'vbl' }, { t: ') ' }, { t: '=>', c: 'cf' },
-      { t: ' {\n    ' }, { t: 'clearTimeout', c: 'fn' }, { t: '(' },
-      { t: 'timer', c: 'vbl' }, { t: ');\n    ' }, { t: 'timer', c: 'vbl' },
-      { t: ' = ' }, { t: 'setTimeout', c: 'fn' }, { t: '(() ' },
-      { t: '=>', c: 'cf' }, { t: ' ' }, { t: 'fn', c: 'fn' }, { t: '(...' },
-      { t: 'args', c: 'vbl' }, { t: '), ' }, { t: 'delay', c: 'vbl' },
-      { t: ');\n  };\n}' },
-    ],
-  },
-  {
-    title: 'math.go',
-    tokens: [
-      { t: 'func ', c: 'kw' }, { t: 'Max', c: 'fn' }, { t: '(' },
-      { t: 'a', c: 'vbl' }, { t: ', ' }, { t: 'b', c: 'vbl' }, { t: ' ' },
-      { t: 'int', c: 'ty' }, { t: ') ' }, { t: 'int', c: 'ty' }, { t: ' {\n  ' },
-      { t: 'if ', c: 'cf' }, { t: 'a', c: 'vbl' }, { t: ' > ' },
-      { t: 'b', c: 'vbl' }, { t: ' {\n    ' }, { t: 'return ', c: 'cf' },
-      { t: 'a', c: 'vbl' }, { t: '\n  }\n  ' }, { t: 'return ', c: 'cf' },
-      { t: 'b', c: 'vbl' }, { t: '\n}' },
-    ],
-  },
-  {
-    title: 'main.rs',
-    tokens: [
-      { t: 'fn ', c: 'kw' }, { t: 'fib', c: 'fn' }, { t: '(' },
-      { t: 'n', c: 'vbl' }, { t: ': ' }, { t: 'u32', c: 'ty' },
-      { t: ') -> ' }, { t: 'u32', c: 'ty' }, { t: ' {\n  ' },
-      { t: 'match ', c: 'cf' }, { t: 'n', c: 'vbl' }, { t: ' {\n    ' },
-      { t: '0', c: 'num' }, { t: ' => ' }, { t: '0', c: 'num' }, { t: ',\n    ' },
-      { t: '1', c: 'num' }, { t: ' => ' }, { t: '1', c: 'num' }, { t: ',\n    ' },
-      { t: '_', c: 'kw' }, { t: ' => ' }, { t: 'fib', c: 'fn' }, { t: '(' },
-      { t: 'n', c: 'vbl' }, { t: ' - ' }, { t: '1', c: 'num' }, { t: ') + ' },
-      { t: 'fib', c: 'fn' }, { t: '(' }, { t: 'n', c: 'vbl' }, { t: ' - ' },
-      { t: '2', c: 'num' }, { t: ')\n  }\n}' },
-    ],
-  },
+	{
+		title: 'hello.js',
+		tokens: [
+			{ t: 'function ', c: 'kw' }, { t: 'sayHello', c: 'fn' }, { t: '() {\n  ' },
+			{ t: 'console', c: 'vbl' }, { t: '.' }, { t: 'log', c: 'fn' }, { t: '(' },
+			{ t: '"Hello, CodeGuessr!"', c: 'str' }, { t: ');\n}' },
+		],
+	},
+	{
+		title: 'math.py',
+		tokens: [
+			{ t: 'def ', c: 'kw' }, { t: 'add', c: 'fn' }, { t: '(' },
+			{ t: 'a', c: 'vbl' }, { t: ', ' }, { t: 'b', c: 'vbl' }, { t: '):\n  ' },
+			{ t: 'return ', c: 'cf' }, { t: 'a', c: 'vbl' }, { t: ' + ' }, { t: 'b', c: 'vbl' },
+		],
+	},
+	{
+		title: 'check.js',
+		tokens: [
+			{ t: 'const ', c: 'kw' }, { t: 'isEven', c: 'fn' }, { t: ' = ' },
+			{ t: 'n', c: 'vbl' }, { t: ' => ' }, { t: 'n', c: 'vbl' }, { t: ' % ' },
+			{ t: '2', c: 'num' }, { t: ' === ' }, { t: '0', c: 'num' }, { t: ';' },
+		],
+	},
+	{
+	title: 'greet.ts',
+		tokens: [
+			{ t: 'export const ', c: 'kw' }, { t: 'greet', c: 'fn' }, { t: ' = (' },
+			{ t: 'name', c: 'vbl' }, { t: ': ' }, { t: 'string', c: 'ty' },
+			{ t: ') => ' }, { t: '`Ciao ${', c: 'str' }, { t: 'name', c: 'vbl' },
+			{ t: '}`', c: 'str' }, { t: ';' },
+	],
+	},
+	{
+		title: 'main.c',
+		tokens: [
+			{ t: 'int ', c: 'ty' }, { t: 'main', c: 'fn' }, { t: '() {\n  ' },
+			{ t: 'printf', c: 'fn' }, { t: '(' }, { t: '"Hello World\\n"', c: 'str' },
+			{ t: ');\n  ' }, { t: 'return ', c: 'cf' }, { t: '0', c: 'num' }, { t: ';\n}' },
+	],
+	},
 ];
 
-// ─── Typing Engine ───────────────────────────────────────────────────────────
+// ===== LOGICA DI SCRITTURA CODICE =====
 
+/**
+ * Crea un elemento <span> per un token di codice.
+ * @param {Object} token - L'oggetto token {t, c}.
+ * @returns {HTMLElement} Lo span creato con la classe opportuna.
+ */
 function createSpan(token) {
-  const span = document.createElement('span');
-  if (token.c) span.className = token.c;
-  return span;
+    const span = document.createElement('span');
+    if (token.c) span.className = token.c;
+    return span;
 }
 
+/**
+ * Avvia l'animazione di uno snippet specifico.
+ * @param {HTMLElement} container - Il contenitore HTML dove scrivere il codice.
+ * @param {Array} snippets - L'intero array di snippet disponibili.
+ * @param {number} index - L'indice dello snippet da riprodurre ora.
+ */
 function playSnippet(container, snippets, index) {
-  container.innerHTML = '';
-  container.classList.add('typing-active');
+    // Pulisce il contenitore prima di iniziare
+    container.innerHTML = '';
 
-  const { title, tokens } = snippets[index];
+    // Aggiunge la classe per il cursore lampeggiante (gestito in CSS)
+    container.classList.add('typing-active');
 
-  const titleEl = document.createElement('div');
-  titleEl.className = 'mac-window-title';
-  titleEl.textContent = title;
-  container.appendChild(titleEl);
+    const {
+        title,
+        tokens
+    } = snippets[index];
 
-  let tokenIdx = 0;
-  let charIdx = 0;
-  let currentSpan = null;
+    // Crea e aggiunge il titolo della finestra (stile Mac)
+    const titleEl = document.createElement('div');
+    titleEl.className = 'mac-window-title';
+    titleEl.textContent = title;
+    container.appendChild(titleEl);
 
-  function typeNext() {
-    if (tokenIdx >= tokens.length) {
-      container.classList.remove('typing-active');
-      setTimeout(() => {
-        playSnippet(container, snippets, (index + 1) % snippets.length);
-      }, 5000);
-      return;
+    let tokenIdx = 0; // Indice del token corrente
+    let charIdx = 0; // Indice del carattere corrente all'interno del token
+    let currentSpan = null; // Riferimento allo span in cui stiamo scrivendo ora
+
+    /* Funzione ricorsiva che scrive un carattere alla volta */
+    function typeNext() {
+        // Se abbiamo finito tutti i token dello snippet
+        if (tokenIdx >= tokens.length) {
+            container.classList.remove('typing-active');
+
+            // Aspetta 5 secondi e poi passa allo snippet successivo (in loop)
+            setTimeout(() => {
+                playSnippet(container, snippets, (index + 1) % snippets.length);
+            }, 5000);
+            return;
+        }
+
+        const token = tokens[tokenIdx];
+
+        // Se stiamo iniziando un nuovo token, creiamo un nuovo span
+        if (charIdx === 0) {
+            currentSpan = createSpan(token);
+            container.appendChild(currentSpan);
+        }
+
+        // Aggiunge il carattere corrente allo span
+        currentSpan.textContent += token.t[charIdx];
+        charIdx++;
+
+        // Se abbiamo finito i caratteri di questo token, passiamo al prossimo
+        if (charIdx >= token.t.length) {
+            tokenIdx++;
+            charIdx = 0;
+        }
+
+        /* Calcola un ritardo per simulare una digitazione realistica */
+        const delay = 100;
+
+        // Pianifica la scrittura del prossimo carattere
+        setTimeout(typeNext, delay);
     }
 
-    const token = tokens[tokenIdx];
-
-    if (charIdx === 0) {
-      currentSpan = createSpan(token);
-      container.appendChild(currentSpan);
-    }
-
-    currentSpan.textContent += token.t[charIdx];
-    charIdx++;
-
-    if (charIdx >= token.t.length) {
-      tokenIdx++;
-      charIdx = 0;
-    }
-
-    // Variabilità realistica nella velocità di digitazione
-    const delay = Math.random() * 40 + 20 + (token.t[charIdx - 1] === ' ' ? 30 : 0);
-    setTimeout(typeNext, delay);
-  }
-
-  setTimeout(typeNext, 800);
+    // Inizia la digitazione dopo un breve ritardo per caricare il loader.js
+    setTimeout(typeNext, 2000);
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// ===== INIZIALIZZAZIONE =====
 
+/* Inizializza l'animazione cercando il contenitore nel DOM */
 function initTypingAnimation() {
-  const container = document.querySelector('.code-decoration');
-  if (!container) return;
-  playSnippet(container, SNIPPETS, 0);
+    // Cerca l'elemento con classe .code-decoration (presente in game_page.html)
+    const container = document.querySelector('.code-decoration');
+
+    if (!container) return; // Se non lo trova si ferma
+
+    // Avvia il primo snippet (indice 0)
+    playSnippet(container, SNIPPETS, 0);
 }
 
 initTypingAnimation();
