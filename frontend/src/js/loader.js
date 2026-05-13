@@ -92,13 +92,6 @@ export function initLoader() {
         </svg>
       </div>
 
-      <!-- Pallini rimbalzanti -->
-      <div class="gl-dots" aria-hidden="true">
-        <span class="gl-dot gl-dot--green"  style="animation-delay: 0ms"></span>
-        <span class="gl-dot gl-dot--yellow" style="animation-delay: 150ms"></span>
-        <span class="gl-dot gl-dot--red"    style="animation-delay: 300ms"></span>
-      </div>
-
       <!-- Testo di stato -->
       <div class="gl-status" id="gl-status-text">Caricamento<span class="gl-ellipsis"></span></div>
     `;
