@@ -5,6 +5,7 @@
  */
 
 import { getSession, fetchAuth } from '../managers/auth.js';
+import { setXpProgress, updateNavbarUI, XP_PER_LEVEL } from '../utils/ui_utils.js';
 
 window.handleProfileFriendAction = async function (action, targetUserId) {
     let url = '';
@@ -31,30 +32,12 @@ window.handleProfileFriendAction = async function (action, targetUserId) {
     }
 }
 
-const XP_PER_LEVEL = 500;
+// XP_PER_LEVEL is now imported
 
 // ─── Utility XP Ring ─────────────────────────────────────────────────────────
 
 const lastPctMap = new Map();
-function setXpProgress(pct, ringId = 'xp-ring-progress') {
-    const ring = document.getElementById(ringId);
-    if (!ring) return;
-    const r = 17;
-    const circumference = 2 * Math.PI * r;
-    const lastPct = lastPctMap.get(ringId) || 0;
-
-    if (pct < lastPct) {
-        ring.style.transition = 'none';
-        ring.style.strokeDashoffset = circumference;
-        ring.getBoundingClientRect(); // Forza il reflow
-        ring.style.transition = '';
-    }
-    lastPctMap.set(ringId, pct);
-
-    setTimeout(() => {
-        ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
-    }, 50);
-}
+// setXpProgress is now imported
 
 // ─── Utility: formatta data relativa ────────────────────────────────────────
 
@@ -477,23 +460,7 @@ async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
     }
 }
 // ─── Init ────────────────────────────────────────────────────────────────────
-async function updateNavbar(playerData) {
-    // --- Navbar Profile ---
-    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-
-    setText('player-name', playerData.user);
-    setText('player-level', playerData.livello);
-    setText('player-cups', (playerData.trophies || 0).toLocaleString('it-IT'));
-
-    const navAvatar = document.getElementById('player-avatar');
-    if (navAvatar) {
-        navAvatar.src = playerData.avatar_url || '/src/assets/img/user_profile.webp';
-    }
-
-    const xpPercent = Math.min(100, (playerData.exp % XP_PER_LEVEL) / (XP_PER_LEVEL / 100));
-    setXpProgress(xpPercent);
-
-}
+// updateNavbar is now handled by updateNavbarUI in ui_utils.js
 async function initProfilePage() {
     console.log("🟢 1. Avvio initProfilePage...");
     const session = getSession();
@@ -510,7 +477,7 @@ async function initProfilePage() {
 
     // 2. Apri il pacchetto estraendo i dati veri (AWAIT e PARENTESI!)
     const playerData = await risposta.json();
-    updateNavbar(playerData); // Aggiorna la navbar con i dati del giocatore
+    updateNavbarUI(playerData); // Aggiorna la navbar con i dati del giocatore
 
     try {
         const urlPath = window.location.pathname;
