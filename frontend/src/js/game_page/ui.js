@@ -67,6 +67,7 @@ document.querySelectorAll('.btn-completed-missions, .btn-panel-action')
     });
 
 document.addEventListener('DOMContentLoaded', () => {
+
   document.getElementById('btn-singleplayer')?.addEventListener('click', () => {
     console.log('[CodeGuessr] Starting Single Player…');
     if (typeof showToast === 'function') {
@@ -227,47 +228,35 @@ async function renderFriendSearchResults(resultsNode, query) {
 
 // 5. Inizializzazione degli eventi
 function initAddFriendSearch() {
-    // 🚀 SCARICA LE AMICIZIE SUBITO ALL'AVVIO DELLA PAGINA!
     caricaRelazioni();
 
     const openBtn = document.getElementById('btn-add-friend');
-    const overlay = document.getElementById('friend-search-overlay');
-    const closeBtn = document.getElementById('friend-search-close');
-    const input = document.getElementById('friend-search-input');
+    const modalEl = document.getElementById('friendSearchModal');  // ← nuovo ID
+    const input   = document.getElementById('friend-search-input');
     const results = document.getElementById('friend-search-results');
 
-    if (!openBtn || !overlay || !closeBtn || !input || !results) {
+    if (!openBtn || !modalEl || !input || !results) {
         console.error("ATTENZIONE: Un elemento HTML per la ricerca amici non è stato trovato!");
         return;
     }
 
-    const openModal = () => {
-        overlay.classList.add('open');
-        overlay.setAttribute('aria-hidden', 'false');
-        requestAnimationFrame(() => input.focus());
+    // Bootstrap si occupa di backdrop, ESC e chiusura — noi usiamo la sua API
+    const bsModal = new bootstrap.Modal(modalEl);
+
+    openBtn.addEventListener('click', () => {
         results.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
-    };
-
-    const closeModal = () => {
-        // Togliamo il focus prima di chiudere (risolve il warning di Chrome)
-        if (document.activeElement) document.activeElement.blur(); 
-        overlay.classList.remove('open');
-        overlay.setAttribute('aria-hidden', 'true');
-        input.value = '';
-        results.innerHTML = '';
-    };
-
-    openBtn.addEventListener('click', openModal);
-    closeBtn.addEventListener('click', closeModal);
-
-    overlay.addEventListener('click', (event) => {
-        if (event.target === overlay) closeModal();
+        bsModal.show();
     });
 
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && overlay.classList.contains('open')) {
-            closeModal();
-        }
+    // Quando Bootstrap finisce di aprire il modal → mettiamo il focus sull'input
+    modalEl.addEventListener('shown.bs.modal', () => {
+        input.focus();
+    });
+
+    // Quando Bootstrap chiude il modal → resettiamo input e risultati
+    modalEl.addEventListener('hidden.bs.modal', () => {
+        input.value = '';
+        results.innerHTML = '';
     });
 
     const debouncedSearch = debounce((query) => {

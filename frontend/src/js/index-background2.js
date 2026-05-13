@@ -12,7 +12,7 @@ const INTERVALLO_INSERIMENTO = 1400;
 const container = document.getElementById('codeTrack');
 
 // Dimensione in pixel di ogni cella quadrata
-const cellSize = 100;
+const cellSize = 40;
 
 // Numero di colonne e righe della griglia (calcolati in base allo schermo)
 let cols = 0;
@@ -32,12 +32,12 @@ function initGrid() {
     container.innerHTML = '';
 
     // Calcola quante celle ci stanno in larghezza e in altezza
-    cols = Math.floor(window.innerWidth  / cellSize);
-    rows = Math.floor(window.innerHeight / cellSize);
+    cols = Math.floor(document.documentElement.clientWidth / cellSize);
+    rows = Math.floor(document.documentElement.clientHeight / cellSize);
 
     // Imposta la griglia CSS con il numero di colonne e righe calcolato
-    container.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
-    container.style.gridTemplateRows    = `repeat(${rows}, ${cellSize}px)`;
+    container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
 
     // Costruisce la matrice e crea le celle HTML riga per riga
     grid = [];
