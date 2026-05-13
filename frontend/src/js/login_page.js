@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('loginForm');
+    const alertBox = document.getElementById('ErrorAlert');
+    const goodAlert = document.getElementById('GoodAlert');
+
     form.addEventListener('submit', async (event) => {
 
         event.preventDefault()
@@ -23,12 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const risultato = await risposta.json()
         if(!risposta.ok){
 
-            const alertBox = document.getElementById('ErrorAlert');
+            
             alertBox.classList.remove('d-none');
             alertBox.textContent = risultato.errore;
             setTimeout(() => alertBox.classList.add('d-none'), 5000);
         }else{
-            alert('Login riuscito !: ' + risultato.messaggio);
+            goodAlert.classList.remove('d-none');
+            goodAlert.textContent = 'Login riuscito !: ' + risultato.messaggio;
+            
             localStorage.setItem('id_giocatore', risultato.user); // Salvo l'ID utente per sessioni future
             localStorage.setItem('isLoggedIn', 'true'); // Flag per indicare che l'utente è loggato 
             localStorage.setItem('supabaseToken', risultato.token);
