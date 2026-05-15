@@ -14,5 +14,6 @@ File Javascript
 index.Javascript
 js/leaderboard_page
 js/game_page
+js/match_page
 js/utils/ui_utils.js
 js/managers/multiplayer.js
