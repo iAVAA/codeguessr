@@ -1,140 +1,164 @@
+/*
+    FILE: auth.js
+    DESCRIPTION: Manager dell'autenticazione. Espone utility per gestire la sessione utente (lettura e pulizia localStorage).
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===== GESTORI DI SESSIONE ===== */
+
 /**
- * CodeGuessr - auth.js
- * Gestisce login, logout e utility per cookie/localStorage
- */
-
-// ─── Cookie Utilities ────────────────────────────────────────────────────────
-
-export function getCookie(name) {
-  const parts = `; ${document.cookie}`.split(`; ${name}=`);
-  if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-  return null;
-}
-
-export function setCookie(name, value, days = 7) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
-}
-
-export function deleteCookie(name) {
-  document.cookie = `${name}=; Max-Age=-99999999; path=/;`;
-}
-
-// ─── Session Helpers ─────────────────────────────────────────────────────────
-
+ * Recupera le informazioni della sessione corrente salvate nel localStorage.
+ * @returns {{isLoggedIn: boolean, idGiocatore: string|null, token: string|null}}
+*/
 export function getSession() {
-  return {
-    isLoggedIn: localStorage.getItem('isLoggedIn') === 'true',
-    idGiocatore: localStorage.getItem('id_giocatore'),
-    token: localStorage.getItem('supabaseToken'),
-  };
+    return {
+        isLoggedIn: localStorage.getItem('isLoggedIn') === 'true',
+        idGiocatore: localStorage.getItem('id_giocatore'),
+        token: localStorage.getItem('supabaseToken'),
+    };
 }
 
+/**
+ * Distrugge la sessione corrente rimuovendo tutte le chiavi relative
+ * all'autenticazione dal localStorage.
+ */
 export function clearSession() {
-  localStorage.removeItem('isLoggedIn');
-  localStorage.removeItem('id_giocatore');
-  localStorage.removeItem('supabaseToken');
-  localStorage.removeItem('supabaseRefreshToken');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('id_giocatore');
+    localStorage.removeItem('supabaseToken');
+    localStorage.removeItem('supabaseRefreshToken');
 }
 
-// ─── Token Refresh ────────────────────────────────────────────────────────────
+/* ===== GESTIONE TOKEN (JWT) ===== */
 
 /**
- * Rinnova l'access_token usando il refresh_token salvato.
- * @returns {string|null} Il nuovo access_token, o null se il refresh fallisce.
- */
+ * Tenta di rinnovare l'access_token usando il refresh_token salvato.
+ * Viene chiamata automaticamente da fetchAuth() quando riceve un 401.
+ * 
+ * @returns {Promise<string|null>} Il nuovo access_token, oppure null se fallisce.
+*/
 export async function refreshToken() {
-  const refreshToken = localStorage.getItem('supabaseRefreshToken');
-  if (!refreshToken) return null;
+    const refresh_token = localStorage.getItem('supabaseRefreshToken');
+    
+    // Se non abbiamo un refresh token, l'utente è permanentemente non autenticato
+    if (!refresh_token) return null;
 
-  try {
-    const res = await fetch('/api/refresh-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken })
-    });
+    try {
+        const response = await fetch('/api/refresh-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token })
+        });
 
-    if (!res.ok) {
-      // Refresh fallito: sessione definitivamente scaduta, forza logout
-      clearSession();
-      window.location.href = '/index.html';
-      return null;
+        if (!response.ok) {
+            console.warn('[auth.js] Refresh fallito: sessione definitivamente scaduta. Forza logout.');
+            clearSession();
+            window.location.href = '/index.html';
+            return null;
+        }
+
+        const data = await response.json();
+        
+        // Salva i nuovi token per le chiamate future
+        localStorage.setItem('supabaseToken', data.token);
+        localStorage.setItem('supabaseRefreshToken', data.refresh_token);
+        
+        return data.token;
+    } catch (err) {
+        console.error('[auth.js] Errore di rete durante il refresh token:', err);
+        return null;
     }
-
-    const data = await res.json();
-    localStorage.setItem('supabaseToken', data.token);
-    localStorage.setItem('supabaseRefreshToken', data.refresh_token);
-    return data.token;
-
-  } catch (err) {
-    console.error('[Auth] Errore refresh token:', err);
-    return null;
-  }
 }
 
 /**
- * Wrapper di fetch che aggiunge automaticamente il Bearer token
- * e lo rinnova trasparentemente se è scaduto (risposta 401).
+ * Wrapper di 'fetch' che inietta automaticamente il token Bearer nell'header Authorization.
+ * Se la chiamata fallisce per token scaduto (HTTP 401), esegue trasparentemente
+ * il processo di refresh del token e ripete la richiesta originale.
  *
- * Uso: await fetchAuth('/api/profilo', { method: 'PUT', body: ... })
- */
+ * @param {string} url - Endpoint da chiamare
+ * @param {RequestInit} options - Opzioni della fetch standard
+ * @returns {Promise<Response>} Risposta della fetch
+*/
 export async function fetchAuth(url, options = {}) {
-  let token = localStorage.getItem('supabaseToken');
+    let token = localStorage.getItem('supabaseToken');
 
-  const makeRequest = (t) => fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-      'Authorization': `Bearer ${t}`
+    // Helper per costruire la richiesta con il token attuale
+    const makeRequest = (jwtToken) => fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {}),
+            'Authorization': `Bearer ${jwtToken}`
+        }
+    });
+
+    // Prima esecuzione
+    let response = await makeRequest(token);
+
+    // Se il token risulta scaduto (Unauthorized), tenta il ripristino
+    if (response.status === 401) {
+        console.warn(`[auth.js] Token scaduto chiamando ${url}, tentativo di refresh in corso...`);
+
+        const newToken = await refreshToken();
+
+        // Se il refresh fallisce o non abbiamo un refresh token, ritorniamo il 401 per farlo gestire al chiamante
+        if (!newToken) return response; 
+
+        // Se abbiamo un nuovo token, ripetiamo la chiamata originale
+        console.log(`[auth.js] Refresh completato con successo. Ripeto la chiamata a ${url}`);
+        response = await makeRequest(newToken);
     }
-  });
 
-  let res = await makeRequest(token);
-
-  // Se il token è scaduto, prova a rinnovarlo e riprova la richiesta
-  if (res.status === 401) {
-    console.warn('[Auth] Token scaduto, tentativo di refresh...');
-    const newToken = await refreshToken();
-    if (!newToken) return res; // Refresh fallito, ritorna la risposta 401
-    res = await makeRequest(newToken);
-  }
-
-  return res;
+    return response;
 }
 
+/* === EVENT LISTENER E BINDING UI === */
 
-// ─── UI Binding ──────────────────────────────────────────────────────────────
+/**
+ * Aggancia gli eventi di navigazione e logout agli elementi dell'interfaccia globale (NAVBAR, etc...)
+*/
+function initAuthUI() {
+    // Bottone Logout nel menu a tendina
+    const logoutBtn = document.getElementById('menu-btn-logout');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearSession();
+            window.location.href = '/index.html';
+        });
+    }
 
-function initAuth() {
-  document.getElementById('menu-btn-logout')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    clearSession();
-    window.location.href = '/index.html';
-  });
-
-  // Bottoni header login/registrati (fallback, normalmente nascosti)
-  ['btn-header-login', 'btn-header-signup'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = '/index.html';
+    // Bottoni di login/signup fallback nell'header (solitamente nascosti da CSS se loggati)
+    const headerBtns = ['btn-header-login', 'btn-header-signup'];
+    headerBtns.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = '/index.html';
+            });
+        }
     });
-  });
 
-  // Dropdown mobile: toggle al click, chiudi cliccando fuori
-  const profileDropdownWrapper = document.getElementById('profile-dropdown-wrapper');
-  if (profileDropdownWrapper) {
-    profileDropdownWrapper.addEventListener('click', (e) => {
-      if (e.target.closest('.dropdown-item')) return;
-      profileDropdownWrapper.classList.toggle('active');
-    });
+    // Gestione apertura/chiusura del dropdown profilo (mobile & desktop)
+    const profileDropdownWrapper = document.getElementById('profile-dropdown-wrapper');
+    if (profileDropdownWrapper) {
+        
+        // Toggle sul wrapper
+        profileDropdownWrapper.addEventListener('click', (e) => {
+            // Se clicco su un elemento interno del menu, lascia propagare e non togglare
+            if (e.target.closest('.dropdown-item')) return;
+            profileDropdownWrapper.classList.toggle('active');
+        });
 
-    document.addEventListener('click', (e) => {
-      if (!profileDropdownWrapper.contains(e.target)) {
-        profileDropdownWrapper.classList.remove('active');
-      }
-    });
-  }
+        // Chiudi se si clicca fuori dal dropdown
+        document.addEventListener('click', (e) => {
+            if (!profileDropdownWrapper.contains(e.target)) {
+                profileDropdownWrapper.classList.remove('active');
+            }
+        });
+    }
 }
 
-initAuth();
+// Inizializza automaticamente i listener UI quando il modulo viene importato
+initAuthUI();
