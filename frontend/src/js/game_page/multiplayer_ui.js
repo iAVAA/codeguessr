@@ -29,23 +29,10 @@ function notify(message, color = 'blue') {
 function ensureInviteUI() {
     if (inviteOverlay) return;
 
-    inviteOverlay = document.createElement('div');
-    inviteOverlay.id = 'cg-challenge-invite-overlay';
-    inviteOverlay.className = 'cg-challenge-invite-overlay';
-    inviteOverlay.innerHTML = `
-        <div class="cg-challenge-invite-card" role="dialog" aria-modal="true" aria-labelledby="cg-challenge-invite-title">
-            <div class="cg-challenge-invite-icon"><i class="bi bi-bell-fill"></i></div>
-            <h3 id="cg-challenge-invite-title" class="cg-challenge-invite-title">Sfida in arrivo</h3>
-            <p class="cg-challenge-invite-text">Un giocatore ti ha invitato a una partita.</p>
-            <div class="cg-challenge-invite-actions">
-                <button type="button" class="cg-challenge-btn cg-challenge-btn--ghost" id="cg-challenge-reject">Rifiuta</button>
-                <button type="button" class="cg-challenge-btn cg-challenge-btn--accept" id="cg-challenge-accept">Accetta</button>
-            </div>
-        </div>
-    `;
+    inviteOverlay = document.getElementById('cg-challenge-invite-overlay');
+    if (!inviteOverlay) return;
 
-    document.body.appendChild(inviteOverlay);
-    inviteTitle = inviteOverlay.querySelector('.cg-challenge-invite-text');
+    inviteTitle = document.getElementById('cg-challenge-invite-text');
 
     // Evento se l'utente accetta la sfida
     inviteOverlay.querySelector('#cg-challenge-accept')?.addEventListener('click', () => {

@@ -407,6 +407,26 @@
         </div>
         <!-- ===== FINE FINESTRA MODALE: Conferma Eliminazione Profilo ===== -->
 
+        <!-- ===== INIZIO FINESTRA MODALE: Fine Partita ===== -->
+        <div class="end-game-overlay" id="end-game-overlay">
+            <div class="end-game-card p-4 p-lg-5 text-center d-flex flex-column align-items-center gap-3" id="end-game-card">
+                <i class="bi bi-trophy end-game-icon" id="end-game-icon"></i>
+                <h1 class="end-game-title" id="end-game-title">Fine Partita</h1>
+                <p class="end-game-subtitle" id="end-game-subtitle">Partita conclusa.</p>
+                <div id="end-game-hp-section" class="w-100"></div>
+                <div id="end-game-rewards-section" class="w-100"></div>
+                <div class="d-flex gap-3 mt-2 flex-wrap justify-content-center">
+                    <a href="/home" class="btn btn-outline-light rounded-pill px-4 py-2">
+                        <i class="bi bi-house-fill me-2"></i>Home
+                    </a>
+                    <a href="/match" class="btn btn-primary rounded-pill px-4 py-2">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Rigioca
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- ===== FINE FINESTRA MODALE: Fine Partita ===== -->
+
         <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"
             integrity="sha384-kzavj5fiMwLKzzD1f8S7TeoVIEi7uKHvbTA3ueZkrzYq75pNQUiUi6Dy98Q3fxb0"
             crossorigin="anonymous"></script>

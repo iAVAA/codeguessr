@@ -166,8 +166,8 @@ function _loadBotProfile() {
     const diff = settings.difficulty ?? 'normal';
 
     const botNames = { easy: 'EasyBot', normal: 'CodeBot', hard: 'HardCore' };
-    const botLvls  = { easy: 5, normal: 25, hard: 99 };
-    const botCups  = { easy: 400, normal: 2800, hard: 9999 };
+    const botLvls = { easy: 5, normal: 25, hard: 99 };
+    const botCups = { easy: 400, normal: 2800, hard: 9999 };
 
     document.getElementById('match-p2-name').textContent = botNames[diff] || '';
     document.getElementById('match-p2-lvl').textContent  = botLvls[diff]  || 1;
@@ -180,7 +180,7 @@ function _loadBotProfile() {
  * Invia il risultato della partita singleplayer al backend per la persistenza su DB.
  * La flag matchSaved è gestita esternamente in match.js per evitare doppi salvataggi.
  *
- * @param {string} risultato     - 'vittoria' | 'sconfitta'.
+ * @param {string} risultato - 'vittoria' | 'sconfitta'.
  * @param {number} expGuadagnata - Punti EXP da assegnare (positivi o negativi).
  */
 export async function saveMatchResult(risultato, expGuadagnata) {
@@ -255,19 +255,19 @@ export function showEndGame(state) {
  * Mostra la schermata di fine partita per la modalità multiplayer.
  * Legge EXP e trofei guadagnati/persi dal payload del server.
  *
- * @param {object}      data          - Dati dell'evento 'matchFinished' dal server.
+ * @param {object} data - Dati dell'evento 'matchFinished' dal server.
  * @param {string|null} data.winner   - ID del vincitore (null = pareggio).
- * @param {boolean}     data.unranked - true se la partita non assegna trofei.
- * @param {object}      data.rewards  - Mappa id→{exp, trophies} per ogni giocatore.
+ * @param {boolean} data.unranked - true se la partita non assegna trofei.
+ * @param {object} data.rewards  - Mappa id→{exp, trophies} per ogni giocatore.
  */
 export function showEndGameMultiplayer(data) {
     const { idGiocatore } = getSession();
     const isWinner = data.winner === idGiocatore || data.winner === null;
 
-    const title      = isWinner ? 'VITTORIA!' : 'SCONFITTA';
-    const icon       = isWinner ? 'bi-trophy-fill' : 'bi-x-octagon-fill';
+    const title = isWinner ? 'VITTORIA!' : 'SCONFITTA';
+    const icon = isWinner ? 'bi-trophy-fill' : 'bi-x-octagon-fill';
     const badgeClass = isWinner ? 'end-result--win' : 'end-result--lose';
-    const subtitle   = isWinner ? 'Hai dominato la sfida!' : 'Sarà per la prossima volta!';
+    const subtitle = isWinner ? 'Hai dominato la sfida!' : 'Sarà per la prossima volta!';
 
     if (isWinner) {
         if (typeof CG_Sound !== 'undefined') CG_Sound.playWin();
@@ -286,8 +286,8 @@ export function showEndGameMultiplayer(data) {
         title, subtitle, icon, badgeClass,
         expEarned,
         trophyDiff,
-        myHealth:      null,
-        oppHealth:     null,
+        myHealth: null,
+        oppHealth: null,
         opponentLabel: 'Avversario'
     });
 }
@@ -296,15 +296,15 @@ export function showEndGameMultiplayer(data) {
  * Crea e aggiunge al DOM l'overlay di fine partita con animazione di ingresso.
  *
  * @param {object} opts
- * @param {string}      opts.title         - Titolo principale (es. "VITTORIA!").
- * @param {string}      opts.subtitle      - Sottotitolo descrittivo.
- * @param {string}      opts.icon          - Classe Bootstrap Icon.
- * @param {string}      opts.badgeClass    - Classe CSS per il colore del card (win/lose).
- * @param {number|null} opts.expEarned     - EXP guadagnate/perse (null se non disponibile).
- * @param {number|null} opts.trophyDiff    - Trofei guadagnati/persi (null se non disponibile o unranked).
- * @param {number|null} opts.myHealth      - HP finali del giocatore (null in multiplayer).
- * @param {number|null} opts.oppHealth     - HP finali dell'avversario (null in multiplayer).
- * @param {string}      opts.opponentLabel - Etichetta dell'avversario (es. 'Bot', 'Avversario').
+ * @param {string} opts.title - Titolo principale (es. "VITTORIA!").
+ * @param {string} opts.subtitle - Sottotitolo descrittivo.
+ * @param {string} opts.icon - Classe Bootstrap Icon.
+ * @param {string} opts.badgeClass - Classe CSS per il colore del card (win/lose).
+ * @param {number|null} opts.expEarned - EXP guadagnate/perse (null se non disponibile).
+ * @param {number|null} opts.trophyDiff - Trofei guadagnati/persi (null se non disponibile o unranked).
+ * @param {number|null} opts.myHealth - HP finali del giocatore (null in multiplayer).
+ * @param {number|null} opts.oppHealth - HP finali dell'avversario (null in multiplayer).
+ * @param {string} opts.opponentLabel - Etichetta dell'avversario (es. 'Bot', 'Avversario').
  */
 function _renderEndGameOverlay({ title, subtitle, icon, badgeClass, expEarned, trophyDiff = null, myHealth, oppHealth, opponentLabel = 'Avversario' }) {
     // Sezione HP: visibile solo in singleplayer
@@ -334,28 +334,28 @@ function _renderEndGameOverlay({ title, subtitle, icon, badgeClass, expEarned, t
             </div>` : ''}
         </div>` : '';
 
-    const overlay = document.createElement('div');
-    overlay.id        = 'end-game-overlay';
-    overlay.className = 'end-game-overlay';
-    overlay.innerHTML = `
-        <div class="end-game-card ${badgeClass} p-4 p-lg-5 text-center d-flex flex-column align-items-center gap-3">
-            <i class="bi ${icon} end-game-icon"></i>
-            <h1 class="end-game-title">${title}</h1>
-            <p class="end-game-subtitle">${subtitle}</p>
-            ${hpSection}
-            ${rewardsSection}
-            <div class="d-flex gap-3 mt-2 flex-wrap justify-content-center">
-                <a href="/home" class="btn btn-outline-light rounded-pill px-4 py-2">
-                    <i class="bi bi-house-fill me-2"></i>Home
-                </a>
-                <a href="/match" class="btn btn-primary rounded-pill px-4 py-2">
-                    <i class="bi bi-arrow-counterclockwise me-2"></i>Rigioca
-                </a>
-            </div>
-        </div>
-    `;
+    const overlay = document.getElementById('end-game-overlay');
+    if (!overlay) return;
 
-    document.body.appendChild(overlay);
+    const card = document.getElementById('end-game-card');
+    const iconEl = document.getElementById('end-game-icon');
+    const titleEl = document.getElementById('end-game-title');
+    const subtitleEl = document.getElementById('end-game-subtitle');
+    const hpContainer = document.getElementById('end-game-hp-section');
+    const rewardsContainer = document.getElementById('end-game-rewards-section');
+
+    // Assegna il colore del badge (rimuovi classi precedenti win/lose/tie)
+    card.className = `end-game-card p-4 p-lg-5 text-center d-flex flex-column align-items-center gap-3 ${badgeClass}`;
+
+    // Aggiorna icone e testi
+    iconEl.className = `bi ${icon} end-game-icon`;
+    titleEl.textContent = title;
+    subtitleEl.textContent = subtitle;
+
+    // Inietta sezioni dinamiche
+    hpContainer.innerHTML = hpSection;
+    rewardsContainer.innerHTML = rewardsSection;
+
     // Doppio rAF per garantire un paint prima di aggiungere la classe di animazione
     requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('visible')));
 }
