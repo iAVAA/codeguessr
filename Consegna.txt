@@ -1,18 +1,21 @@
 FILE PRONTI PER LA CONSEGNA
-game_page.html
-leaderboard_page.html
-match_page.html
-profile_page.html: 1 TODO MANCANTE
+pages/
 css/
+assets/
+db/
 index.html
 
 FILE MANCANTI DI CSS
 index-background2.css
 
-File Javascript
-index.Javascript
-js/leaderboard_page
-js/game_page
-js/match_page
-js/managers
-js/utils/ui_utils.js
+FILE MANCANTI DI JAVASCRIPT
+js/profile_page
+login_page.js
+reset_password_completo.js
+reset_password.js
+index-background2.js
+
+FILE MANCANTI DEL BACKEND
+auth.js
+server-commentato.js
+server.js

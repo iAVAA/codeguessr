@@ -112,6 +112,19 @@ export async function fetchAuth(url, options = {}) {
     return response;
 }
 
+/**
+ * Inizializza il timer per l'invio dell'heartbeat di presenza online.
+ * @param {number} [intervalMs=5000] - Intervallo in millisecondi.
+ */
+export function startHeartbeat(intervalMs = 5000) {
+    if (window._heartbeatInit) return;
+    window._heartbeatInit = true;
+
+    const sendHeartbeat = () => fetchAuth('/api/heartbeat', { method: 'POST' }).catch(() => {});
+    setInterval(sendHeartbeat, intervalMs);
+    sendHeartbeat();
+}
+
 /* === EVENT LISTENER E BINDING UI === */
 
 /**

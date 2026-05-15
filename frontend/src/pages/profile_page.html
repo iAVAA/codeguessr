@@ -173,15 +173,14 @@
                                     <span id="page-name"></span>
                                 </h1>
                                 <div class="profile-main-meta mb-3">
-                                    <!-- TODO: Da rimuovere lo userid nel frontend -->
-                                    <span class="badge text-bg-secondary">
+                                    <!-- UUID Nascosto -->
+                                    <span class="badge text-bg-secondary d-none">
                                         <i class="bi bi-hash"></i><span id="page-userid"></span>
                                     </span>
 
                                     <!-- Data di iscrizione -->
                                     <span class="ms-2 text-darcula-comment">
-                                        <i class="bi bi-calendar-event"></i>
-                                        Iscritto dal <span id="page-joindate"></span>
+                                        <i class="bi bi-calendar-event"></i> Iscritto dal <span id="page-joindate"></span>
                                     </span>
                                 </div>
 
@@ -492,6 +491,7 @@
             </div>
 
             <!-- Footer della pagina modale -->
+            <div id="edit-profile-status" style="display: none; margin: 0.75rem 1.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500;"></div>
             <div class="cg-settings-footer">
                 <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0</span>
                 <div class="d-flex gap-2">

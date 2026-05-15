@@ -4,7 +4,7 @@
  * storico partite dal DB, amici e aggiornamento UI completo.
  */
 
-import { getSession, fetchAuth } from '../managers/auth.js';
+import { getSession, fetchAuth, startHeartbeat } from '../managers/auth.js';
 import { setXpProgress, updateNavbarUI, XP_PER_LEVEL } from '../utils/ui_utils.js';
 
 window.handleProfileFriendAction = async function (action, targetUserId) {
@@ -536,15 +536,8 @@ async function initProfilePage() {
             }
         }
 
-        // Heartbeat: segnala al server che siamo online ogni 10 secondi
-        setInterval(async () => {
-            try {
-                await fetchAuth('/api/heartbeat', { method: 'POST' });
-            } catch (e) {
-                console.error('Heartbeat fallito', e);
-            }
-        }, 10000);
-        fetchAuth('/api/heartbeat', { method: 'POST' }).catch(e => console.error(e));
+        // Heartbeat centralizzato ogni 10 secondi
+        startHeartbeat(10000);
 
     } catch (error) {
         console.error('[Profile Page] Errore caricamento dati:', error);
