@@ -1,5 +1,5 @@
 /*
-    FILE: managers/multiplayer.js
+    FILE: multiplayer.js
     DESCRIPTION: Gestore della comunicazione via Socket.io per il multiplayer.
     AUTHORS: Salvatore Iavarone & Michele Pio Forlani
 */
@@ -89,7 +89,7 @@ export function initMultiplayer(callbacks = {}) {
     return socket;
 }
 
-// ─── Azioni Multiplayer ──────────────────────────────────────────────────────
+/* === AZIONI MULTIPLAYER === */
 
 export function startMatchmaking() {
     socket?.emit('startMatchmaking');
