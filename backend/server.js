@@ -1286,8 +1286,8 @@ app.get('/api/search/:nome', async (req, res) => {
             userid: gioc.id_giocatore,
             user: gioc.nickname,
             avatar_url: gioc.avatar_url,
-            avatarSeed: gioc.nickname,
-            livello: gioc.livello
+           // avatarSeed: gioc.nickname,
+           // livello: gioc.livello
         }));
 
         res.status(200).json(risultati);

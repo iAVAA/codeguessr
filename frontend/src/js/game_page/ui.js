@@ -5,7 +5,7 @@
 */
 
 import { showToast, debounce } from '../utils/ui_utils.js';
-import { fetchPlayerAmici, handleFriendAction } from './friends.js';
+import { fetchPlayerAmici, handleFriendAction, inviaRichiestaAmicizia } from './friends.js';
 
 // Espone showToast globalmente per compatibilità con script non-modulo
 window.showToast = showToast;
@@ -159,7 +159,8 @@ function initAddFriendSearch() {
         // Se l'azione è "aggiungi", usiamo una fetch locale
         // Altrimenti usiamo il manager centralizzato per accetta/rifiuta
         if (action === 'aggiungi') {
-            await handleAddFriend(btn, userid, username);
+            const ok = await inviaRichiestaAmicizia(btn, userid, username);
+            if (ok) relazioniUtente[username] = { stato: STATO.INVIATA, userid };
         } else {
             await handleFriendAction(btn, action, userid, async () => {
                 await caricaRelazioni(); // Aggiorna lookup locale
@@ -171,33 +172,6 @@ function initAddFriendSearch() {
     });
 }
 
-/* Gestisce l'invio di una nuova richiesta di amicizia */
-async function handleAddFriend(btn, userid, username) {
-    const originalHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
-    try {
-        const token = localStorage.getItem('supabaseToken');
-        const res = await fetch(`/api/invia-richiesta/${userid}`, {
-            method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!res.ok) throw new Error("Errore nell'invio della richiesta");
-
-        showToast(`Richiesta inviata a @${username}`, 'green');
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Inviata';
-        relazioniUtente[username] = { stato: 'inviata', userid };
-    } catch (err) {
-        showToast(err.message, 'red');
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
-    }
-}
 
 // ===== INIZIALIZZAZIONE GENERALE =====
 

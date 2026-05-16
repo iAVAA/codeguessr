@@ -107,6 +107,27 @@ export async function fetchPlayerAmici() {
 	};
 }
 
+export async function inviaRichiestaAmicizia(btn, userid, username) {
+    const originalHTML = btn.innerHTML;
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+        const res = await fetchAuth(`/api/invia-richiesta/${userid}`,{ method: 'POST' });
+
+        if (!res.ok) throw new Error("Errore nell'invio della richiesta");
+
+        showToast(`Richiesta inviata a @${username}`, 'green');
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Inviata';
+        return true; // ← segnala successo al chiamante
+
+    } catch (err) {
+        showToast(err.message, 'red');
+        btn.disabled  = false;
+        btn.innerHTML = originalHTML;
+        return false;
+    }
+}
 /* Gestisce le azioni di amicizia (accetta/rifiuta) */
 export async function handleFriendAction(btn, action, userid, onComplete) {
 	const originalHTML = btn.innerHTML;
