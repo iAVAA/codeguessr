@@ -199,6 +199,20 @@
     color: rgba(var(--darcula-fg), 0.5);
 }
 
+/* Badge linguaggio nella titlebar (es. "PYTHON", "JAVA") */
+.vscode-lang-badge {
+    display: inline-block;
+    font-size: 0.7em;
+    font-family: 'JetBrains Mono', monospace;
+    color: rgb(var(--darcula-green));
+    background: rgba(var(--darcula-green), 0.12);
+    border: 1px solid rgba(var(--darcula-green), 0.3);
+    border-radius: 6px;
+    padding: 1px 7px;
+    vertical-align: middle;
+}
+
+
 .vscode-editor-body {
     flex-grow: 1;
     padding: 1.5rem;

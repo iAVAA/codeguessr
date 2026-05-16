@@ -2279,18 +2279,20 @@ io.on('connection', (socket) => {
             risultatoP2 = 'vittoria';
         }
 
+        // Calcolo EXP e trofei (dichiarati fuori dal try per essere accessibili all'emit)
+        let expP1 = risultatoP1 === 'vittoria' ? 100 + Math.round(p1.health / 2) : (risultatoP1 === 'sconfitta' ? -10 - Math.round(p2.health / 2) : 20);
+        let expP2 = risultatoP2 === 'vittoria' ? 100 + Math.round(p2.health / 2) : (risultatoP2 === 'sconfitta' ? -10 - Math.round(p1.health / 2) : 20);
+
+        let trophyP1 = risultatoP1 === 'vittoria'
+            ? Math.floor(Math.random() * 11) + 30 + Math.round(p1.health / 2)
+            : (risultatoP1 === 'sconfitta' ? -(Math.floor(Math.random() * 11) + 20) - Math.round(p2.health / 2) : 0);
+
+        let trophyP2 = risultatoP2 === 'vittoria'
+            ? Math.floor(Math.random() * 11) + 30 + Math.round(p2.health / 2)
+            : (risultatoP2 === 'sconfitta' ? -(Math.floor(Math.random() * 11) + 20) - Math.round(p1.health / 2) : 0);
+
         // Salvataggio nel DB
         try {
-            const expP1 = risultatoP1 === 'vittoria' ? 100 + Math.round(p1.health / 2) : (risultatoP1 === 'sconfitta' ? -10 - Math.round(p2.health / 2) : 20);
-            const expP2 = risultatoP2 === 'vittoria' ? 100 + Math.round(p2.health / 2) : (risultatoP2 === 'sconfitta' ? -10 - Math.round(p1.health / 2) : 20);
-            
-            const trophyP1 = risultatoP1 === 'vittoria' 
-                ? Math.floor(Math.random() * 11) + 30 + Math.round(p1.health / 2) 
-                : (risultatoP1 === 'sconfitta' ? -(Math.floor(Math.random() * 11) + 20) - Math.round(p2.health / 2) : 0);
-                
-            const trophyP2 = risultatoP2 === 'vittoria' 
-                ? Math.floor(Math.random() * 11) + 30 + Math.round(p2.health / 2) 
-                : (risultatoP2 === 'sconfitta' ? -(Math.floor(Math.random() * 11) + 20) - Math.round(p1.health / 2) : 0);
 
             // Se la partita è stata creata nel DB (partita_id è presente)
             if (match.partita_id) {
@@ -2373,7 +2375,12 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('matchFinished', {
             winner: winnerId,
             players: match.players,
-            unranked: match.unranked
+            unranked: match.unranked,
+            // Ricompense per ciascun giocatore (usate dal frontend per l'overlay di fine partita)
+            rewards: {
+                [p1.id]: { exp: expP1, trophies: match.unranked ? 0 : trophyP1 },
+                [p2.id]: { exp: expP2, trophies: match.unranked ? 0 : trophyP2 }
+            }
         });
 
         activeMatches.delete(roomCode);

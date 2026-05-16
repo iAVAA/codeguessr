@@ -77,7 +77,7 @@
 
         <!-- Inizializzazione del sistema di caricamento iniziale della pagina -->
         <script type="module">
-            import { initLoader } from '/src/js/loader.js';
+            import { initLoader } from '/src/js/managers/loader.js';
             initLoader();
         </script>
 
@@ -312,6 +312,31 @@
             </div>
         </div>
         <!-- ===== FINE FINESTRA MODALE: Impostazioni ===== -->
+
+        <!-- ===== INIZIO FINESTRA MODALE: Conferma Eliminazione Profilo ===== -->
+        <div class="cg-settings-overlay" id="cg-confirm-delete-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="delete-profile-title">
+            <div class="cg-settings-modal" style="max-width: 450px; text-align: center;">
+                <div class="cg-settings-header" style="justify-content: center; position: relative; border-bottom: none; padding-bottom: 0;">
+                    <div class="cg-settings-title-group text-danger">
+                        <div class="cg-settings-icon-wrap" style="color: rgb(var(--darcula-red))">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
+                        <h2 class="cg-settings-title text-danger" id="delete-profile-title">Elimina Profilo</h2>
+                    </div>
+                </div>
+                <div class="cg-settings-body" style="padding: 2rem;">
+                    <p class="text-darcula-fg mb-4" style="line-height: 1.5; font-size: 1.1rem;">
+                        Sei sicuro di voler eliminare definitivamente il tuo profilo?<br><br>
+                        <strong>Questa azione distruggerà i tuoi dati e non può essere annullata.</strong>
+                    </p>
+                    <div class="d-flex gap-3 justify-content-center mt-2">
+                        <button class="cg-btn-secondary" id="btn-cancel-delete" style="min-width: 120px; justify-content: center;">Annulla</button>
+                        <button class="cg-btn-danger" id="btn-confirm-delete" style="min-width: 120px; font-weight: bold; justify-content: center;">Sì, elimina</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===== FINE FINESTRA MODALE: Conferma Eliminazione Profilo ===== -->
 
         <!-- ===================== FOOTER ===================== -->
         <footer class="site-footer" id="site-footer">

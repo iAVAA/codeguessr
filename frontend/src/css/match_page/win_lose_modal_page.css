@@ -103,6 +103,14 @@
     font-weight: 700;
 }
 
+/* Contenitore ricompense (EXP + Trofei allineati in fila) */
+.end-rewards-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 .end-exp-badge {
     font-family: 'JetBrains Mono', monospace;
     font-size: 1rem;
@@ -113,6 +121,28 @@
     border-radius: 20px;
     padding: 0.35rem 1.2rem;
 }
+
+/* Badge trofei: colore verde se guadagno, rosso se perdita */
+.end-trophy-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 0.35rem 1.2rem;
+}
+
+.end-trophy-badge.trophy--gain {
+    color: rgb(var(--darcula-green));
+    background: rgba(var(--darcula-green), 0.12);
+    border: 1px solid rgba(var(--darcula-green), 0.3);
+}
+
+.end-trophy-badge.trophy--loss {
+    color: rgb(var(--darcula-red));
+    background: rgba(var(--darcula-red), 0.12);
+    border: 1px solid rgba(var(--darcula-red), 0.3);
+}
+
 
 
 /* ===========================

@@ -1,215 +1,244 @@
-/**
- * CodeGuessr - sound.js
- * Sistema audio globale basato su file audio locali.
- *
- * API pubblica:
- *   CG_Sound.playClick()           → suono click casuale (7 varianti)
- *   CG_Sound.playWin()             → suono vittoria
- *   CG_Sound.playGameOver()        → suono sconfitta
- *   CG_Sound.playMissionComplete() → suono missione completata
- *   CG_Sound.startMusic()          → avvia musica di background (loop)
- *   CG_Sound.stopMusic()           → ferma la musica
- *   CG_Sound.setMusicVolume(0-1)   → volume musica
- *   CG_Sound.setSfxVolume(0-1)     → volume SFX
- *   CG_Sound.isMusicPlaying()      → boolean
- */
+/*
+    FILE: sound.js
+    DESCRIPTION: Sistema audio globale di CodeGuessr.
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
 
-(function (global) {
-  'use strict';
+class SoundManager {
+    constructor() {
+        // Configurazioni base
+        this.basePath = '/src/assets/music';
+        this.clickCount = 7;
+        this.settingsKey = 'codeguessr-settings';
+        this.prefKey = 'codeguessr-audio-allowed';
 
-  // ─── CONFIGURAZIONE ───────────────────────────────────────────────────────
+        // Stato dei volumi
+        this.musicVolume = 0.6;
+        this.sfxVolume = 0.8;
 
-  const BASE = '/src/assets/music';
-  const CLICK_COUNT = 7;
-  const PREF_KEY = 'codeguessr-audio-allowed';
-  const SETTINGS_KEY = 'codeguessr-settings';
+        // Tracce e cache
+        this.currentMusic = null;
+        this.musicTracks = {};
+        this.clickPool = [];
+        this.sfxCache = {};
 
-  // ─── STATO ────────────────────────────────────────────────────────────────
-
-  let _musicVolume = 0.6;
-  let _sfxVolume = 0.8;
-  let _musicEls = {};
-  let _currentMusic = null;
-  const _clickPool = [];
-
-  // ─── VOLUMI DAL LOCALSTORAGE ──────────────────────────────────────────────
-
-  function loadVolumeFromSettings() {
-    try {
-      const raw = localStorage.getItem(SETTINGS_KEY);
-      if (!raw) return;
-      const s = JSON.parse(raw);
-      if (typeof s.volumeMusic === 'number') _musicVolume = s.volumeMusic / 100;
-      if (typeof s.volumeSfx   === 'number') _sfxVolume   = s.volumeSfx   / 100;
-    } catch (e) { /* ignora */ }
-  }
-
-  // ─── INIT ─────────────────────────────────────────────────────────────────
-
-  function makeAudio(src, loop = false) {
-    const el = new Audio(src);
-    el.loop = loop;
-    el.volume = 0;
-    el.preload = 'auto';
-    return el;
-  }
-
-  function init() {
-    loadVolumeFromSettings();
-    _musicEls['game'] = makeAudio(`${BASE}/game_music_loop.mp3`, true);
-    _musicEls['match'] = makeAudio(`${BASE}/match_music_loop.mp3`, true);
-    _musicEls['game'].volume = _musicVolume;
-    _musicEls['match'].volume = _musicVolume;
-    for (let i = 1; i <= CLICK_COUNT; i++) {
-      const el = makeAudio(`${BASE}/button_clicks/button_click_${i}.mp3`);
-      el.volume = _sfxVolume;
-      _clickPool.push(el);
+        // Inizializza tutto
+        this.loadVolumes();
+        this.initAudioElements();
+        this.setupEventListeners();
     }
-  }
 
-  // ─── SFX ──────────────────────────────────────────────────────────────────
+    /* Legge i volumi dal localStorage */
+    loadVolumes() {
+        try {
+            const raw = localStorage.getItem(this.settingsKey);
+            if (!raw) return;
 
-  function playSfxFile(src) {
-    if (_sfxVolume <= 0) return;
-    const el = new Audio(src);
-    el.volume = _sfxVolume;
-    el.play().catch(() => { });
-  }
+            const settings = JSON.parse(raw);
+            if (typeof settings.volumeMusic === 'number') this.musicVolume = settings.volumeMusic / 100;
+            if (typeof settings.volumeSfx === 'number') this.sfxVolume = settings.volumeSfx / 100;
+        }
+        catch {
+            console.warn('[sound.js] Errore nel caricamento dei volumi');
+        }
+    }
 
-  // ─── API PUBBLICA ─────────────────────────────────────────────────────────
+    /* Carica gli elementi audio per evitare ritardi */
+    initAudioElements() {
+        // Tracce musicali di sottofondo in loop
+        this.musicTracks['game'] = this.createAudio(`${this.basePath}/game_music_loop.mp3`, true);
+        this.musicTracks['match'] = this.createAudio(`${this.basePath}/match_music_loop.mp3`, true);
 
-  const CG_Sound = {
+        // Applica il volume alla musica
+        Object.values(this.musicTracks).forEach(track => track.volume = this.musicVolume);
 
-    playClick() {
-      if (_sfxVolume <= 0 || _clickPool.length === 0) return;
-      const el = _clickPool[Math.floor(Math.random() * _clickPool.length)];
-      el.volume = _sfxVolume;
-      el.currentTime = 0;
-      el.play().catch(() => { });
-    },
+        // Suoni per i click (7 varianti)
+        for (let i = 1; i <= this.clickCount; i++) {
+            const audio = this.createAudio(`${this.basePath}/button_clicks/button_click_${i}.mp3`);
+            audio.volume = this.sfxVolume;
+            this.clickPool.push(audio);
+        }
+    }
 
-    playWin()             { playSfxFile(`${BASE}/win_sound.mp3`);       },
-    playGameOver()        { playSfxFile(`${BASE}/game_over.mp3`);       },
-    playMissionComplete() { playSfxFile(`${BASE}/mission_complete.mp3`); },
+    /* Crea un singolo elemento HTMLAudioElement */
+    createAudio(src, loop = false) {
+        const audio = new Audio(src);
+        audio.loop = loop;
+        audio.volume = 0;
+        audio.preload = 'auto';
+        return audio;
+    }
 
+    /* === COMANDI PUBBLICI PER USARE I SUONI === */
+
+    /* Avvia la musica di sottofondo ('game' o 'match') */
     startMusic(type = 'game') {
-      if (_currentMusic === type && !_musicEls[type].paused) return;
-      this.stopMusic();
-      const el = _musicEls[type];
-      if (!el) return;
-      el.volume = _musicVolume;
-      el.play().catch(() => { });
-      _currentMusic = type;
-    },
+        const track = this.musicTracks[type];
+        if (!track) return;
 
+        // Se è già in riproduzione, non fare nulla
+        if (this.currentMusic === type && !track.paused) return;
+
+        this.stopMusic();
+
+        track.volume = this.musicVolume;
+        track.play().catch(() => console.warn('[SoundManager] Autoplay musica bloccato'));
+        this.currentMusic = type;
+    }
+
+    /* Ferma la musica attualmente in riproduzione */
     stopMusic() {
-      if (_currentMusic && _musicEls[_currentMusic]) {
-        _musicEls[_currentMusic].pause();
-        _musicEls[_currentMusic].currentTime = 0;
-      }
-      _currentMusic = null;
-    },
-
-    setMusicVolume(vol) {
-      _musicVolume = Math.max(0, Math.min(1, vol));
-      if (_musicEls['game']) _musicEls['game'].volume = _musicVolume;
-      if (_musicEls['match']) _musicEls['match'].volume = _musicVolume;
-    },
-
-    setSfxVolume(vol) {
-      _sfxVolume = Math.max(0, Math.min(1, vol));
-      _clickPool.forEach(el => { el.volume = _sfxVolume; });
-    },
-
-    isMusicPlaying() { return _currentMusic !== null && !_musicEls[_currentMusic].paused; },
-  };
-
-  // ─── BANNER AUDIO (HTML già in game_page.html) ────────────────────────────
-  // Il banner con id="cg-audio-banner" è definito nell'HTML della pagina.
-  // Qui gestiamo solo visibilità e logica.
-
-  function initAudioBanner() {
-    const pref = localStorage.getItem(PREF_KEY);
-    const getMusicType = () => window.location.pathname.includes('/match') ? 'match' : 'game';
-
-    // Già accettato → avvia subito la musica
-    if (pref === 'yes') {
-      CG_Sound.startMusic(getMusicType());
+        if (this.currentMusic && this.musicTracks[this.currentMusic]) {
+            const track = this.musicTracks[this.currentMusic];
+            track.pause();
+            track.currentTime = 0;
+        }
+        this.currentMusic = null;
     }
 
-    const banner = document.getElementById('cg-audio-banner');
-    if (!banner) return; // pagina senza banner → nessun popup
-
-    // Se aveva già scelto (yes o no), non mostrare il banner
-    if (pref === 'yes' || pref === 'no') return;
-
-    // Prima visita → mostra il banner
-    banner.removeAttribute('hidden');
-
-    function dismiss(choice) {
-      localStorage.setItem(PREF_KEY, choice);
-      banner.setAttribute('hidden', '');
+    /* Cambia il volume della musica in tempo reale */
+    setMusicVolume(volume) {
+        this.musicVolume = Math.max(0, Math.min(1, volume));
+        Object.values(this.musicTracks).forEach(track => track.volume = this.musicVolume);
     }
 
-    const btnYes = document.getElementById('cg-audio-yes');
-    const btnNo  = document.getElementById('cg-audio-no');
-
-    if (btnYes) {
-      btnYes.addEventListener('click', () => {
-        dismiss('yes');
-        CG_Sound.startMusic(getMusicType());
-      });
+    /* Cambia il volume degli effetti sonori in tempo reale */
+    setSfxVolume(volume) {
+        this.sfxVolume = Math.max(0, Math.min(1, volume)); // Limita tra 0 e 1
+        this.clickPool.forEach(audio => audio.volume = this.sfxVolume);
+        Object.values(this.sfxCache).forEach(audio => audio.volume = this.sfxVolume);
     }
 
-    if (btnNo) {
-      btnNo.addEventListener('click', () => dismiss('no'));
+    /* Riproduce uno dei 7 suoni di click a caso */
+    playClick() {
+        if (this.sfxVolume <= 0 || this.clickPool.length === 0) return;
+
+        const randomIndex = Math.floor(Math.random() * this.clickPool.length);
+        const audio = this.clickPool[randomIndex];
+        
+        audio.volume = this.sfxVolume;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
     }
-  }
 
-  // ─── CLICK SFX AUTOMATICO ────────────────────────────────────────────────
+    /* Effetto sonoro generico (usa la cache per non ricreare Audio object) */
+    playSfx(src) {
+        if (this.sfxVolume <= 0) return;
 
-  function attachClickSfx() {
-    document.addEventListener('click', (e) => {
-      if (_sfxVolume <= 0) return;
-      if (e.target.closest('#cg-audio-banner')) return; // ignora i bottoni del banner
-      const target = e.target.closest('button, a, [role="button"], input[type="submit"]');
-      if (!target) return;
-      CG_Sound.playClick();
-    }, true);
-  }
+        if (!this.sfxCache[src]) {
+            this.sfxCache[src] = this.createAudio(src);
+        }
 
-  // ─── SYNC VOLUMI CON IMPOSTAZIONI ────────────────────────────────────────
+        const audio = this.sfxCache[src];
+        audio.volume = this.sfxVolume;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+    }
 
-  function watchSettingsSave() {
-    document.addEventListener('click', (e) => {
-      if (e.target && e.target.id === 'settings-save') {
-        setTimeout(() => {
-          loadVolumeFromSettings();
-          CG_Sound.setMusicVolume(_musicVolume);
-          CG_Sound.setSfxVolume(_sfxVolume);
-        }, 50);
-      }
-    });
+    /* Metodi per suoni specifici */
+    playWin() {
+        this.playSfx(`${this.basePath}/win_sound.mp3`);
+    }
 
-    document.addEventListener('input', (e) => {
-      if (e.target.id === 'volume-music') {
-        CG_Sound.setMusicVolume(parseInt(e.target.value, 10) / 100);
-      } else if (e.target.id === 'volume-sfx') {
-        CG_Sound.setSfxVolume(parseInt(e.target.value, 10) / 100);
-      }
-    });
-  }
+    playGameOver() {
+        this.playSfx(`${this.basePath}/game_over.mp3`);
+    }
 
-  // ─── BOOTSTRAP ────────────────────────────────────────────────────────────
+    isMusicPlaying() {
+        return this.currentMusic !== null && !this.musicTracks[this.currentMusic]?.paused;
+    }
 
-  init();
+    /* === EVENT LISTENER E BANNER === */
+    setupEventListeners() {
+        // Aspettiamo che il DOM sia caricato per agganciare gli eventi UI
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.onDomReady());
+        }
+        else {
+            this.onDomReady();
+        }
+    }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    attachClickSfx();
-    watchSettingsSave();
-    initAudioBanner();
-  });
+    onDomReady() {
+        this.setupAutomaticClicks();
+        this.setupSettingsSync();
+        this.setupAudioBanner();
+    }
 
-  global.CG_Sound = CG_Sound;
+    /* Riproduce automaticamente il suono click su bottoni e link */
+    setupAutomaticClicks() {
+        document.addEventListener('click', (e) => {
+            if (this.sfxVolume <= 0) return;
+            
+            // Ignoriamo i click sul banner del consenso audio
+            if (e.target.closest('#cg-audio-banner')) return;
 
-})(window);
+            // Se clicchiamo su un elemento interattivo, suona
+            const isInteractive = e.target.closest('button, a, [role="button"], input[type="submit"]');
+            if (isInteractive) {
+                this.playClick();
+            }
+        }, true); // true = capture phase, per intercettare prima che altri script blocchino l'evento
+    }
+
+    /** Sincronizza i volumi con gli slider delle impostazioni */
+    setupSettingsSync() {
+        // Movimento degli slider in tempo reale
+        document.addEventListener('input', (e) => {
+            if (e.target.id === 'volume-music') {
+                this.setMusicVolume(parseInt(e.target.value, 10) / 100);
+            } else if (e.target.id === 'volume-sfx') {
+                this.setSfxVolume(parseInt(e.target.value, 10) / 100);
+            }
+        });
+
+        // Quando preme "Salva" aggiorna tutto leggendo dal localStorage
+        document.addEventListener('click', (e) => {
+            if (e.target?.id === 'settings-save') {
+                this.loadVolumes();
+                this.setMusicVolume(this.musicVolume);
+                this.setSfxVolume(this.sfxVolume);
+            }
+        });
+    }
+
+    /** Gestisce il banner popup che chiede il permesso per l'audio */
+    setupAudioBanner() {
+        const savedChoice = localStorage.getItem(this.prefKey);
+        const isMatchPage = window.location.pathname.includes('/match');
+        const musicType = isMatchPage ? 'match' : 'game';
+
+        // Se aveva già acconsentito in passato, avvia la musica
+        if (savedChoice === 'yes') {
+            this.startMusic(musicType);
+        }
+
+        const banner = document.getElementById('cg-audio-banner');
+        if (!banner) return; // Se la pagina non ha il banner, ci fermiamo qui
+
+        // Se ha già risposto (Si o No), non mostriamo più il banner
+        if (savedChoice === 'yes' || savedChoice === 'no') return;
+
+        // Altrimenti è la prima volta: mostra il banner
+        banner.removeAttribute('hidden');
+
+        const dismissBanner = (choice) => {
+            localStorage.setItem(this.prefKey, choice);
+            banner.setAttribute('hidden', '');
+        };
+
+        // Click su "Si"
+        document.getElementById('cg-audio-yes')?.addEventListener('click', () => {
+            dismissBanner('yes');
+            this.startMusic(musicType);
+        });
+
+        // Click su "No"
+        document.getElementById('cg-audio-no')?.addEventListener('click', () => {
+            dismissBanner('no');
+        });
+    }
+}
+
+// Inizializza il manager e lo rende globale
+window.CG_Sound = new SoundManager();

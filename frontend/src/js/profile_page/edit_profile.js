@@ -35,19 +35,7 @@ async function uploadImmagine(file, tipo) {
 
 function showSaveStatus(message, isError = false) {
     let statusEl = document.getElementById('edit-profile-status');
-    if (!statusEl) {
-        statusEl = document.createElement('div');
-        statusEl.id = 'edit-profile-status';
-        statusEl.style.cssText = `
-            margin: 0.75rem 1.5rem 0;
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        `;
-        const footer = document.querySelector('#edit-profile-modal .cg-settings-footer');
-        if (footer) footer.parentNode.insertBefore(statusEl, footer);
-    }
+    if (!statusEl) return;
 
     statusEl.textContent = message;
     statusEl.style.background = isError ? 'rgba(220, 53, 69, 0.15)' : 'rgba(98, 151, 85, 0.15)';
