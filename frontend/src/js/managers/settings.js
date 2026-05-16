@@ -1,303 +1,346 @@
-/**
- * CodeGuessr - settings.js
- * Gestisce il modale delle impostazioni (audio, tema, gameplay, notifiche)
- */
+/*
+    FILE: settings.js
+    DESCRIPTION: Manager delle impostazioni globali di CodeGuessr. Gestisce il modale delle impostazioni e il localStorage.
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
 
-const SETTINGS_KEY = 'codeguessr-settings';
+class SettingsManager {
+    constructor() {
+        this.STORAGE_KEY = 'codeguessr-settings';
+        this.THEME_KEY = 'codeguessr-theme';
 
-// ─── Defaults ─────────────────────────────────────────────────────────────────
+        this.DEFAULT_SETTINGS = {
+            volumeMusic: 60,
+            volumeSfx: 80,
+            theme: 'dark',
+            reducedAnimations: false,
+            difficulty: 'normal'
+        };
 
-const DEFAULT_SETTINGS = {
-  volumeMusic: 60,
-  volumeSfx: 80,
-  theme: 'dark',
-  reducedAnimations: false,
-  difficulty: 'normal',
-  showTimer: true,
-  syntaxHighlight: true,
-  notifChallenge: true,
-  notifFriends: false,
-};
-
-// ─── Persist ─────────────────────────────────────────────────────────────────
-
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS };
-  } catch {
-    return { ...DEFAULT_SETTINGS };
-  }
-}
-
-function saveSettings(settings) {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  } catch (e) {
-    console.warn('[Settings] Impossibile salvare le impostazioni:', e);
-  }
-}
-
-// ─── DOM Helpers ──────────────────────────────────────────────────────────────
-
-function el(id) { return document.getElementById(id); }
-
-// ─── Slider ───────────────────────────────────────────────────────────────────
-
-function initSlider(sliderId, valueId, storageKey, settings) {
-  const slider = el(sliderId);
-  const valueEl = el(valueId);
-  if (!slider || !valueEl) return;
-
-  slider.value = settings[storageKey];
-  valueEl.textContent = `${settings[storageKey]}%`;
-
-  // Live gradient fill
-  function updateFill() {
-    const pct = slider.value;
-    slider.style.background = `linear-gradient(to right, rgb(var(--darcula-blue, 104,151,187)) 0%, rgb(var(--darcula-blue, 104,151,187)) ${pct}%, rgba(var(--darcula-comment,128,128,128),0.25) ${pct}%, rgba(var(--darcula-comment,128,128,128),0.25) 100%)`;
-    valueEl.textContent = `${pct}%`;
-  }
-
-  updateFill();
-  slider.addEventListener('input', updateFill);
-}
-
-// ─── Theme Picker ─────────────────────────────────────────────────────────────
-
-function initThemePicker(settings) {
-  const picker = el('theme-picker');
-  if (!picker) return;
-
-  const btns = picker.querySelectorAll('.cg-theme-btn');
-  btns.forEach(btn => {
-    const isActive = btn.dataset.theme === settings.theme;
-    btn.setAttribute('aria-pressed', String(isActive));
-  });
-
-  picker.addEventListener('click', (e) => {
-    const btn = e.target.closest('.cg-theme-btn');
-    if (!btn) return;
-    btns.forEach(b => b.setAttribute('aria-pressed', 'false'));
-    btn.setAttribute('aria-pressed', 'true');
-    applyTempTheme(btn.dataset.theme);
-  });
-}
-
-function applyTempTheme(theme) {
-  const html = document.documentElement;
-  if (theme === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    html.classList.toggle('light-mode', !prefersDark);
-  } else {
-    html.classList.toggle('light-mode', theme === 'light');
-  }
-}
-
-// ─── Difficulty Picker ────────────────────────────────────────────────────────
-
-function initDifficultyPicker(settings) {
-  const picker = el('difficulty-picker');
-  if (!picker) return;
-
-  const btns = picker.querySelectorAll('.cg-diff-btn');
-  btns.forEach(btn => {
-    const isActive = btn.dataset.diff === settings.difficulty;
-    btn.setAttribute('aria-pressed', String(isActive));
-  });
-
-  picker.addEventListener('click', (e) => {
-    const btn = e.target.closest('.cg-diff-btn');
-    if (!btn) return;
-    btns.forEach(b => b.setAttribute('aria-pressed', 'false'));
-    btn.setAttribute('aria-pressed', 'true');
-  });
-}
-
-// ─── Toggle ───────────────────────────────────────────────────────────────────
-
-function initToggle(id, settingKey, settings) {
-  const input = el(id);
-  if (!input) return;
-  input.checked = settings[settingKey];
-}
-
-// ─── Read State from DOM ──────────────────────────────────────────────────────
-
-function readCurrentSettings() {
-  const getSlider = (id) => parseInt(el(id)?.value ?? 0, 10);
-  const getToggle = (id) => el(id)?.checked ?? false;
-  const getPicker = (pickerId, attr) => {
-    const active = document.querySelector(`#${pickerId} [aria-pressed="true"]`);
-    return active?.dataset[attr] ?? null;
-  };
-
-  return {
-    volumeMusic: getSlider('volume-music'),
-    volumeSfx: getSlider('volume-sfx'),
-    theme: getPicker('theme-picker', 'theme') ?? 'dark',
-    reducedAnimations: getToggle('toggle-animations'),
-    difficulty: getPicker('difficulty-picker', 'diff') ?? 'normal',
-    showTimer: getToggle('toggle-timer'),
-    syntaxHighlight: getToggle('toggle-syntax'),
-    notifChallenge: getToggle('toggle-notif-challenge'),
-    notifFriends: getToggle('toggle-notif-friends'),
-  };
-}
-
-// ─── Apply Theme ──────────────────────────────────────────────────────────────
-
-function applyThemeSetting(theme) {
-  const html = document.documentElement;
-  const THEME_KEY = 'codeguessr-theme';
-  if (theme === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    html.classList.toggle('light-mode', !prefersDark);
-    localStorage.removeItem(THEME_KEY);
-  } else {
-    html.classList.toggle('light-mode', theme === 'light');
-    localStorage.setItem(THEME_KEY, theme);
-  }
-}
-
-function applyReducedAnimations(reduced) {
-  document.documentElement.classList.toggle('reduced-animations', reduced);
-}
-
-// ─── Modal Open / Close ───────────────────────────────────────────────────────
-
-function openSettings() {
-  const overlay = el('settings-overlay');
-  if (!overlay) return;
-  overlay.removeAttribute('aria-hidden');
-  overlay.classList.add('open');
-  document.body.style.overflow = 'hidden';
-  el('settings-close')?.focus();
-}
-
-function revertUnsavedSettings() {
-  const current = loadSettings();
-  initSlider('volume-music', 'volume-music-val', 'volumeMusic', current);
-  initSlider('volume-sfx', 'volume-sfx-val', 'volumeSfx', current);
-
-  document.querySelectorAll('#theme-picker .cg-theme-btn').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.theme === current.theme));
-  });
-  document.querySelectorAll('#difficulty-picker .cg-diff-btn').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.diff === current.difficulty));
-  });
-
-  ['toggle-animations', 'toggle-timer', 'toggle-syntax', 'toggle-notif-challenge', 'toggle-notif-friends'].forEach(id => {
-    const map = {
-      'toggle-animations': 'reducedAnimations',
-      'toggle-timer': 'showTimer',
-      'toggle-syntax': 'syntaxHighlight',
-      'toggle-notif-challenge': 'notifChallenge',
-      'toggle-notif-friends': 'notifFriends',
-    };
-    const input = el(id);
-    if (input) input.checked = current[map[id]];
-  });
-
-  applyThemeSetting(current.theme);
-  applyReducedAnimations(current.reducedAnimations);
-}
-
-function closeSettings() {
-  const overlay = el('settings-overlay');
-  if (!overlay) return;
-  revertUnsavedSettings();
-  overlay.setAttribute('aria-hidden', 'true');
-  overlay.classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-// ─── Init ─────────────────────────────────────────────────────────────────────
-
-function initSettings() {
-  const settings = loadSettings();
-
-  // Populate controls
-  initSlider('volume-music', 'volume-music-val', 'volumeMusic', settings);
-  initSlider('volume-sfx', 'volume-sfx-val', 'volumeSfx', settings);
-  initThemePicker(settings);
-  initDifficultyPicker(settings);
-  initToggle('toggle-animations', 'reducedAnimations', settings);
-  initToggle('toggle-timer', 'showTimer', settings);
-  initToggle('toggle-syntax', 'syntaxHighlight', settings);
-  initToggle('toggle-notif-challenge', 'notifChallenge', settings);
-  initToggle('toggle-notif-friends', 'notifFriends', settings);
-
-  // Apply initial state
-  applyReducedAnimations(settings.reducedAnimations);
-
-  // Open via menu
-  el('menu-btn-settings')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    // Close dropdown if open
-    document.getElementById('profile-dropdown-wrapper')?.classList.remove('active');
-    openSettings();
-  });
-
-  // Close button
-  el('settings-close')?.addEventListener('click', closeSettings);
-
-  // Click outside modal
-  el('settings-overlay')?.addEventListener('click', (e) => {
-    if (e.target === el('settings-overlay')) closeSettings();
-  });
-
-  // ESC key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && el('settings-overlay')?.classList.contains('open')) {
-      closeSettings();
-    }
-  });
-
-  // Save button
-  el('settings-save')?.addEventListener('click', () => {
-    const current = readCurrentSettings();
-    saveSettings(current);
-    applyThemeSetting(current.theme);
-    applyReducedAnimations(current.reducedAnimations);
-    closeSettings();
-
-    // Show toast if available
-    if (typeof showToast === 'function') {
-      showToast('✅ Impostazioni salvate', 'green');
-    }
-  });
-
-  // Cancel button
-  el('settings-cancel')?.addEventListener('click', () => {
-    closeSettings();
-  });
-
-  // Delete Profile button
-  el('btn-delete-profile')?.addEventListener('click', async () => {
-    if (confirm("Sei sicuro di voler eliminare definitivamente il tuo profilo? Questa azione non può essere annullata.")) {
-      try {
-        const { fetchAuth, clearSession } = await import('./auth.js');
-        const res = await fetchAuth('/api/profilo', { method: 'DELETE' });
-
-        if (res.ok) {
-          if (typeof showToast === 'function') {
-            showToast('Profilo eliminato con successo.', 'green');
-          } else {
-            alert('Profilo eliminato con successo.');
-          }
-          clearSession();
-          window.location.replace('/index.html');
-        } else {
-          const data = await res.json();
-          alert('Errore: ' + (data.errore || 'Impossibile eliminare il profilo.'));
+        // Inizializza tutto se il DOM è già pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
         }
-      } catch (err) {
-        console.error('Errore eliminazione profilo:', err);
-        alert('Si è verificato un errore durante l\'eliminazione del profilo.');
-      }
+		else {
+            this.init();
+        }
     }
-  });
+
+    /* === CARICATORE DI STORAGE PER IMPOSTAZIONI === */
+
+    /* Legge e carica le impostazioni dal localStorage */
+    loadSettings() {
+        try {
+            const raw = localStorage.getItem(this.STORAGE_KEY);
+            return raw ? { ...this.DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...this.DEFAULT_SETTINGS };
+        }
+		catch {
+            console.warn('[settings.js] Errore nel caricamento impostazioni, uso default.');
+            return { ...this.DEFAULT_SETTINGS };
+        }
+    }
+
+    /* Salva le impostazioni nel localStorage */
+    saveSettings(settings) {
+        try {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+        }
+		catch (e) {
+            console.warn('[settings.js] Impossibile salvare le impostazioni:', e);
+        }
+    }
+
+    /* === ESTRAZIONE DATI DALLA FINESTRA MODALE */
+
+    /* Legge lo stato attuale di tutti gli input nel modale */
+    readCurrentState() {
+        const getSlider = (id) => parseInt(document.getElementById(id)?.value ?? 0, 10);
+        const getToggle = (id) => document.getElementById(id)?.checked ?? false;
+
+        const getPicker = (pickerId, attr) => {
+            const activeBtn = document.querySelector(`#${pickerId} [aria-pressed="true"]`);
+            return activeBtn?.dataset[attr] ?? null;
+        };
+
+        return {
+            volumeMusic: getSlider('volume-music'),
+            volumeSfx: getSlider('volume-sfx'),
+            theme: getPicker('theme-picker', 'theme') ?? 'dark',
+            reducedAnimations: getToggle('toggle-animations'),
+            difficulty: getPicker('difficulty-picker', 'diff') ?? 'normal'
+        };
+    }
+
+    /* === INIZIALIZZAZIONE UI === */
+
+    init() {
+        const currentSettings = this.loadSettings();
+
+        // Popola gli input con i valori salvati
+        this.initSlider('volume-music', 'volume-music-val', currentSettings.volumeMusic);
+        this.initSlider('volume-sfx', 'volume-sfx-val', currentSettings.volumeSfx);
+        this.initThemePicker(currentSettings.theme);
+        this.initDifficultyPicker(currentSettings.difficulty);
+        
+        this.initToggle('toggle-animations', currentSettings.reducedAnimations);
+
+        // Applica le impostazioni visive globali (Tema, Animazioni)
+        this.applyTheme(currentSettings.theme);
+        this.applyReducedAnimations(currentSettings.reducedAnimations);
+
+        // Ascolta gli eventi (apertura/chiusura/salvataggio/eliminazione)
+        this.setupEventListeners();
+    }
+
+    /* Configura uno slider (range input) e gestisce l'aggiornamento visivo */
+    initSlider(sliderId, labelId, initialValue) {
+        const slider = document.getElementById(sliderId);
+        const label = document.getElementById(labelId);
+        if (!slider || !label) return;
+
+        slider.value = initialValue;
+        label.textContent = `${initialValue}%`;
+
+        // Colora la parte sinistra dello slider dinamicamente
+        const updateFill = () => {
+            const pct = slider.value;
+            slider.style.background = `linear-gradient(to right, rgb(var(--darcula-blue, 104,151,187)) 0%, rgb(var(--darcula-blue, 104,151,187)) ${pct}%, rgba(var(--darcula-comment,128,128,128),0.25) ${pct}%, rgba(var(--darcula-comment,128,128,128),0.25) 100%)`;
+            label.textContent = `${pct}%`;
+        };
+
+        updateFill();
+        slider.addEventListener('input', updateFill);
+    }
+
+    /* Configura i bottoni di selezione del tema */
+    initThemePicker(initialTheme) {
+        const picker = document.getElementById('theme-picker');
+        if (!picker) return;
+
+        const btns = picker.querySelectorAll('.cg-theme-btn');
+        
+        // Imposta lo stato iniziale
+        btns.forEach(btn => {
+            const isActive = btn.dataset.theme === initialTheme;
+            btn.setAttribute('aria-pressed', String(isActive));
+        });
+
+        // Ascolta i click (gestione UI locale)
+        picker.addEventListener('click', (e) => {
+            const btn = e.target.closest('.cg-theme-btn');
+            if (!btn) return;
+            
+            btns.forEach(b => b.setAttribute('aria-pressed', 'false'));
+            btn.setAttribute('aria-pressed', 'true');
+            
+            // Anteprima del tema in tempo reale
+            this.applyTempTheme(btn.dataset.theme);
+        });
+    }
+
+    /* Configura i bottoni della difficoltà */
+    initDifficultyPicker(initialDifficulty) {
+        const picker = document.getElementById('difficulty-picker');
+        if (!picker) return;
+
+        const btns = picker.querySelectorAll('.cg-diff-btn');
+        
+        btns.forEach(btn => {
+            const isActive = btn.dataset.diff === initialDifficulty;
+            btn.setAttribute('aria-pressed', String(isActive));
+        });
+
+        picker.addEventListener('click', (e) => {
+            const btn = e.target.closest('.cg-diff-btn');
+            if (!btn) return;
+
+            btns.forEach(b => b.setAttribute('aria-pressed', 'false'));
+            btn.setAttribute('aria-pressed', 'true');
+        });
+    }
+
+    /* Inizializza un semplice checkbox toggle */
+    initToggle(id, isChecked) {
+        const input = document.getElementById(id);
+        if (input) input.checked = isChecked;
+    }
+
+    /* === APPLICAZIONE GLOBALE (TEMA/ANIMAZIONI) === */
+
+    /* Applica il tema in maniera temporanea senza salvare per un'anteprima */
+    applyTempTheme(theme) {
+        const html = document.documentElement;
+        if (theme === 'system') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            html.classList.toggle('light-mode', !prefersDark);
+        }
+		else {
+            html.classList.toggle('light-mode', theme === 'light');
+        }
+    }
+
+    /* Applica e salva ufficialmente il tema */
+    applyTheme(theme) {
+        this.applyTempTheme(theme);
+        
+        // Salviamo anche codeguessr-theme per le altre pagine
+        if (theme === 'system') {
+            localStorage.removeItem(this.THEME_KEY);
+        }
+		else {
+            localStorage.setItem(this.THEME_KEY, theme);
+        }
+    }
+
+    /* Disabilita/abilita le animazioni a livello globale */
+    applyReducedAnimations(isReduced) {
+        document.documentElement.classList.toggle('reduced-animations', isReduced);
+    }
+
+    /* === GESTIONE DEL MODALE (OPEN/CLOSE/REVERT) === */
+
+    openModal() {
+        const overlay = document.getElementById('settings-overlay');
+        if (!overlay) return;
+        
+        overlay.removeAttribute('aria-hidden');
+        overlay.classList.add('open');
+
+        // Blocca lo scroll della pagina principale
+        document.body.style.overflow = 'hidden';
+        
+        document.getElementById('settings-close')?.focus();
+    }
+
+    closeModal() {
+        const overlay = document.getElementById('settings-overlay');
+        if (!overlay) return;
+
+        // Se chiudo senza salvare, annullo le modifiche temporanee
+        this.revertUnsavedChanges();
+
+        overlay.setAttribute('aria-hidden', 'true');
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    /* Ripristina l'UI del modale ai valori attualmente salvati */
+    revertUnsavedChanges() {
+        // Ricarichiamo da localStorage e ricarichiamo l'UI
+        this.init();
+    }
+
+    /* === GESTORE EVENTI === */
+
+    setupEventListeners() {
+        // Apri modale dal menu a tendina
+        document.getElementById('menu-btn-settings')?.addEventListener('click', (e) => {
+            e.preventDefault();
+    
+            // Chiude il dropdown del profilo (se aperto)
+            document.getElementById('profile-dropdown-wrapper')?.classList.remove('active');
+            this.openModal();
+        });
+
+        // Chiudi modale coi bottoni (X in alto o bottone Annulla)
+        document.getElementById('settings-close')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('settings-cancel')?.addEventListener('click', () => this.closeModal());
+
+        // Chiudi cliccando lo sfondo (per telefoni principalmente)
+        document.getElementById('settings-overlay')?.addEventListener('click', (e) => {
+            if (e.target.id === 'settings-overlay') this.closeModal();
+        });
+
+        // Chiudi premendo ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('settings-overlay')?.classList.contains('open')) {
+                this.closeModal();
+            }
+        });
+
+        // Salva impostazioni
+        document.getElementById('settings-save')?.addEventListener('click', () => {
+            const newState = this.readCurrentState();
+            
+            this.saveSettings(newState);
+            this.applyTheme(newState.theme);
+            this.applyReducedAnimations(newState.reducedAnimations);
+            
+            this.closeModal();
+
+            if (typeof window.showToast === 'function') {
+                window.showToast('Impostazioni salvate', 'green');
+            }
+        });
+
+        // Eliminazione profilo (danger zone)
+        document.getElementById('btn-delete-profile')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showConfirmDeleteModal();
+        });
+    }
+
+    /* Mostra un modale custom per confermare l'eliminazione del profilo */
+    showConfirmDeleteModal() {
+        const overlay = document.getElementById('cg-confirm-delete-overlay');
+        if (!overlay) return;
+
+        // Chiude il modale delle impostazioni per far risaltare questo
+        this.closeModal();
+
+        overlay.removeAttribute('aria-hidden');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        // Setup listener locali (una tantum per questa apertura)
+        const btnCancel = document.getElementById('btn-cancel-delete');
+        const btnConfirm = document.getElementById('btn-confirm-delete');
+
+        const closeConfirmModal = () => {
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+            btnCancel?.removeEventListener('click', closeConfirmModal);
+        };
+
+        const executeDelete = async () => {
+            closeConfirmModal();
+            btnConfirm?.removeEventListener('click', executeDelete);
+            await this.handleDeleteProfile();
+        };
+
+        btnCancel?.addEventListener('click', closeConfirmModal);
+        btnConfirm?.addEventListener('click', executeDelete);
+    }
+
+    /* Logica di eliminazione profilo delegata a una funzione asincrona a parte */
+    async handleDeleteProfile() {
+        try {
+            // Import dinamico per auth.js (per evitare dipendenze circolari)
+            const { fetchAuth, clearSession } = await import('./auth.js');
+            
+            const res = await fetchAuth('/api/profilo', { method: 'DELETE' });
+
+            if (res.ok) {
+                clearSession();
+
+                setTimeout(() => window.location.replace('/index.html'), 1000);
+            }
+			else {
+                const data = await res.json();
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Errore: ' + (data.errore || 'Impossibile eliminare il profilo.'), 'red');
+                }
+            }
+        }
+		catch (err) {
+            console.error('[settings.js] Errore eliminazione profilo:', err);
+            if (typeof window.showToast === 'function') {
+                window.showToast('Errore durante l\'eliminazione del profilo.', 'red');
+            }
+        }
+    }
 }
 
-initSettings();
+// Avvia automaticamente il manager
+window.CG_Settings = new SettingsManager();

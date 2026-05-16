@@ -81,7 +81,7 @@
     </noscript>
 
     <script type="module">
-        import { initLoader } from '/src/js/loader.js';
+        import { initLoader } from '/src/js/managers/loader.js';
         initLoader();
     </script>
 
@@ -173,15 +173,14 @@
                                     <span id="page-name"></span>
                                 </h1>
                                 <div class="profile-main-meta mb-3">
-                                    <!-- TODO: Da rimuovere lo userid nel frontend -->
-                                    <span class="badge text-bg-secondary">
+                                    <!-- UUID Nascosto -->
+                                    <span class="badge text-bg-secondary d-none">
                                         <i class="bi bi-hash"></i><span id="page-userid"></span>
                                     </span>
 
                                     <!-- Data di iscrizione -->
                                     <span class="ms-2 text-darcula-comment">
-                                        <i class="bi bi-calendar-event"></i>
-                                        Iscritto dal <span id="page-joindate"></span>
+                                        <i class="bi bi-calendar-event"></i> Iscritto dal <span id="page-joindate"></span>
                                     </span>
                                 </div>
 
@@ -416,6 +415,31 @@
     </div>
     <!-- ===== FINE FINESTRA MODALE: Impostazioni ===== -->
 
+    <!-- ===== INIZIO FINESTRA MODALE: Conferma Eliminazione Profilo ===== -->
+    <div class="cg-settings-overlay" id="cg-confirm-delete-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="delete-profile-title">
+        <div class="cg-settings-modal" style="max-width: 450px; text-align: center;">
+            <div class="cg-settings-header" style="justify-content: center; position: relative; border-bottom: none; padding-bottom: 0;">
+                <div class="cg-settings-title-group text-danger">
+                    <div class="cg-settings-icon-wrap" style="color: rgb(var(--darcula-red))">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <h2 class="cg-settings-title text-danger" id="delete-profile-title">Elimina Profilo</h2>
+                </div>
+            </div>
+            <div class="cg-settings-body" style="padding: 2rem;">
+                <p class="text-darcula-fg mb-4" style="line-height: 1.5; font-size: 1.1rem;">
+                    Sei sicuro di voler eliminare definitivamente il tuo profilo?<br><br>
+                    <strong>Questa azione distruggerà i tuoi dati e non può essere annullata.</strong>
+                </p>
+                <div class="d-flex gap-3 justify-content-center mt-2">
+                    <button class="cg-btn-secondary" id="btn-cancel-delete" style="min-width: 120px; justify-content: center;">Annulla</button>
+                    <button class="cg-btn-danger" id="btn-confirm-delete" style="min-width: 120px; font-weight: bold; justify-content: center;">Sì, elimina</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== FINE FINESTRA MODALE: Conferma Eliminazione Profilo ===== -->
+
     <!-- ===== INIZIO FINESTRA MODALE: Modifica Profilo ===== -->
     <div class="cg-settings-overlay" id="edit-profile-overlay" aria-hidden="true" role="dialog" aria-modal="true"
         aria-labelledby="edit-profile-title">
@@ -467,6 +491,7 @@
             </div>
 
             <!-- Footer della pagina modale -->
+            <div id="edit-profile-status" style="display: none; margin: 0.75rem 1.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500;"></div>
             <div class="cg-settings-footer">
                 <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0</span>
                 <div class="d-flex gap-2">

@@ -4,7 +4,7 @@
     AUTHORS: Salvatore Iavarone & Michele Pio Forlani
 */
 
-import { getSession, fetchAuth } from '../managers/auth.js';
+import { getSession, fetchAuth, startHeartbeat } from '../managers/auth.js';
 import { loadNavbarData } from '../utils/ui_utils.js';
 import { 
   fetchPlayerMissions, 
@@ -80,10 +80,8 @@ function initIntervals(idGiocatore) {
 		}
 	}, 10000);
 
-	// Heartbeat ogni 5 secondi per segnalare presenza online
-	const sendHeartbeat = () => fetchAuth('/api/heartbeat', { method: 'POST' }).catch(() => {});
-	setInterval(sendHeartbeat, 5000);
-	sendHeartbeat();
+	// Heartbeat centralizzato ogni 5 secondi
+	startHeartbeat(5000);
 }
 
 // Avvio al caricamento del DOM
