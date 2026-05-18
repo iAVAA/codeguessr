@@ -28,7 +28,7 @@ function buildHistoryElement(match, playerName) {
         resultClass = 'tie';
         xpColor = 'text-darcula-yellow';
         xpPrefix = '';
-        textResult = 'Pareggio';
+        textResult = 'Amichevole';
     } else if (isWin) {
         iconClass = 'bi-arrow-up-right';
         resultClass = 'win';
@@ -56,7 +56,7 @@ function buildHistoryElement(match, playerName) {
 
     let modeLabel = 'Single Player';
     if (match.modalita === 'multiplayer') modeLabel = 'Multiplayer';
-    else if (match.modalita === 'amichevole') modeLabel = 'Amichevole';
+    else if (match.modalita === 'amichevole') modeLabel = 'Partita amichevole';
     clone.querySelector('.history-mode').textContent = modeLabel;
 
     const opponentSpan = clone.querySelector('.history-opponent');
