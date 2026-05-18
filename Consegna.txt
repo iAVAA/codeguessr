@@ -1,4 +1,5 @@
 FILE PRONTI PER LA CONSEGNA
+backend/
 pages/
 css/
 assets/
@@ -9,13 +10,7 @@ FILE MANCANTI DI CSS
 index-background2.css
 
 FILE MANCANTI DI JAVASCRIPT
-js/profile_page
 login_page.js
 reset_password_completo.js
 reset_password.js
 index-background2.js
-
-FILE MANCANTI DEL BACKEND
-auth.js
-server-commentato.js
-server.js

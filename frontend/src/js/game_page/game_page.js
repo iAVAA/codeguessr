@@ -1,5 +1,5 @@
 /*
-    FILE: profile.js
+    FILE: game_page.js
     DESCRIPTION: Gestore generale del profilo utente nella lobby.
     AUTHORS: Salvatore Iavarone & Michele Pio Forlani
 */
@@ -31,7 +31,7 @@ async function loadPlayerData() {
 	const { isLoggedIn, idGiocatore } = getSession();
 
 	if (!isLoggedIn || !idGiocatore) {
-		window.location.href = '/index.html';
+		window.location.href = '/index';
 		return;
 	}
 
