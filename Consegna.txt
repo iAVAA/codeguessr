@@ -9,7 +9,6 @@ FILE MANCANTI DI CSS
 index-background2.css
 
 FILE MANCANTI DI JAVASCRIPT
-js/profile_page
 login_page.js
 reset_password_completo.js
 reset_password.js

@@ -1,94 +1,74 @@
-/**
- * edit_profile.js
- * Gestisce il modale per la modifica del profilo utente.
- */
+/*
+    FILE: edit_profile.js
+    DESCRIPTION: Gestisce l'apertura/chiusura del modale di modifica profilo e i listener UI.
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
 
-import { getSession, fetchAuth } from '../managers/auth.js';
-
-// ─── Upload immagine via backend ──────────────────────────────────────────────
-
-async function uploadImmagine(file, tipo) {
-    const formData = new FormData();
-    formData.append('immagine', file);
-
-    const token = localStorage.getItem('supabaseToken');
-
-    const res = await fetch(`/api/upload/${tipo}`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`
-            // NON aggiungere Content-Type: il browser lo imposta con il boundary corretto
-        },
-        body: formData,
-    });
-
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.errore || `Upload ${tipo} fallito`);
-    }
-
-    const data = await res.json();
-    return data.url;
-}
+import { getSession } from '../managers/auth.js';
+import { saveProfileChanges } from './edit_profile_api.js';
 
 // ─── Feedback visivo ──────────────────────────────────────────────────────────
 
+/* Mostra un messaggio di stato nel modale (successo o errore) */
 function showSaveStatus(message, isError = false) {
-    let statusEl = document.getElementById('edit-profile-status');
+    const statusEl = document.getElementById('edit-profile-status');
     if (!statusEl) return;
 
-    statusEl.textContent = message;
-    statusEl.style.background = isError ? 'rgba(220, 53, 69, 0.15)' : 'rgba(98, 151, 85, 0.15)';
-    statusEl.style.border = isError ? '1px solid rgba(220, 53, 69, 0.4)' : '1px solid rgba(98, 151, 85, 0.4)';
-    statusEl.style.color = isError ? '#f87171' : '#86efac';
-    statusEl.style.display = 'block';
+    statusEl.textContent        = message;
+    statusEl.style.background   = isError ? 'rgba(220, 53, 69, 0.15)' : 'rgba(98, 151, 85, 0.15)';
+    statusEl.style.border       = isError ? '1px solid rgba(220, 53, 69, 0.4)' : '1px solid rgba(98, 151, 85, 0.4)';
+    statusEl.style.color        = isError ? '#f87171' : '#86efac';
+    statusEl.style.display      = 'block';
 
     setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 4000);
 }
 
-// ─── Apertura/Chiusura modale ─────────────────────────────────────────────────
+// ─── Apertura / Chiusura modale ───────────────────────────────────────────────
 
+/* Apre il modale di modifica e pre-popola i campi con i dati attuali del profilo */
 function openModal() {
     const session = getSession();
     const userIdEl = document.getElementById('page-userid');
     const currentProfileId = userIdEl?.dataset.fullId || userIdEl?.textContent;
 
-    // 🔒 CONTROLLO DI SICUREZZA: Sei loggato ed è il TUO profilo?
+    // Controllo di sicurezza: solo il proprietario del profilo può aprire il modale
     if (!session.isLoggedIn || session.idGiocatore !== currentProfileId) {
-        console.warn("Azione bloccata: non puoi modificare il profilo di un altro utente.");
-        return; // Ferma tutto, il modale non si apre!
+        console.warn('[edit_profile] Azione bloccata: non puoi modificare il profilo di un altro utente.');
+        return;
     }
 
     const overlay = document.getElementById('edit-profile-overlay');
     if (!overlay) return;
     overlay.classList.add('open');
 
-    const currentName = document.getElementById('page-name')?.textContent || '';
-    const bioEl = document.getElementById('page-bio');
-    const currentBio = bioEl?.textContent?.replace(/^"|"$/g, '').replace('Nessuna bio impostata.', '') || '';
-
+    // Pre-popolamento campi con i valori correnti dalla pagina
     const inputName = document.getElementById('edit-username');
-    const inputBio = document.getElementById('edit-bio');
-    if (inputName) inputName.value = currentName;
-    if (inputBio) inputBio.value = currentBio;
+    const inputBio  = document.getElementById('edit-bio');
+    const currentBio = document.getElementById('page-bio')
+        ?.textContent?.replace(/^"|"$/g, '').replace('Nessuna bio impostata.', '') || '';
 
-    const avatarInput = document.getElementById('edit-avatar');
-    const bannerInput = document.getElementById('edit-banner');
-    if (avatarInput) avatarInput.value = '';
-    if (bannerInput) bannerInput.value = '';
+    if (inputName) inputName.value = document.getElementById('page-name')?.textContent || '';
+    if (inputBio)  inputBio.value  = currentBio;
 
+    // Reset file inputs e status bar
+    ['edit-avatar', 'edit-banner'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
     const statusEl = document.getElementById('edit-profile-status');
     if (statusEl) statusEl.style.display = 'none';
 }
 
+/* Chiude il modale di modifica profilo */
 function closeModal() {
     const overlay = document.getElementById('edit-profile-overlay');
     if (!overlay) return;
     overlay.classList.remove('open');
 }
 
-// ─── Salvataggio modifiche ────────────────────────────────────────────────────
+// ─── Salvataggio ─────────────────────────────────────────────────────────────
 
+/* Raccoglie i dati, chiama l'API di salvataggio e aggiorna la UI in-place */
 async function saveChanges() {
     const session = getSession();
     if (!session.isLoggedIn) {
@@ -98,51 +78,22 @@ async function saveChanges() {
 
     const btnSave = document.getElementById('edit-profile-save');
     const originalBtnText = btnSave?.innerHTML;
+
     if (btnSave) {
-        btnSave.disabled = true;
+        btnSave.disabled  = true;
         btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Salvataggio...';
     }
 
     try {
-        const inputName = document.getElementById('edit-username')?.value?.trim();
-        const inputBio = document.getElementById('edit-bio')?.value?.trim();
-        const avatarFile = document.getElementById('edit-avatar')?.files?.[0];
-        const bannerFile = document.getElementById('edit-banner')?.files?.[0];
+        const payload = await saveProfileChanges(showSaveStatus, closeModal);
+        if (!payload) return; // saveProfileChanges ha già mostrato l'errore
 
-        const payload = {};
-        if (inputName) payload.nickname = inputName;
-        if (inputBio !== undefined) payload.bio = inputBio;
-
-        if (avatarFile) {
-            showSaveStatus('Caricamento avatar…');
-            payload.avatar_url = await uploadImmagine(avatarFile, 'avatar');
-        }
-        if (bannerFile) {
-            showSaveStatus('Caricamento banner…');
-            payload.banner_url = await uploadImmagine(bannerFile, 'banner');
-        }
-
-        if (Object.keys(payload).length === 0) {
-            showSaveStatus('Nessuna modifica da salvare.', true);
-            return;
-        }
-
-        // Salva nickname/bio nel DB tramite backend
-        const res = await fetchAuth('/api/profilo', {
-            method: 'PUT',
-            body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-            showSaveStatus(data.errore || 'Errore durante il salvataggio.', true);
-            return;
-        }
-
-        // Aggiorna la UI senza ricaricare
+        // Aggiorna la UI in-place senza ricaricare la pagina
         if (payload.nickname) {
-            document.getElementById('page-name') && (document.getElementById('page-name').textContent = payload.nickname);
-            document.getElementById('player-name') && (document.getElementById('player-name').textContent = payload.nickname);
+            const pageNameEl   = document.getElementById('page-name');
+            const playerNameEl = document.getElementById('player-name');
+            if (pageNameEl)   pageNameEl.textContent   = payload.nickname;
+            if (playerNameEl) playerNameEl.textContent = payload.nickname;
         }
 
         if (payload.bio !== undefined) {
@@ -157,9 +108,9 @@ async function saveChanges() {
         if (payload.avatar_url) {
             const bust = `?t=${Date.now()}`;
             const pageAv = document.getElementById('page-avatar');
-            const navAv = document.getElementById('player-avatar');
+            const navAv  = document.getElementById('player-avatar');
             if (pageAv) pageAv.src = payload.avatar_url + bust;
-            if (navAv) navAv.src = payload.avatar_url + bust;
+            if (navAv)  navAv.src  = payload.avatar_url + bust;
         }
 
         if (payload.banner_url) {
@@ -171,11 +122,11 @@ async function saveChanges() {
         setTimeout(closeModal, 1200);
 
     } catch (error) {
-        console.error('Errore durante il salvataggio profilo:', error);
+        console.error('[edit_profile] Errore durante il salvataggio:', error);
         showSaveStatus(error.message || 'Errore di connessione. Riprova.', true);
     } finally {
         if (btnSave) {
-            btnSave.disabled = false;
+            btnSave.disabled  = false;
             btnSave.innerHTML = originalBtnText;
         }
     }
@@ -183,6 +134,7 @@ async function saveChanges() {
 
 // ─── Anteprima immagini ───────────────────────────────────────────────────────
 
+/* Mostra il nome del file selezionato accanto alla label del campo immagine */
 function setupImagePreview(inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -200,20 +152,21 @@ function setupImagePreview(inputId) {
     });
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// ─── Inizializzazione ─────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
     const btnEditProfile = document.getElementById('btn-edit-profile');
-    const overlay = document.getElementById('edit-profile-overlay');
-    const btnClose = document.getElementById('edit-profile-close');
-    const btnCancel = document.getElementById('edit-profile-cancel');
-    const btnSave = document.getElementById('edit-profile-save');
+    const overlay        = document.getElementById('edit-profile-overlay');
+    const btnClose       = document.getElementById('edit-profile-close');
+    const btnCancel      = document.getElementById('edit-profile-cancel');
+    const btnSave        = document.getElementById('edit-profile-save');
 
     if (btnEditProfile) btnEditProfile.addEventListener('click', openModal);
-    if (btnClose) btnClose.addEventListener('click', closeModal);
-    if (btnCancel) btnCancel.addEventListener('click', closeModal);
-    if (btnSave) btnSave.addEventListener('click', saveChanges);
+    if (btnClose)       btnClose.addEventListener('click', closeModal);
+    if (btnCancel)      btnCancel.addEventListener('click', closeModal);
+    if (btnSave)        btnSave.addEventListener('click', saveChanges);
 
+    // Chiudi il modale cliccando sull'overlay (fuori dalla card)
     if (overlay) {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closeModal();
