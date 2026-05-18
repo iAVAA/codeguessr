@@ -54,7 +54,13 @@ codeguessr/
 Per una comprensione profonda delle specifiche tecniche e delle scelte di design del progetto, consulta:
 * **[Architettura di Sistema (docs/ARCHITETTURA.md)](docs/ARCHITETTURA.md)**: Analisi completa sul pattern Client-Server, WebSocket, modularità CSS/JS, logiche dei trigger SQL e prompt LLM.
 
-**[![Schema Relazionale ER del Database](docs/db_scheme.svg)](docs/db_scheme.svg)**
+---
+
+<p align="center">
+  <a href="docs/db_scheme.svg">
+    <img src="docs/db_scheme.svg" alt="Schema Relazionale ER del Database" />
+  </a>
+</p>
 
 ---
 

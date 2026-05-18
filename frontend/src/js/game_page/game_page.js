@@ -1,5 +1,5 @@
 /*
-    FILE: profile.js
+    FILE: game_page.js
     DESCRIPTION: Gestore generale del profilo utente nella lobby.
     AUTHORS: Salvatore Iavarone & Michele Pio Forlani
 */

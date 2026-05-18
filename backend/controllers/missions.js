@@ -159,7 +159,7 @@ module.exports = (app) => {
                     description: ach.description,
                     current: current,
                     target: target,
-                    reward: `+${ach.exp_reward} XP, +${ach.trophy_reward} 🏆`,
+                    reward: `+${ach.exp_reward} XP, +${ach.trophy_reward} <i class="bi bi-trophy-fill"></i>`,
                     completed: isCompleted
                 };
             });
