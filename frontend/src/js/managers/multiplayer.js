@@ -37,20 +37,12 @@ export function initMultiplayer(callbacks = {}) {
     // --- Registrazione Eventi ---
 
     socket.on('connect', () => {
-<<<<<<< HEAD
         console.log("Connesso al server multiplayer");
-=======
-        console.log("[multiplayer.js]: Connesso al server multiplayer");
->>>>>>> 87803307880fa30710911f89c2222608cfd7174a
         callbacks.onConnect?.();
     });
 
     socket.on('connect_error', (err) => {
-<<<<<<< HEAD
         console.error("Errore socket:", err.message);
-=======
-        console.error("[multiplayer.js]: Errore socket:", err.message);
->>>>>>> 87803307880fa30710911f89c2222608cfd7174a
         callbacks.onError?.(err.message);
     });
 
