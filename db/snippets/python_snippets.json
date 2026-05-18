@@ -1,0 +1,6 @@
+{
+  "code": "def is_palindrome(s: str) -> bool:\n    clean = ''.join(ch.lower() for ch in s if ch.isalnum())\n    left, right = 0, len(clean) - 1\n\n    while left < right:\n        if clean[left] != clean[right]:\n            return False\n        left += 1\n        right -= 1\n\n    return True",
+  "monacoLang": "python",
+  "source": "fallback/local - palindrome.py",
+  "fileUrl": null
+}

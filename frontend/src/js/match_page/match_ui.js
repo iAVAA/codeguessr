@@ -142,7 +142,7 @@ export async function loadProfiles(isMultiplayer, opponentData) {
                 const myProfile = await res.json();
                 document.getElementById('match-p1-name').textContent = myProfile.user;
                 document.getElementById('match-p1-lvl').textContent  = myProfile.livello || 1;
-                document.getElementById('match-p1-cups').textContent = myProfile.exp || 0;
+                document.getElementById('match-p1-cups').textContent = myProfile.trophies || 0;
                 document.getElementById('match-p1-avatar').src = myProfile.avatar_url || '/src/assets/img/user_profile.webp';
             }
         } catch (e) {
@@ -277,8 +277,8 @@ export function showEndGameMultiplayer(data) {
     }
 
     // Legge le ricompense personali dal payload del server
-    const myRewards  = data.rewards?.[idGiocatore] ?? null;
-    const expEarned  = myRewards?.exp     ?? null;
+    const myRewards = data.rewards?.[idGiocatore] ?? null;
+    const expEarned = myRewards?.exp ?? null;
     // I trofei sono mostrati solo nelle partite ranked
     const trophyDiff = !data.unranked ? (myRewards?.trophies ?? null) : null;
 

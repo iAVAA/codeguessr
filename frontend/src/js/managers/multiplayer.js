@@ -37,12 +37,12 @@ export function initMultiplayer(callbacks = {}) {
     // --- Registrazione Eventi ---
 
     socket.on('connect', () => {
-        console.log("✅ Connesso al server multiplayer");
+        console.log("[multiplayer.js]: Connesso al server multiplayer");
         callbacks.onConnect?.();
     });
 
     socket.on('connect_error', (err) => {
-        console.error("❌ Errore socket:", err.message);
+        console.error("[multiplayer.js]: Errore socket:", err.message);
         callbacks.onError?.(err.message);
     });
 
@@ -80,6 +80,11 @@ export function initMultiplayer(callbacks = {}) {
 
     socket.on('matchFound', (data) => {
         callbacks.onMatchFound?.(data);
+    });
+
+    socket.on('activeMatchFound', (data) => {
+        console.log("[multiplayer.js]: Partita attiva rilevata! Reindirizzamento...", data.roomCode);
+        window.location.href = `/match?room=${data.roomCode}`;
     });
 
     socket.on('error', (data) => {

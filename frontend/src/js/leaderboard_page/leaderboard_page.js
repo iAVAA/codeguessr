@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Protezione rotta
     if (!session.isLoggedIn) {
-        window.location.href = '/index.html';
+        window.location.href = '/index';
         return;
     }
 

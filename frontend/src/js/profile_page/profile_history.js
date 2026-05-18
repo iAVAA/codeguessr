@@ -14,13 +14,28 @@ function buildHistoryElement(match, playerName) {
 
     const clone = templateContainer.firstElementChild.cloneNode(true);
 
+    const isAmichevole = match.modalita === 'amichevole';
     const isWin = match.risultato === 'vittoria';
     
-    const iconClass = isWin ? 'bi-arrow-up-right' : 'bi-arrow-down-right';
-    const resultClass = isWin ? 'win' : 'loss';
-    const xpColor = isWin ? 'text-darcula-green' : 'text-darcula-red';
-    const xpPrefix = isWin ? '+' : '';
-    const textResult = isWin ? 'Vittoria' : 'Sconfitta';
+    let iconClass = 'bi-arrow-down-right';
+    let resultClass = 'loss';
+    let xpColor = 'text-darcula-red';
+    let xpPrefix = '';
+    let textResult = 'Sconfitta';
+
+    if (isAmichevole) {
+        iconClass = 'bi-dash-lg';
+        resultClass = 'tie';
+        xpColor = 'text-darcula-yellow';
+        xpPrefix = '';
+        textResult = 'Pareggio';
+    } else if (isWin) {
+        iconClass = 'bi-arrow-up-right';
+        resultClass = 'win';
+        xpColor = 'text-darcula-green';
+        xpPrefix = '+';
+        textResult = 'Vittoria';
+    }
 
     const timeAgo = formatRelativeTime(match.data_fine || match.data_inizio);
 
@@ -39,11 +54,13 @@ function buildHistoryElement(match, playerName) {
         trophiesSpan.querySelector('.trophies-val').textContent = `${tPrefix}${match.trofei_cambiati}`;
     }
 
-    const modeLabel = match.modalita === 'multiplayer' ? 'Multiplayer' : 'Single Player';
+    let modeLabel = 'Single Player';
+    if (match.modalita === 'multiplayer') modeLabel = 'Multiplayer';
+    else if (match.modalita === 'amichevole') modeLabel = 'Amichevole';
     clone.querySelector('.history-mode').textContent = modeLabel;
 
     const opponentSpan = clone.querySelector('.history-opponent');
-    if (match.modalita === 'multiplayer') {
+    if (match.modalita === 'multiplayer' || match.modalita === 'amichevole') {
         opponentSpan.classList.remove('d-none');
         
         const myNameStr = playerName || 'Tu';

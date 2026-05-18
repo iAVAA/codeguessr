@@ -1,0 +1,138 @@
+<!--
+    FILE: 404.html
+    DESCRIPTION: Pagina di errore 404 - Risoluzione percorso fallita
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+-->
+
+<!DOCTYPE html>
+<html lang="it">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="CodeGuessr - Errore 404: Pagina non trovata." />
+        <meta name="theme-color" content="#313335" />
+
+        <title>404 - Pagina Non Trovata | CodeGuessr</title>
+
+        <link rel="icon" type="image/webp" href="/src/assets/icons/logo.ico" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+        <!-- CSS Ufficiali del Progetto -->
+        <link rel="stylesheet" href="/src/css/style.css" />
+        <link rel="stylesheet" href="/src/css/game_page/game_page.css" />
+        <link rel="stylesheet" href="/src/css/game_page/code_block.css" />
+
+        <script id="fouc-prevention">
+            // Anti-FOUC: applica il tema dal localStorage prima che il CSS venga parsato
+            const theme = localStorage.getItem('codeguessr-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (theme === 'light' || (!theme && !prefersDark)) {
+                document.documentElement.classList.add('light-mode');
+            }
+        </script>
+    </head>
+
+    <body>
+        <!-- Inizializzazione del sistema di caricamento iniziale della pagina -->
+        <script type="module">
+            import { initLoader } from '/src/js/managers/loader.js';
+            initLoader();
+        </script>
+
+        <!-- ===================== HEADER ===================== -->
+        <header class="navbar-codeguessr d-flex align-items-center justify-content-between" style="position:relative">
+            <!-- == Lato sinistro: Brand Logo == -->
+            <div class="navbar-brand-logo" id="nav-brand" style="cursor: pointer;" onclick="window.location.href='/home'">
+                <img src="/src/assets/img/logo.webp" alt="CodeGuessr Logo" class="logo-img" />
+                <span class="brand-text">Code<span class="brand-accent">Guessr</span></span>
+            </div>
+        </header>
+
+        <!-- ===================== MAIN HERO ===================== -->
+        <main class="game-hero">
+            <div class="hero-content">
+                <!-- Titolo principale a tema -->
+                <h1 class="hero-welcome mb-3">
+                    Risoluzione del percorso <span class="hero-title-accent">fallita!</span>
+                </h1>
+                
+                <p class="mb-4" style="color: rgb(var(--darcula-comment)); font-size: 1.05rem; font-weight: 500;">
+                    La risorsa richiesta o la pagina a cui stai tentando di accedere non è stata trovata.
+                </p>
+
+                <!-- Blocco di codice animato (Code Block Ufficiale) -->
+                <div class="code-decoration"></div>
+
+                <!-- Bottone per Ritornare alla Home -->
+                <div class="play-buttons mt-4">
+                    <button class="btn-play btn-singleplayer" aria-label="Ritorna alla home page" onclick="handleGoHome()">
+                        <div class="btn-play-icon">
+                            <i class="bi bi-house-fill"></i>
+                        </div>
+                        <div class="btn-play-text">
+                            <span class="btn-play-label">Torna su CodeGuessr</span>
+                            <span class="btn-play-title">Torna alla Home</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- ===================== FOOTER ===================== -->
+        <footer class="site-footer" id="site-footer">
+            <div class="container">
+                <div class="footer-bottom">
+                    <!-- LATO SINISTRO -->
+                    <div class="footer-copy">
+                        <span class="footer-brand">
+                            <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
+                        </span>
+                        <span class="footer-sep" aria-hidden="true">&mdash;</span>
+                        <span class="footer-authors">
+                            Salvatore Iavarone &amp; Michele Pio Forlani
+                        </span>
+                        <span class="footer-sep" aria-hidden="true">&bull;</span>
+                        <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
+                            class="footer-license">Licenza MIT</a>
+                        <span class="footer-sep" aria-hidden="true">&bull;</span>
+                        <span class="footer-version">v1.0.0</span>
+                    </div>
+
+                    <!-- LATO DESTRO -->
+                    <div class="footer-links-inline">
+                        <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
+                            title="GitHub">
+                            <i class="bi bi-github"></i>
+                        </a>
+                        <a href="https://www.linkedin.com/in/salvatoreiavarone" target="_blank" class="social-btn"
+                            aria-label="LinkedIn" title="LinkedIn">
+                            <i class="bi bi-linkedin"></i>
+                        </a>
+                        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr"
+                            target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
+                            <i class="bi bi-envelope-fill"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- JS Ufficiali e Manager di CodeGuessr -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
+        </script>
+        
+        <script src="/src/js/managers/theme.js"></script>
+        <script src="/src/js/managers/sound.js"></script>
+        <script src="/src/js/404/typing_404.js"></script>
+        <script src="/src/js/404/404.js"></script>
+    </body>
+
+</html>

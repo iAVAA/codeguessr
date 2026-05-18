@@ -89,6 +89,12 @@
     box-shadow: 0 0 12px rgba(var(--darcula-red), 0.4);
 }
 
+.history-result.tie {
+    background: rgba(var(--darcula-yellow), 0.15);
+    color: rgb(var(--darcula-yellow));
+    box-shadow: 0 0 12px rgba(var(--darcula-yellow), 0.4);
+}
+
 .history-opponent {
     margin-top: 4px;
     font-size: 0.85rem;
