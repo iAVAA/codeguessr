@@ -90,16 +90,24 @@
 }
 
 .history-opponent {
-    margin-left: 4px;
+    margin-top: 4px;
+    font-size: 0.85rem;
 }
 
-.history-opponent strong {
+.history-player-link {
     color: rgb(var(--darcula-fg));
-    font-weight: 600;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.history-player-link:hover {
+    color: rgb(var(--darcula-blue));
+    text-decoration: underline;
 }
 
 .history-trophies {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     display: inline-flex;
     align-items: center;
     gap: 4px;
