@@ -31,7 +31,7 @@ async function loadPlayerData() {
 	const { isLoggedIn, idGiocatore } = getSession();
 
 	if (!isLoggedIn || !idGiocatore) {
-		window.location.href = '/index.html';
+		window.location.href = '/index';
 		return;
 	}
 

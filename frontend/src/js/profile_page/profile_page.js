@@ -17,7 +17,7 @@ async function initProfilePage() {
 
     // reindirizza alla landing page (index.html) se non autenticato
     if (!session.isLoggedIn || !session.idGiocatore) {
-        window.location.href = '/index.html';
+        window.location.href = '/index';
         return;
     }
 

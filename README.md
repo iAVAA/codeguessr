@@ -23,26 +23,38 @@ A differenza dei normali giochi di programmazione, qui non devi limitarti a indo
 ```text
 codeguessr/
 ├── backend/                  # Server Node.js e API (WebSockets)
-│   ├── server.js             # Entry point del server Express
-│   ├── auth.js               # Middleware di autenticazione Supabase
-│   ├── .env.example          # Variabili d'ambiente (Esemio .example)
-│   └── package.json          # Dipendenze backend
-├── frontend/                 # Applicazione Client
-│   ├── index.html            # Landing page / Pagina di Login
-│   └── src/
-│       ├── assets/           # Immagini, audio, video e loghi
-│       ├── css/              # Fogli di stile modulari e globali
-│       ├── js/               # Logica di business e UI
-│       │   ├── managers/     # Gestori globali (Auth, Sound, Theme, Settings)
-│       │   ├── game_page/    # Script specifici della Lobby
-│       │   ├── match_page/   # Script specifici della Partita
-│       │   └── utils/        # Utility generiche e funzioni di supporto
-│       └── pages/            # Pagine HTML
+│   ├── controllers/          # Logica applicativa (snippet GitHub, missioni, socket real-time)
+│   ├── middleware/           # Middleware di autenticazione Supabase JWT
+│   ├── server.js             # Entry point del server Express e configurazione socket
+│   ├── .env.example          # Variabili d'ambiente di esempio
+│   └── package.json          # Dipendenze backend (Express, Socket.io, Supabase)
 ├── db/
-│   └── schema.sql            # Schema completo del DB Supabase
+│   ├── llm/                  # Prompt di valutazione per l'LLM (GPT-4o-mini via OpenRouter)
+│   ├── snippets/             # Snippet di fallback precompilati in JSON
+│   └── schema.sql            # Schema completo DDL del database PostgreSQL
+├── docs/                     # Documentazione tecnica approfondita
+│   ├── ARCHITETTURA.md       # Specifica architetturale del sistema (in italiano)
+│   └── db_scheme.svg         # Schema grafico ER del database (vettoriale ad alta definizione)
+├── frontend/                 # Applicazione Client (Vanilla HTML, CSS, JS)
+│   ├── index.html            # Landing page / Pagina di ingresso
+│   └── src/
+│       ├── assets/           # Risorse statiche (audio, video, loghi)
+│       ├── css/              # Fogli di stile modulari organizzati per componente
+│       ├── js/               # Moduli JS divisi in gestori globali, utility e script di pagina
+│       └── pages/            # Pagine HTML di gioco, profilo, matchmaking, leaderboard
 ├── package.json              # Script globali per installazione ed esecuzione (npm run install-all)
+├── LICENSE                   # File di licenza generale (MIT)
 └── README.md                 # Questo file
 ```
+
+---
+
+## Documentazione Tecnica
+
+Per una comprensione profonda delle specifiche tecniche e delle scelte di design del progetto, consulta:
+* **[Architettura di Sistema (docs/ARCHITETTURA.md)](docs/ARCHITETTURA.md)**: Analisi completa sul pattern Client-Server, WebSocket, modularità CSS/JS, logiche dei trigger SQL e prompt LLM.
+
+**[![Schema Relazionale ER del Database](docs/db_scheme.svg)](docs/db_scheme.svg)**
 
 ---
 
@@ -75,4 +87,4 @@ Sviluppato da:
 
 ## Licenza (MIT)
 
-Questo progetto è distribuito sotto licenza **MIT**. Guarda il file `LICENSE` per ulteriori dettagli.
+Questo progetto è distribuito sotto licenza **MIT**. Guarda il file [`LICENSE`](LICENSE) per ulteriori dettagli.

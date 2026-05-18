@@ -324,7 +324,7 @@ class SettingsManager {
             if (res.ok) {
                 clearSession();
 
-                setTimeout(() => window.location.replace('/index.html'), 1000);
+                setTimeout(() => window.location.replace('/index'), 1000);
             }
 			else {
                 const data = await res.json();

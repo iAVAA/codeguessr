@@ -1,4 +1,4 @@
-const { supabase } = require('./server'); // ← adatta questo import
+const { supabase } = require('../server');
 
 async function verificaToken(req, res, next) {
     const authHeader = req.get('Authorization');
