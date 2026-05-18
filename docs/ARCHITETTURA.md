@@ -50,8 +50,11 @@ Il sistema è suddiviso in tre macro-livelli fondamentali:
 
 La persistenza dei dati è gestita tramite PostgreSQL. Il database implementa un forte accoppiamento referenziale e logiche automatiche sul database per prevenire incongruenze e manipolazioni dei client.
 
-Il diagramma delle entità-relazioni (ER) completo è disponibile al seguente link:
-👉 **[Schema Grafico ER (SVG)](db_scheme.svg)**
+<p align="center">
+  <a href="db_scheme.svg">
+    <img src="db_scheme.svg" alt="Schema Relazionale ER del Database" />
+  </a>
+</p>
 
 ### Tipi ENUM Personalizzati
 Per garantire il massimo rigore nei vincoli sui dati, sono stati definiti i seguenti domini ENUM:
