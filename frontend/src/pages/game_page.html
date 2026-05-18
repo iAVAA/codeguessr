@@ -37,7 +37,7 @@
         <script>
             // Reindirizza alla pagina di login se l'utente non è autenticato
             if (localStorage.getItem('isLoggedIn') !== 'true') {
-                window.location.replace('/index.html');
+                window.location.replace('/index');
             }
         </script>
 
@@ -627,11 +627,10 @@
         <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
         <script type="module" src="src/js/game_page/ui.js"></script>
         <script src="src/js/game_page/typing.js"></script>
-        <script src="src/js/managers/auth.js"></script>
         <script src="src/js/managers/theme.js"></script>
         <script src="src/js/managers/sound.js"></script>
         <script src="src/js/managers/settings.js"></script>
-        <script type="module" src="src/js/game_page/profile_page.js"></script>
+        <script type="module" src="src/js/game_page/game_page.js"></script>
         <script type="module" src="src/js/game_page/multiplayer_ui.js"></script>
     </body>
 

@@ -53,7 +53,7 @@ export async function refreshToken() {
         if (!response.ok) {
             console.warn('[auth.js] Refresh fallito: sessione definitivamente scaduta. Forza logout.');
             clearSession();
-            window.location.href = '/index.html';
+            window.location.href = '/index';
             return null;
         }
 
@@ -137,7 +137,7 @@ function initAuthUI() {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
             clearSession();
-            window.location.href = '/index.html';
+            window.location.href = '/index';
         });
     }
 
@@ -148,7 +148,7 @@ function initAuthUI() {
         if (btn) {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                window.location.href = '/index.html';
+                window.location.href = '/index';
             });
         }
     });
