@@ -32,7 +32,7 @@ window.handleProfileFriendAction = async function (action, targetUserId) {
         if (!res.ok) throw new Error("Errore durante l'azione");
         
         // Rilancia l'evento di refresh profilo senza reload della pagina
-        window.dispatchEvent(new CustomEvent('cg:profile-refresh'));
+       window.dispatchEvent(new CustomEvent('cg:profile-refresh'));
     } catch (err) {
         console.error('[profile_friends] Errore azione amicizia:', err);
     }

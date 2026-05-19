@@ -12,6 +12,20 @@ import { initFriendActions, initFriendNameNavigation, setupDynamicProfileButton 
 
 /* ===== Inizializzazione Pagina ===== */
 
+const PROFILE_REFRESH_EVENT = 'cg:profile-refresh';
+const PROFILE_REFRESH_INTERVAL_MS = 3000;
+
+function setupProfileRefresh() {
+    if (window._profileRefreshInit) return;
+    window._profileRefreshInit = true;
+
+    window.addEventListener(PROFILE_REFRESH_EVENT, initProfilePage);
+
+    setInterval(() => {
+        window.dispatchEvent(new CustomEvent(PROFILE_REFRESH_EVENT));
+    }, PROFILE_REFRESH_INTERVAL_MS);
+}
+
 async function initProfilePage() {
     const session = getSession();
 
@@ -43,9 +57,6 @@ async function initProfilePage() {
         initFriendActions(initProfilePage);
         initFriendNameNavigation();
 
-        // 5.5. Listener per refresh profilo da azioni amicizia globali (inline onclick)
-        window.addEventListener('cg:profile-refresh', initProfilePage);
-
         // 6. Gestione bottone "Modifica Profilo" / azioni amicizia dinamiche
         const btnEditProfile = document.getElementById('btn-edit-profile');
         if (btnEditProfile) {
@@ -65,4 +76,5 @@ async function initProfilePage() {
 }
 
 // Avvio al caricamento del modulo
+setupProfileRefresh();
 initProfilePage();
