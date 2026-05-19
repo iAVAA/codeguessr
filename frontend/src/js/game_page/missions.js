@@ -137,13 +137,11 @@ export function initMissionToggle() {
         if (showingCompletedMissions) {
             icon.classList.remove('bi-archive');
             icon.classList.add('bi-archive-fill');
-            btn.style.background = 'rgb(var(--darcula-blue))';
-            btn.style.color = '#fff';
+            btn.classList.add('active');
         } else {
             icon.classList.remove('bi-archive-fill');
             icon.classList.add('bi-archive');
-            btn.style.background = '';
-            btn.style.color = '';
+            btn.classList.remove('active');
         }
 
         renderMissions(cachedMissions);

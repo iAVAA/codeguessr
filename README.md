@@ -53,6 +53,7 @@ codeguessr/
 
 Per una comprensione profonda delle specifiche tecniche e delle scelte di design del progetto, consulta:
 * **[Architettura di Sistema (docs/ARCHITETTURA.md)](docs/ARCHITETTURA.md)**: Analisi completa sul pattern Client-Server, WebSocket, modularità CSS/JS, logiche dei trigger SQL e prompt LLM.
+* **[Interfaccia Grafica e Galleria Schermate (docs/SCREENSHOTS.md)](docs/SCREENSHOTS.md)**: Panoramica visiva approfondita delle schermate di gioco con screenshot descritti.
 
 ---
 

@@ -113,6 +113,7 @@ function initAddFriendSearch() {
 
     const openBtn = document.getElementById('btn-add-friend');
     const modalEl = document.getElementById('friendSearchModal');  // ← nuovo ID
+    const closeBtn = document.getElementById('friend-search-close');
     const input   = document.getElementById('friend-search-input');
     const results = document.getElementById('friend-search-results');
 
@@ -121,23 +122,35 @@ function initAddFriendSearch() {
         return;
     }
 
-    // Bootstrap si occupa di backdrop, ESC e chiusura — noi usiamo la sua API
-    const bsModal = new bootstrap.Modal(modalEl);
-
-    openBtn.addEventListener('click', () => {
+    const openModal = () => {
         results.innerHTML = '<div class="cg-search-empty">Inizia a digitare per cercare giocatori.</div>';
-        bsModal.show();
-    });
+        modalEl.removeAttribute('aria-hidden');
+        modalEl.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => input.focus(), 50);
+    };
 
-    // Quando Bootstrap finisce di aprire il modal → mettiamo il focus sull'input
-    modalEl.addEventListener('shown.bs.modal', () => {
-        input.focus();
-    });
-
-    // Quando Bootstrap chiude il modal → resettiamo input e risultati
-    modalEl.addEventListener('hidden.bs.modal', () => {
+    const closeModal = () => {
+        modalEl.setAttribute('aria-hidden', 'true');
+        modalEl.classList.remove('open');
+        document.body.style.overflow = '';
         input.value = '';
         results.innerHTML = '';
+    };
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn?.addEventListener('click', closeModal);
+
+    // Chiudi cliccando sullo sfondo dell'overlay
+    modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) closeModal();
+    });
+
+    // Chiudi premendo ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalEl.classList.contains('open')) {
+            closeModal();
+        }
     });
 
     const debouncedSearch = debounce((query) => {

@@ -104,6 +104,29 @@ export function setFeedback(html, colorClass = '') {
     el.className  = `mt-3 text-center fw-bold ${colorClass}`.trim();
 }
 
+/**
+ * Imposta e mostra la spiegazione della valutazione dell'AI.
+ * Se text è vuoto o null, nasconde il box di valutazione.
+ *
+ * @param {string} text - Testo della valutazione fornito dall'AI.
+ */
+export function setAIEvaluation(text) {
+    const box = document.getElementById('ai-evaluation-box');
+    const content = document.getElementById('ai-evaluation-content');
+    const input = document.getElementById('guess-input');
+    if (!box || !content) return;
+
+    if (text) {
+        content.textContent = text;
+        box.classList.remove('d-none');
+        if (input) input.classList.add('d-none');
+    } else {
+        box.classList.add('d-none');
+        content.textContent = '';
+        if (input) input.classList.remove('d-none');
+    }
+}
+
 
 /**
  * Carica i dati dei profili dei due giocatori e li mostra nell'header.

@@ -118,15 +118,19 @@ async function evaluateMultiplayerRound(roomCode) {
     match.timer = null;
 
     const results = {};
+    const evaluationsMap = {};
     const pIds = match.players.map(p => p.id);
 
     try {
         const evaluations = await Promise.all(pIds.map(async (id) => {
-            const score = await evaluateAnswer(match.currentSnippet.code, match.answers[id] || "");
-            return { id, score };
+            const res = await evaluateAnswer(match.currentSnippet.code, match.answers[id] || "");
+            return { id, score: res.score, evaluation: res.evaluation };
         }));
 
-        evaluations.forEach(ev => results[ev.id] = ev.score);
+        evaluations.forEach(ev => {
+            results[ev.id] = ev.score;
+            evaluationsMap[ev.id] = ev.evaluation;
+        });
 
         const p1 = match.players[0];
         const p2 = match.players[1];
@@ -141,6 +145,7 @@ async function evaluateMultiplayerRound(roomCode) {
 
         const roundResult = {
             scores: results,
+            evaluations: evaluationsMap,
             healths: {
                 [p1.id]: p1.health,
                 [p2.id]: p2.health
@@ -152,10 +157,10 @@ async function evaluateMultiplayerRound(roomCode) {
         io.to(roomCode).emit('roundResult', roundResult);
 
         if (p1.health <= 0 || p2.health <= 0 || match.currentRound >= match.maxRounds) {
-            setTimeout(() => finishMultiplayerMatch(roomCode), 3000);
+            setTimeout(() => finishMultiplayerMatch(roomCode), 2500);
         } else {
             match.currentRound++;
-            setTimeout(() => startMultiplayerRound(roomCode), 4000);
+            setTimeout(() => startMultiplayerRound(roomCode), 2500);
         }
         match.evaluating = false;
     } catch (err) {

@@ -17,11 +17,11 @@ import { showToast } from '../utils/ui_utils.js';
  */
 window.handleProfileFriendAction = async function (action, targetUserId) {
     const ROUTES = {
-        aggiungi: { url: `/api/invia-richiesta/${targetUserId}`,   method: 'POST'   },
-        accetta:  { url: `/api/accetta-richiesta/${targetUserId}`, method: 'PUT'    },
-        rifiuta:  { url: `/api/rifiuta-richiesta/${targetUserId}`, method: 'DELETE' },
-        annulla:  { url: `/api/rifiuta-richiesta/${targetUserId}`, method: 'DELETE' },
-        rimuovi:  { url: `/api/rifiuta-richiesta/${targetUserId}`, method: 'DELETE' },
+        aggiungi: { url: `/api/invia-richiesta/${targetUserId}`, method: 'POST' },
+        accetta: { url: `/api/accetta-richiesta/${targetUserId}`, method: 'PUT' },
+        rifiuta: { url: `/api/rifiuta-richiesta/${targetUserId}`, method: 'DELETE' },
+        annulla: { url: `/api/rifiuta-richiesta/${targetUserId}`, method: 'DELETE' },
+        rimuovi: { url: `/api/rifiuta-richiesta/${targetUserId}`, method: 'DELETE' },
     };
 
     const route = ROUTES[action];
@@ -44,29 +44,29 @@ function buildFriendHTML(friend) {
 
     let filterStyle = '';
     let statusClass = 'offline';
-    let textClass   = 'text-darcula-comment';
-    let statusText  = '';
+    let textClass = 'text-darcula-comment';
+    let statusText = '';
     let rightContent = '';
 
     if (type === 'amico') {
-        filterStyle  = online ? '' : 'style="filter:grayscale(100%);opacity:0.7;"';
-        statusClass  = online ? 'online' : 'offline';
-        textClass    = online ? 'text-darcula-green' : 'text-darcula-comment';
-        statusText   = online ? 'Online' : 'Offline';
+        filterStyle = online ? '' : 'style="filter:grayscale(100%);opacity:0.7;"';
+        statusClass = online ? 'online' : 'offline';
+        textClass = online ? 'text-darcula-green' : 'text-darcula-comment';
+        statusText = online ? 'Online' : 'Offline';
         rightContent = online
             ? `<button class="profile-btn-challenge" aria-label="Sfida ${name}"><i class="bi bi-swords"></i> <span>Sfida</span></button>`
             : '';
     } else if (type === 'ricevuta') {
-        statusClass  = 'online';
-        textClass    = 'text-warning';
-        statusText   = 'Nuova richiesta';
+        statusClass = 'online';
+        textClass = 'text-warning';
+        statusText = 'Nuova richiesta';
         rightContent = `
             <div class="d-flex gap-2">
                 <button class="profile-action-btn profile-action-btn--success" data-action="accetta" data-username="${name}" data-userid="${userid}" title="Accetta"><i class="bi bi-check-lg"></i></button>
                 <button class="profile-action-btn profile-action-btn--danger"  data-action="rifiuta" data-username="${name}" data-userid="${userid}" title="Rifiuta"><i class="bi bi-x-lg"></i></button>
             </div>`;
     } else if (type === 'inviata') {
-        statusText   = 'In attesa...';
+        statusText = 'In attesa...';
         rightContent = `<button class="profile-action-btn profile-action-btn--muted" disabled><i class="bi bi-clock"></i></button>`;
     }
 
@@ -95,10 +95,8 @@ export function renderFriends(friends) {
 
     if (!friends || friends.length === 0) {
         container.innerHTML = `
-            <div class="profile-empty-state">
-                <i class="bi bi-people"></i>
-                Nessun amico ancora.
-                <small>Aggiungi qualcuno con il bottone +</small>
+            <div class="text-center text-darcula-comment py-3">
+                Nessun amico o richiesta al momento.
             </div>`;
         return;
     }
@@ -130,7 +128,7 @@ export function initFriendActions(onActionSuccess) {
             if (friendItem) {
                 const friendId = friendItem.id.replace('sidebar-rel-', '');
                 const name = friendItem.querySelector('.profile-friend-name')?.textContent?.trim();
-                
+
                 if (typeof showToast === 'function') showToast(`Invio sfida a ${name || 'giocatore'}...`, 'blue');
                 window.dispatchEvent(new CustomEvent('cg:challenge-friend', { detail: { friendId } }));
             }
@@ -150,7 +148,7 @@ export function initFriendActions(onActionSuccess) {
         actionButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
         try {
-            const apiUrl    = action === 'accetta' ? `/api/accetta-richiesta/${userid}` : `/api/rifiuta-richiesta/${userid}`;
+            const apiUrl = action === 'accetta' ? `/api/accetta-richiesta/${userid}` : `/api/rifiuta-richiesta/${userid}`;
             const apiMethod = action === 'accetta' ? 'PUT' : 'DELETE';
 
             const res = await fetchAuth(apiUrl, { method: apiMethod });
@@ -196,9 +194,9 @@ export async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
         if (!res.ok) throw new Error('Errore nel recupero amicizie');
         const mieAmicizie = await res.json();
 
-        const isAmico     = mieAmicizie.amici.find(u => u.userid === targetUserId);
+        const isAmico = mieAmicizie.amici.find(u => u.userid === targetUserId);
         const haInviatoLui = mieAmicizie.ricevute.find(u => u.userid === targetUserId);
-        const hoInviatoIo  = mieAmicizie.inviate.find(u => u.userid === targetUserId);
+        const hoInviatoIo = mieAmicizie.inviate.find(u => u.userid === targetUserId);
 
         // Cloniamo il bottone per azzerare i vecchi listener
         const container = btnEditProfile.parentNode;
@@ -206,9 +204,9 @@ export async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
         container.replaceChild(newBtn, btnEditProfile);
 
         if (isAmico) {
-            newBtn.innerHTML  = '<i class="bi bi-person-x-fill"></i> Rimuovi Amicizia';
-            newBtn.className  = 'profile-action-btn profile-action-btn--danger';
-            newBtn.onclick    = () => window.handleProfileFriendAction('rimuovi', targetUserId);
+            newBtn.innerHTML = '<i class="bi bi-person-x-fill"></i> Rimuovi Amicizia';
+            newBtn.className = 'profile-action-btn profile-action-btn--danger';
+            newBtn.onclick = () => window.handleProfileFriendAction('rimuovi', targetUserId);
 
         } else if (haInviatoLui) {
             // Stato: ha inviato lui → mostriamo Accetta e Rifiuta
@@ -223,14 +221,14 @@ export async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
                 </div>`;
 
         } else if (hoInviatoIo) {
-            newBtn.innerHTML  = '<i class="bi bi-clock-history"></i> Richiesta inviata';
-            newBtn.className  = 'profile-action-btn profile-action-btn--muted';
-            newBtn.onclick    = () => window.handleProfileFriendAction('annulla', targetUserId);
+            newBtn.innerHTML = '<i class="bi bi-clock-history"></i> Richiesta inviata';
+            newBtn.className = 'profile-action-btn profile-action-btn--muted';
+            newBtn.onclick = () => window.handleProfileFriendAction('annulla', targetUserId);
 
         } else {
-            newBtn.innerHTML  = '<i class="bi bi-person-plus-fill"></i> Aggiungi Amico';
-            newBtn.className  = 'profile-action-btn profile-action-btn--primary';
-            newBtn.onclick    = () => window.handleProfileFriendAction('aggiungi', targetUserId);
+            newBtn.innerHTML = '<i class="bi bi-person-plus-fill"></i> Aggiungi Amico';
+            newBtn.className = 'profile-action-btn profile-action-btn--primary';
+            newBtn.onclick = () => window.handleProfileFriendAction('aggiungi', targetUserId);
         }
 
     } catch (err) {

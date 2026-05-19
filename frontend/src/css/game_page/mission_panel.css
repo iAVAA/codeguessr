@@ -38,18 +38,33 @@
 }
 
 .btn-completed-missions:hover,
+.btn-panel-action:hover,
+.btn-completed-missions.active,
+.btn-panel-action.active {
+    background: rgb(var(--darcula-blue)) !important;
+    color: #fff !important;
+    border-color: rgba(var(--darcula-blue), 0.5) !important;
+}
+
+.btn-completed-missions:hover,
 .btn-panel-action:hover {
-    background: rgb(var(--darcula-blue));
-    color: #fff;
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(var(--darcula-blue), 0.3);
 }
 
+.btn-completed-missions.active {
+    box-shadow: 0 4px 12px rgba(var(--darcula-blue), 0.3);
+}
+
+.panel-title .btn-completed-missions:hover i,
+.panel-title .btn-panel-action:hover i,
+.panel-title .btn-completed-missions.active i,
+.panel-title .btn-panel-action.active i,
 .btn-completed-missions:hover i,
 .btn-panel-action:hover i,
 .btn-completed-missions.active i,
 .btn-panel-action.active i {
-    color: #fff;
+    color: #fff !important;
 }
 
 .btn-completed-missions i,

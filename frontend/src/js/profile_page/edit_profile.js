@@ -40,6 +40,7 @@ function openModal() {
     const overlay = document.getElementById('edit-profile-overlay');
     if (!overlay) return;
     overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
 
     // Pre-popolamento campi con i valori correnti dalla pagina
     const inputName = document.getElementById('edit-username');
@@ -64,6 +65,7 @@ function closeModal() {
     const overlay = document.getElementById('edit-profile-overlay');
     if (!overlay) return;
     overlay.classList.remove('open');
+    document.body.style.overflow = '';
 }
 
 // ─── Salvataggio ─────────────────────────────────────────────────────────────
