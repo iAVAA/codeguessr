@@ -100,6 +100,6 @@ Questo documento raccoglie e illustra l'interfaccia utente (**UI**) e l'esperien
 
 ---
 
-## 🔗 Collegamenti Rapidi alla Documentazione
-* 📜 **[Architettura Tecnica e Specifiche (ARCHITETTURA.md)](ARCHITETTURA.md)**
-* 💻 **[README Principale del Progetto (../README.md)](../README.md)**
+## Collegamenti Rapidi alla Documentazione
+* **[Architettura Tecnica e Specifiche (ARCHITETTURA.md)](ARCHITETTURA.md)**
+* **[README Principale del Progetto (../README.md)](../README.md)**
