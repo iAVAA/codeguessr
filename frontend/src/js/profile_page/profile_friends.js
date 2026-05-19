@@ -10,7 +10,7 @@ import { showToast } from '../utils/ui_utils.js';
 // ─── Azioni di Amicizia (globale per onclick inline) ─────────────────────────
 
 /**
- * Esegue un'azione di amicizia chiamando il backend e ricaricando la pagina.
+ * Esegue un'azione di amicizia chiamando il backend senza reload della pagina.
  * Esposta su window per compatibilità con gli onclick inline generati dinamicamente.
  * @param {'aggiungi'|'accetta'|'rifiuta'|'annulla'|'rimuovi'} action
  * @param {string} targetUserId
@@ -30,7 +30,9 @@ window.handleProfileFriendAction = async function (action, targetUserId) {
     try {
         const res = await fetchAuth(route.url, { method: route.method });
         if (!res.ok) throw new Error("Errore durante l'azione");
-        window.location.reload();
+        
+        // Rilancia l'evento di refresh profilo senza reload della pagina
+        window.dispatchEvent(new CustomEvent('cg:profile-refresh'));
     } catch (err) {
         console.error('[profile_friends] Errore azione amicizia:', err);
     }
@@ -221,8 +223,8 @@ export async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
                 </div>`;
 
         } else if (hoInviatoIo) {
-            newBtn.innerHTML = '<i class="bi bi-clock-history"></i> Richiesta inviata';
-            newBtn.className = 'profile-action-btn profile-action-btn--muted';
+            newBtn.innerHTML = '<i class="bi bi-clock-history"></i> Annulla Richiesta';
+            newBtn.className = 'profile-action-btn btn btn-danger';
             newBtn.onclick = () => window.handleProfileFriendAction('annulla', targetUserId);
 
         } else {
