@@ -43,6 +43,9 @@ async function initProfilePage() {
         initFriendActions(initProfilePage);
         initFriendNameNavigation();
 
+        // 5.5. Listener per refresh profilo da azioni amicizia globali (inline onclick)
+        window.addEventListener('cg:profile-refresh', initProfilePage);
+
         // 6. Gestione bottone "Modifica Profilo" / azioni amicizia dinamiche
         const btnEditProfile = document.getElementById('btn-edit-profile');
         if (btnEditProfile) {
