@@ -10,6 +10,11 @@ import { formatJoinDate } from './profile_ui.js';
 const DEFAULT_AVATAR = '/src/assets/img/user_profile.webp';
 
 /* ===== Recupera l'ID utente a partire dal nickname nell'URL ===== */
+/**
+ * 
+ * @param {URL} session() - Dati di sessione dell'utente loggato(carichiamo questi se non c'è un nickname nell'URL)
+ * @returns torna l'ID del profilo da caricare, o reindirizza se il nickname non è valido
+ */
 export async function resolveTargetUserId(session) {
     const pathParts = window.location.pathname.split('/');
 
@@ -36,6 +41,13 @@ export async function resolveTargetUserId(session) {
 }
 
 /* ===== Recupera tutti i dati necessari per la pagina del profilo ===== */
+/**
+ * in modo parallelo recupera. amicizie, storico partite, statistiche e dati base del profilo
+ * se l'ID richiesto è diverso da quello del giocatore loggato, recupera solo le amicizie confermate (non mostra richieste o inviti)
+ * 
+ * @param {string} userId 
+ * @returns
+ */
 export async function fetchFullProfileData(userId) {
     const session = getSession();
 

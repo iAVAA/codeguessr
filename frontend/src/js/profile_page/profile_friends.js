@@ -32,6 +32,7 @@ window.handleProfileFriendAction = async function (action, targetUserId) {
         if (!res.ok) throw new Error("Errore durante l'azione");
         
         // Rilancia l'evento di refresh profilo senza reload della pagina
+        console.log(`[profile_friends] Azione "${action}" eseguita con successo su userId ${targetUserId}`);
        window.dispatchEvent(new CustomEvent('cg:profile-refresh'));
     } catch (err) {
         console.error('[profile_friends] Errore azione amicizia:', err);
@@ -204,30 +205,51 @@ export async function setupDynamicProfileButton(targetUserId, btnEditProfile) {
         const container = btnEditProfile.parentNode;
         const newBtn = btnEditProfile.cloneNode(true);
         container.replaceChild(newBtn, btnEditProfile);
+        
+        // Rimuovi tutti i bottoni "Accetta"/"Rifiuta" precedenti dal container
+        container.querySelectorAll('button.profile-action-btn--success, button.profile-action-btn--danger').forEach(btn => {
+            if (btn !== newBtn) btn.remove();
+        });
 
         if (isAmico) {
+            newBtn.style.display = '';
             newBtn.innerHTML = '<i class="bi bi-person-x-fill"></i> Rimuovi Amicizia';
             newBtn.className = 'profile-action-btn profile-action-btn--danger';
             newBtn.onclick = () => window.handleProfileFriendAction('rimuovi', targetUserId);
 
         } else if (haInviatoLui) {
             // Stato: ha inviato lui → mostriamo Accetta e Rifiuta
-            container.innerHTML = `
-                <div class="d-flex gap-2 flex-wrap">
-                    <button class="profile-action-btn profile-action-btn--success" onclick="handleProfileFriendAction('accetta', '${targetUserId}')">
-                        <i class="bi bi-check-lg"></i> Accetta
-                    </button>
-                    <button class="profile-action-btn profile-action-btn--danger" onclick="handleProfileFriendAction('rifiuta', '${targetUserId}')">
-                        <i class="bi bi-x-lg"></i> Rifiuta
-                    </button>
-                </div>`;
+            newBtn.style.display = 'none';
+            
+            const btnAccetta = document.createElement('button');
+            btnAccetta.className = 'profile-action-btn profile-action-btn--success';
+            btnAccetta.innerHTML = '<i class="bi bi-check-lg"></i> Accetta';
+            btnAccetta.onclick = async () => {
+                btnAccetta.style.display = 'none';
+                btnRifiuta.style.display = 'none';
+                await window.handleProfileFriendAction('accetta', targetUserId);
+            };
+            
+            const btnRifiuta = document.createElement('button');
+            btnRifiuta.className = 'profile-action-btn profile-action-btn--danger';
+            btnRifiuta.innerHTML = '<i class="bi bi-x-lg"></i> Rifiuta';
+            btnRifiuta.onclick = async () => {
+                btnAccetta.style.display = 'none';
+                btnRifiuta.style.display = 'none';
+                await window.handleProfileFriendAction('rifiuta', targetUserId);
+            };
+            
+            container.insertBefore(btnAccetta, newBtn);
+            container.insertBefore(btnRifiuta, newBtn);
 
         } else if (hoInviatoIo) {
+            newBtn.style.display = '';
             newBtn.innerHTML = '<i class="bi bi-clock-history"></i> Annulla Richiesta';
             newBtn.className = 'profile-action-btn btn btn-danger';
             newBtn.onclick = () => window.handleProfileFriendAction('annulla', targetUserId);
 
         } else {
+            newBtn.style.display = '';
             newBtn.innerHTML = '<i class="bi bi-person-plus-fill"></i> Aggiungi Amico';
             newBtn.className = 'profile-action-btn profile-action-btn--primary';
             newBtn.onclick = () => window.handleProfileFriendAction('aggiungi', targetUserId);
