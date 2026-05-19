@@ -215,10 +215,10 @@ async function getRoundSnippet(previousCode = null) {
 /**
  * Valuta l'accuratezza della spiegazione fornita dal giocatore in base al frammento di codice
  * utilizzando il modello LLM gpt-4o-mini tramite OpenRouter.
- * Restituisce un punteggio da 0 a 100.
+ * Restituisce un oggetto contenente il punteggio da 0 a 100 e una spiegazione della valutazione.
  * @param {string} snippet - Frammento di codice sorgente
  * @param {string} risposta - Spiegazione fornita dal giocatore
- * @returns {Promise<number>} Punteggio assegnato dall'AI (0 - 100)
+ * @returns {Promise<Object>} Oggetto { score, evaluation } assegnato dall'AI
  */
 async function evaluateAnswer(snippet, risposta) {
     let prompt = '';
@@ -250,7 +250,10 @@ async function evaluateAnswer(snippet, risposta) {
         const parsed = JSON.parse(rawOutput);
 
         /* Parsa il risultato a int e evita errori di output dell'LLM */
-        return Math.min(100, Math.max(0, parseInt(parsed.punteggio, 10)));
+        const score = Math.min(100, Math.max(0, parseInt(parsed.punteggio, 10) || 0));
+        const evaluation = parsed.valutazione || 'Valutazione completata.';
+
+        return { score, evaluation };
     } catch (err) {
         console.error('[code.js] Errore durante la valutazione AI:', err.message);
         throw err;
@@ -281,7 +284,7 @@ function init(app) {
 
     /**
      * POST /api/valuta-risposta
-     * Valuta la risposta del giocatore rispetto allo snippet e restituisce il punteggio
+     * Valuta la risposta del giocatore rispetto allo snippet e restituisce il punteggio e la valutazione
      */
     app.post('/api/valuta-risposta', async (req, res) => {
         const { snippet, risposta } = req.body;
@@ -290,8 +293,8 @@ function init(app) {
         }
 
         try {
-            const punteggio = await evaluateAnswer(snippet, risposta);
-            res.status(200).json({ punteggio });
+            const result = await evaluateAnswer(snippet, risposta);
+            res.status(200).json({ punteggio: result.score, valutazione: result.evaluation });
         } catch (err) {
             console.error('[code.js] Errore valutazione risposta:', err.message);
             res.status(500).json({ errore: 'Impossibile completare la valutazione della risposta.' });

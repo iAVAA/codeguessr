@@ -45,6 +45,9 @@ Se la risposta contiene blocchi di codice, frasi o sequenze chiaramente copiate 
 Rispondi ESCLUSIVAMENTE con JSON valido.
 
 Formato:
-{"punteggio": numero intero tra 0 e 100}
+{
+  "punteggio": numero intero tra 0 e 100,
+  "valutazione": "cortissima spiegazione del perché è stato assegnato questo punteggio (massimo due frasi)"
+}
 
-Non aggiungere testo, spiegazioni, commenti o markdown.
+Non aggiungere testo extra al di fuori del JSON.

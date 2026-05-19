@@ -13,7 +13,7 @@ import {
 import { loadRoundSnippet, setEditorContent, initMonacoEditor, getMonacoInstance } from './match_snippet.js';
 import {
     updateRoundLabel, reduceHealth, updateHealthBars,
-    setFormEnabled, setFeedback,
+    setFormEnabled, setFeedback, setAIEvaluation,
     loadProfiles, showEndGame, showEndGameMultiplayer
 } from './match_ui.js';
 
@@ -84,6 +84,7 @@ async function startRound() {
     totalRounds = TOTAL_ROUNDS;
     updateRoundLabel(currentRound, totalRounds);
     setFeedback('Attesa risposta...');
+    setAIEvaluation(null);
     setFormEnabled(false);
     roundActive = false;
 
@@ -113,7 +114,7 @@ function _advanceOrEnd(delay) {
         setTimeout(() => showEndGame(state), delay);
     } else {
         currentRound++;
-        setTimeout(startRound, delay + 400); // Piccolo buffer aggiuntivo
+        setTimeout(startRound, delay);
     }
 }
 
@@ -152,7 +153,8 @@ async function handleSubmit(val) {
 
         if (!res.ok) throw new Error(`Errore server: ${res.status}`);
 
-        const { punteggio } = await res.json();
+        const { punteggio, valutazione } = await res.json();
+        setAIEvaluation(valutazione);
         const myScore = punteggio;
         const botScore = rollBotScore();
         const diff = myScore - botScore;
@@ -192,7 +194,7 @@ async function handleSubmit(val) {
         reduceHealth('p1', botScore, state);
     }
 
-    _advanceOrEnd(1800);
+    _advanceOrEnd(5000);
 }
 
 /**
@@ -221,7 +223,7 @@ function handleTimeOut() {
         'text-danger'
     );
     reduceHealth('p1', botScore, state);
-    _advanceOrEnd(1800);
+    _advanceOrEnd(5000);
 }
 
 
@@ -285,6 +287,7 @@ function initMultiplayerSocket(token) {
         updateRoundLabel(currentRound, totalRounds);
 
         setFeedback('');
+        setAIEvaluation(null);
         setFormEnabled(false);
         const input = document.getElementById('guess-input');
         if (input) input.value = '';
@@ -322,6 +325,11 @@ function initMultiplayerSocket(token) {
         state.myHealth = data.healths[session.idGiocatore];
         state.oppHealth = data.healths[oppId];
         updateHealthBars(state);
+
+        // Mostra la spiegazione della valutazione AI personale
+        if (data.evaluations && data.evaluations[session.idGiocatore]) {
+            setAIEvaluation(data.evaluations[session.idGiocatore]);
+        }
 
         if (data.winnerId === session.idGiocatore) {
             setFeedback(

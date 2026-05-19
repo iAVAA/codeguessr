@@ -1,11 +1,3 @@
-FILE PRONTI PER LA CONSEGNA
-backend/
-pages/
-css/
-assets/
-db/
-index.html
-
 FILE MANCANTI DI CSS
 index-background2.css
 

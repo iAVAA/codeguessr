@@ -4,6 +4,12 @@ Benvenuto nel documento di specifica architetturale di **CodeGuessr**. Questo do
 
 ---
 
+### 🔗 Collegamenti Rapidi alla Documentazione
+* 📸 **[Interfaccia Grafica e Galleria Schermate (SCREENSHOTS.md)](SCREENSHOTS.md)**
+* 💻 **[README Principale del Progetto (../README.md)](../README.md)**
+
+---
+
 ## 1. Modello Architetturale Generale
 
 **CodeGuessr** adotta un modello architetturale **Client-Server distribuito e bi-direzionale in tempo reale**, che combina la stabilità dei servizi REST classici alla reattività delle connessioni WebSocket persistenti. 
@@ -336,3 +342,9 @@ Questo punteggio viene utilizzato in modalità multiplayer come base di calcolo 
 1. **Protezione API Key:** Tutte le chiavi API sensibili (Supabase Service Key, GITHUB_TOKEN, OPENROUTER_API_KEY) sono conservate esclusivamente sul server backend nel file `.env` protetto, impedendone l'esposizione sul client.
 2. **Prevenzione del Cheating:** La logica dei punti vita, la selezione degli snippet, la determinazione dei punteggi e l'incremento di esperienza/trofei sono interamente gestiti dal server backend. Il client invia solo l'input testuale dell'utente e riceve aggiornamenti di stato di sola lettura.
 3. **Ottimizzazione del Traffico Socket:** Gli eventi di Socket.io scambiano oggetti JSON leggeri ed escludono tutti i riferimenti di memoria complessi (come i timer attivi o i riferimenti ai socket degli utenti) attraverso funzioni di sanitizzazione prima dell'invio.
+
+---
+
+### 🔗 Collegamenti Rapidi alla Documentazione
+* 📸 **[Interfaccia Grafica e Galleria Schermate (SCREENSHOTS.md)](SCREENSHOTS.md)**
+* 💻 **[README Principale del Progetto (../README.md)](../README.md)**
