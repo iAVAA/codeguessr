@@ -78,7 +78,7 @@ function initIntervals(idGiocatore) {
 		} catch (e) {
 			console.warn('Silent refresh failed', e);
 		}
-	}, 10000);
+	}, 3000);
 
 	// Heartbeat centralizzato ogni 5 secondi
 	startHeartbeat(5000);
