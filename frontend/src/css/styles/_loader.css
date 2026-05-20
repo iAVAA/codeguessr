@@ -1,0 +1,129 @@
+/*
+	FILE: _loader.css
+	DESCRIPTION: Global Loader - schermata di caricamento iniziale animata
+	AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   SCROLL LOCK durante il caricamento
+   Evita che l'utente scorri la pagina mentre il loader è attivo.
+   =========================== */
+body.loader-open {
+	overflow: hidden !important;
+}
+
+/* ===========================
+   CONTENITORE PRINCIPALE
+   Posizionato in fixed su tutta la viewport con z-index altissimo così appare davanti a ogni cosa.
+   =========================== */
+#globalLoader {
+	position: fixed;
+	inset: 0;
+	z-index: 99999;
+	background-color: rgb(var(--darcula-bg));
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1.5rem;
+	transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Stato di uscita: fade-out con leggero scale-up */
+#globalLoader.gl--exiting {
+	opacity: 0;
+	transform: scale(1.06);
+}
+
+/* ===========================
+   Logo + anelli rotanti sovrapposti
+   =========================== */
+.gl-logo-wrapper {
+	position: relative;
+	width: 140px;
+	height: 140px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Base per entrambi gli anelli */
+.gl-ring {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+/* Anello blu - gira in senso orario */
+.gl-ring--outer {
+	color: rgb(var(--darcula-blue));
+	animation: gl-spin 2.2s linear infinite;
+}
+
+/* Anello verde - gira in senso antiorario */
+.gl-ring--inner {
+	color: rgb(var(--darcula-green));
+	animation: gl-spin 3.6s linear infinite reverse;
+	opacity: 0.75;
+}
+
+/* Logo con effetto di ingrandimento */
+.gl-logo-img {
+	position: relative;
+	z-index: 1;
+	width: 64px;
+	height: auto;
+	object-fit: contain;
+	animation: gl-pulse 2.2s ease-in-out infinite;
+}
+
+/* ===========================
+   TESTO DI STATO
+   =========================== */
+.gl-status {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.28em;
+	text-transform: uppercase;
+	color: rgba(var(--darcula-fg), 0.55);
+}
+
+/* Puntini di ellissi animati dopo il testo di stato */
+.gl-ellipsis::after {
+	content: '';
+	display: inline-block;
+	width: 1.2em;
+	animation: gl-ellipsis 1.5s steps(4, end) infinite;
+}
+
+/* ===========================
+   ANIMAZIONI
+   =========================== */
+
+@keyframes gl-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes gl-pulse {
+	0%, 100% {
+		opacity: 1;
+		transform: scale(1.2);
+	}
+
+	50% {
+		opacity: 0.8;
+		transform: scale(0.9);
+	}
+}
+
+@keyframes gl-ellipsis {
+	0% { content: ''; }
+	25% { content: '.'; }
+	50% { content: '..'; }
+	75% { content: '...'; }
+}

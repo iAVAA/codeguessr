@@ -1,0 +1,614 @@
+<!--
+    FILE: profile_page.html
+    DESCRIPTION: Pagina del profilo (Profilo personale /profilo o profilo altri utenti /profilo/{nome_utente})
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+-->
+
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Profilo utente CodeGuessr - Statistiche, storico partite e amici." />
+    <meta name="theme-color" content="#313335" />
+
+    <title>CodeGuessr - Profilo</title>
+
+    <link rel="icon" type="image/webp" href="/src/assets/icons/logo.ico" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="/src/css/style.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/profile_page.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/profile_stats.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/profile_side_panels.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/profile_action_buttons.css" />
+    <link rel="stylesheet" href="/src/css/profile_page/edit_profile_modal.css" />
+    <link rel="stylesheet" href="/src/css/game_page/multiplayer_modal_panel.css" />
+
+    <script>
+        // Reindirizza alla pagina di login se l'utente non è autenticato
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.replace('/index');
+        }
+    </script>
+
+    <script id="fouc-prevention">
+        // Anti-FOUC: applica il tema dal localStorage prima che il CSS venga parsato
+        const theme = localStorage.getItem('codeguessr-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (theme === 'light' || (!theme && !prefersDark)) {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+
+</head>
+
+<body>
+    <!-- ===================== NOSCRIPT ===================== -->
+    <!-- Mostra un’interfaccia di avviso quando JavaScript è disabilitato nel browser -->
+    <noscript>
+        <div id="noscript-wall" role="alert" aria-live="assertive">
+            <div class="ns-logo">
+                <img src="src/assets/img/logo.webp" alt="CodeGuessr Logo" onerror="this.style.display='none'">
+                <span>Code<b>Guessr</b></span>
+            </div>
+            <div class="ns-icon-wrap" aria-hidden="true"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <h1 class="ns-title">JavaScript <span>disabilitato</span></h1>
+            <p class="ns-desc">
+                CodeGuessr richiede JavaScript per funzionare. Senza di esso non è possibile
+                caricare le partite, il profilo o le classifiche.
+            </p>
+            <div class="ns-code" aria-label="Istruzioni per abilitare JavaScript">
+                <span class="c-dim"># Come abilitare JavaScript</span><br>
+                <span class="c-kw">Chrome</span> → Impostazioni > Privacy > JavaScript → <span
+                    class="c-val">Consentito</span><br>
+                <span class="c-kw">Firefox</span> → <span class="c-val">about:config</span> > javascript.enabled → <span
+                    class="c-val">true</span><br>
+                <span class="c-kw">Safari</span> → Preferenze > Sicurezza > Abilita JavaScript → <span class="c-val"><i
+                        class="bi bi-check"></i></span>
+            </div>
+            <div class="ns-links">
+                <a class="ns-link" href="https://enable-javascript.com/it/" target="_blank">
+                    Guida dettagliata per il tuo browser
+                </a>
+            </div>
+        </div>
+    </noscript>
+
+    <script type="module">
+        import { initLoader } from '/src/js/managers/loader.js';
+        initLoader();
+    </script>
+
+    <!-- ===================== HEADER ===================== -->
+    <header class="navbar-codeguessr d-flex align-items-center justify-content-between">
+        <!-- == Lato sinistro: Brand Logo == -->
+        <a href="/home" class="navbar-brand-logo" id="nav-brand">
+            <img src="/src/assets/img/logo.webp" alt="CodeGuessr Logo" class="logo-img" />
+            <span class="brand-text">Code<span class="brand-accent">Guessr</span></span>
+        </a>
+
+        <!-- == Lato destro: Sezione Profilo == -->
+        <div class="d-flex align-items-center gap-3">
+            <!-- Contenitore del menù a tendina -->
+            <div class="profile-dropdown-wrapper" id="profile-dropdown-wrapper">
+                <div class="profile-widget" id="profile-widget" tabindex="0">
+                    <!-- Nome utente e statistiche -->
+                    <div class="profile-info">
+                        <span class="profile-name" id="player-name"></span>
+                        <div class="profile-stats">
+                            <span class="stat-tier">LV <span id="player-level"></span></span>
+                            <span class="stat-divider">&bull;</span>
+                            <span class="profile-cups">
+                                <i class="bi bi-trophy-fill"></i><span id="player-cups"></span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Avatar con Anello di XP dinamico -->
+                    <div class="profile-avatar-wrapper">
+                        <svg class="xp-ring" viewBox="0 0 36 36">
+                            <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
+                            <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress"></circle>
+                        </svg>
+                        <img src="/src/assets/img/user_profile.webp"
+                            alt="Player Avatar" class="profile-avatar" id="player-avatar" />
+                    </div>
+
+                    <!-- Icona di Freccia verso il basso -->
+                    <i class="bi bi-chevron-down profile-chevron" id="profile-chevron"></i>
+                </div>
+
+                <!-- Menù a tendina nascosto -->
+                <div class="profile-dropdown-menu" id="profile-dropdown">
+                    <a href="/home" class="dropdown-item"><i class="bi bi-house-door-fill"></i> Torna alla Lobby</a>
+                    <a href="/classifica" class="dropdown-item leaderboard"><i class="bi bi-award-fill"></i> Classifica</a>
+
+                    <button class="dropdown-item" id="menu-btn-settings">
+                        <i class="bi bi-gear-fill"></i> Impostazioni
+                    </button>
+                    <div class="dropdown-divider" id="menu-divider"></div>
+                    <button class="dropdown-item text-danger" id="menu-btn-logout">
+                        <i class="bi bi-box-arrow-right"></i> Log out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===================== MAIN (max-width: 1100px) ===================== -->
+    <main class="profile-page-wrapper py-5">
+        <div class="container" style="max-width: 1100px;">
+
+            <!-- ===== Container del Profilo (Banner, Immagine profilo e informazioni) ===== -->
+            <div class="profile-header-card mb-4">
+                <!-- Banner del profilo (dietro rispetto all'immagine profilo)-->
+                <div class="profile-banner"></div>
+
+                <!-- Contenuto del profilo -->
+                <div class="profile-header-content">
+                    <div class="d-flex flex-column flex-md-row align-items-start justify-content-between w-100 gap-3">
+                        <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-4">
+
+                            <!-- Immagine profilo dell'utente -->
+                            <div class="profile-main-avatar-wrapper">
+                                <svg class="xp-ring" viewBox="0 0 36 36">
+                                    <circle class="xp-ring-bg" cx="18" cy="18" r="17"></circle>
+                                    <circle class="xp-ring-fill" cx="18" cy="18" r="17" id="xp-ring-progress-profile"></circle>
+                                </svg>
+                                <img src="/src/assets/img/user_profile.webp"
+                                    alt="Main Avatar" class="profile-main-avatar" id="page-avatar">
+                            </div>
+
+                            <!-- Informazioni dell'utente -->
+                            <div class="profile-main-info text-center text-sm-start mt-2 mt-sm-0">
+
+                                <!-- Nome utente -->
+                                <h1 class="profile-main-name mb-1">
+                                    <span id="page-name"></span>
+                                </h1>
+                                <div class="profile-main-meta mb-3">
+                                    <!-- UUID Nascosto -->
+                                    <span class="badge text-bg-secondary d-none">
+                                        <i class="bi bi-hash"></i><span id="page-userid"></span>
+                                    </span>
+
+                                    <!-- Data di iscrizione -->
+                                    <span class="ms-2 text-darcula-comment">
+                                        <i class="bi bi-calendar-event"></i> Iscritto dal <span id="page-joindate"></span>
+                                    </span>
+                                </div>
+
+                                <!-- Biografia dell'utente -->
+                                <p class="profile-main-bio">
+                                    <span id="page-bio"></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Bottone di Modifica del profilo -->
+                        <div class="profile-actions mt-3 mt-md-0 align-self-md-center">
+                            <button class="profile-btn-edit" id="btn-edit-profile">
+                                <i class="bi bi-pencil-square"></i> Modifica Profilo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Container di Statistiche delle partite ===== -->
+            <div class="row g-3 mb-4">
+                <!-- Partite Giocate -->
+                <div class="col-6 col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-box-icon text-darcula-blue"><i class="bi bi-controller"></i></div>
+                        <div class="stat-box-data">
+                            <span class="stat-box-val"></span>
+                            <span class="stat-box-label">Giocate</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Partite Vinte -->
+                <div class="col-6 col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-box-icon text-darcula-green"><i class="bi bi-trophy-fill"></i></div>
+                        <div class="stat-box-data">
+                            <span class="stat-box-val"></span>
+                            <span class="stat-box-label">Vinte</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Partite Perse -->
+                <div class="col-6 col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-box-icon text-darcula-red"><i class="bi bi-x-circle-fill"></i></div>
+                        <div class="stat-box-data">
+                            <span class="stat-box-val"></span>
+                            <span class="stat-box-label">Perse</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rapporto Vittorie / Sconfitte -->
+                <div class="col-6 col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-box-icon text-darcula-yellow"><i class="bi bi-pie-chart-fill"></i></div>
+                        <div class="stat-box-data">
+                            <span class="stat-box-val"></span>
+                            <span class="stat-box-label">Win Rate</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Container di Storico delle partite e Amici (2 colonne) ===== -->
+            <div class="row gy-4">
+
+                <!-- Storico delle partite -->
+                <div class="col-12 col-lg-8">
+                    <div class="profile-side-panel w-100">
+                        <div class="profile-panel-title">
+                            <i class="bi bi-clock-history"></i> Storico Partite
+                        </div>
+
+                        <!-- Lista Partite (Massimo 10) -->
+                        <div class="profile-history-list d-flex flex-column gap-3 mt-2"></div>
+
+                        <!-- Elemento Storico Partite (Generato dinamicamente da JS) -->
+                        <div id="history-empty" class="d-none">
+                            <div class="text-center text-darcula-comment py-3">
+                                <i class="bi bi-controller d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Nessuna partita giocata ancora.
+                                <small class="d-block mt-1">Gioca la tua prima partita!</small>
+                            </div>
+                        </div>
+
+                        <div id="history-item" class="d-none">
+                            <div class="profile-side-item history-item d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="history-result"><i class="bi"></i></div>
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="history-lang text-darcula-fg fw-bold"></span>
+                                            <span class="history-trophies d-none"><i class="bi bi-trophy-fill"></i> <span class="trophies-val"></span></span>
+                                        </div>
+                                        <div class="history-meta d-flex flex-column mt-1">
+                                            <span class="history-mode"></span>
+                                            <span class="history-opponent text-darcula-comment d-none">
+                                                <a href="#" class="history-my-link history-player-link">@<span class="my-name"></span></a>
+                                                <span class="mx-1">vs</span>
+                                                <a href="#" class="history-opp-link history-player-link">@<span class="opponent-name"></span></a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="history-xp fw-bold"></div>
+                                    <div class="history-time"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container degli amici -->
+                <div class="col-12 col-lg-4">
+                    <div class="profile-side-panel w-100">
+                        <div class="profile-panel-title d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-people"></i> Amici</span>
+                        </div>
+
+                        <!-- Lista degli Amici -->
+                        <div class="profile-friends-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== INIZIO FINESTRA MODALE: Impostazioni ===== -->
+    <div class="cg-settings-overlay" id="settings-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+        aria-labelledby="settings-title">
+        <div class="cg-settings-modal" id="settings-modal">
+            <!-- Header delle impostazioni -->
+            <div class="cg-settings-header">
+                <div class="cg-settings-title-group">
+                    <div class="cg-settings-icon-wrap">
+                        <i class="bi bi-gear-fill"></i>
+                    </div>
+                    <h2 class="cg-settings-title" id="settings-title">Impostazioni</h2>
+                </div>
+
+                <!-- Bottone di chiusura della finestra modale -->
+                <button class="cg-settings-close" id="settings-close" aria-label="Chiudi impostazioni">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- Sezioni delle impostazioni -->
+            <div class="cg-settings-body">
+                <!-- Audio -->
+                <section class="cg-settings-section">
+                    <div class="cg-settings-section-label"><i class="bi bi-volume-up-fill"></i> Audio</div>
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Volume musica</span>
+                            <span class="cg-settings-row-desc">Musica di sottofondo</span>
+                        </div>
+                        <div class="cg-slider-group">
+                            <i class="bi bi-volume-down cg-slider-icon"></i>
+                            <input type="range" class="cg-slider" id="volume-music" min="0" max="100" value="100"
+                                aria-label="Volume musica">
+                            <i class="bi bi-volume-up cg-slider-icon"></i>
+                            <span class="cg-slider-value" id="volume-music-val">100%</span>
+                        </div>
+                    </div>
+
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Volume effetti</span>
+                            <span class="cg-settings-row-desc">Suoni di click e notifiche</span>
+                        </div>
+                        <div class="cg-slider-group">
+                            <i class="bi bi-volume-down cg-slider-icon"></i>
+                            <input type="range" class="cg-slider" id="volume-sfx" min="0" max="100" value="75"
+                                aria-label="Volume effetti">
+                            <i class="bi bi-volume-up cg-slider-icon"></i>
+                            <span class="cg-slider-value" id="volume-sfx-val">75%</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Opzioni del Tema -->
+                <section class="cg-settings-section">
+                    <div class="cg-settings-section-label"><i class="bi bi-palette-fill"></i> Aspetto</div>
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Tema</span>
+                            <span class="cg-settings-row-desc">Seleziona il tema nel sito</span>
+                        </div>
+                        <div class="cg-theme-picker" id="theme-picker" role="group" aria-label="Seleziona tema">
+                            <button class="cg-theme-btn" data-theme="dark" aria-pressed="true">
+                                <i class="bi bi-moon-stars-fill"></i> Dark
+                            </button>
+                            <button class="cg-theme-btn" data-theme="light" aria-pressed="false">
+                                <i class="bi bi-sun-fill"></i> Light
+                            </button>
+                            <button class="cg-theme-btn" data-theme="system" aria-pressed="false">
+                                <i class="bi bi-display"></i> Sistema
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Opzioni di riduzione delle animazioni -->
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Animazioni ridotte</span>
+                            <span class="cg-settings-row-desc">Disabilita le transizioni</span>
+                        </div>
+                        <label class="cg-toggle" aria-label="Animazioni ridotte">
+                            <input type="checkbox" id="toggle-animations" role="switch">
+                            <span class="cg-toggle-track"><span class="cg-toggle-thumb"></span></span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Opzioni di Difficoltà -->
+                <section class="cg-settings-section">
+                    <div class="cg-settings-section-label"><i class="bi bi-controller"></i> Gameplay</div>
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name">Difficoltà predefinita</span>
+                            <span class="cg-settings-row-desc">Difficoltà del Bot in Single Player</span>
+                        </div>
+                        <div class="cg-theme-picker" id="difficulty-picker" role="group" aria-label="Difficoltà">
+                            <button class="cg-theme-btn cg-diff-btn" data-diff="easy"
+                                aria-pressed="false">Facile</button>
+                            <button class="cg-theme-btn cg-diff-btn" data-diff="normal"
+                                aria-pressed="true">Normale</button>
+                            <button class="cg-theme-btn cg-diff-btn" data-diff="hard"
+                                aria-pressed="false">Difficile</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Danger Zone: bottone di Eliminazione del profilo -->
+                <section class="cg-settings-section" style="border-bottom: none;">
+                    <div class="cg-settings-section-label text-danger"><i class="bi bi-exclamation-triangle-fill"></i>
+                        Zona Pericolosa</div>
+                    <div class="cg-settings-row">
+                        <div class="cg-settings-row-info">
+                            <span class="cg-settings-row-name text-danger">Elimina Profilo</span>
+                            <span class="cg-settings-row-desc">Questa azione è irreversibile. Tutti i tuoi dati andranno
+                                persi.</span>
+                        </div>
+
+                        <!-- Bottone di eliminazione del profilo -->
+                        <button class="cg-btn-danger" id="btn-delete-profile">
+                            <i class="bi bi-trash3-fill"></i> Elimina
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Footer: bottoni Annulla / Applica -->
+            <div class="cg-settings-footer">
+                <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0</span>
+                <div class="d-flex gap-2">
+                    <button class="cg-btn-secondary" id="settings-cancel">Annulla</button>
+                    <button class="cg-btn-primary" id="settings-save">Applica</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== FINE FINESTRA MODALE: Impostazioni ===== -->
+
+    <!-- ===== INIZIO FINESTRA MODALE: Conferma Eliminazione Profilo ===== -->
+    <div class="cg-settings-overlay" id="cg-confirm-delete-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="delete-profile-title">
+        <div class="cg-settings-modal" style="max-width: 450px; text-align: center;">
+            <div class="cg-settings-header" style="justify-content: center; position: relative; border-bottom: none; padding-bottom: 0;">
+                <div class="cg-settings-title-group text-danger">
+                    <div class="cg-settings-icon-wrap" style="color: rgb(var(--darcula-red))">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <h2 class="cg-settings-title text-danger" id="delete-profile-title">Elimina Profilo</h2>
+                </div>
+            </div>
+            <div class="cg-settings-body" style="padding: 2rem;">
+                <p class="text-darcula-fg mb-4" style="line-height: 1.5; font-size: 1.1rem;">
+                    Sei sicuro di voler eliminare definitivamente il tuo profilo?<br><br>
+                    <strong>Questa azione distruggerà i tuoi dati e non può essere annullata.</strong>
+                </p>
+                <div class="d-flex gap-3 justify-content-center mt-2">
+                    <button class="cg-btn-secondary" id="btn-cancel-delete" style="min-width: 120px; justify-content: center;">Annulla</button>
+                    <button class="cg-btn-danger" id="btn-confirm-delete" style="min-width: 120px; font-weight: bold; justify-content: center;">Sì, elimina</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== FINE FINESTRA MODALE: Conferma Eliminazione Profilo ===== -->
+
+    <!-- ===== INIZIO FINESTRA MODALE: Invito Sfida (Multiplayer) ===== -->
+    <div class="cg-challenge-invite-overlay" id="cg-challenge-invite-overlay">
+        <div class="cg-challenge-invite-card" role="dialog" aria-modal="true" aria-labelledby="cg-challenge-invite-title">
+            <div class="cg-challenge-invite-icon"><i class="bi bi-bell-fill"></i></div>
+            <h3 id="cg-challenge-invite-title" class="cg-challenge-invite-title">Sfida in arrivo</h3>
+            <p class="cg-challenge-invite-text" id="cg-challenge-invite-text">Un giocatore ti ha invitato a una partita.</p>
+            <div class="cg-challenge-invite-actions">
+                <button type="button" class="cg-challenge-btn cg-challenge-btn--ghost" id="cg-challenge-reject">Rifiuta</button>
+                <button type="button" class="cg-challenge-btn cg-challenge-btn--accept" id="cg-challenge-accept">Accetta</button>
+            </div>
+        </div>
+    </div>
+    <!-- ===== FINE FINESTRA MODALE: Invito Sfida (Multiplayer) ===== -->
+
+    <!-- ===== INIZIO FINESTRA MODALE: Modifica Profilo ===== -->
+    <div class="cg-settings-overlay" id="edit-profile-overlay" aria-hidden="true" role="dialog" aria-modal="true"
+        aria-labelledby="edit-profile-title">
+        <div class="cg-settings-modal" id="edit-profile-modal">
+
+            <!-- Header della finestra -->
+            <div class="cg-settings-header">
+
+                <!-- Titolo della finestra e bottone di chiusura -->
+                <div class="cg-settings-title-group">
+                    <div class="cg-settings-icon-wrap"><i class="bi bi-person-lines-fill"></i></div>
+                    <h2 class="cg-settings-title" id="edit-profile-title">Modifica Profilo</h2>
+                </div>
+                <button class="cg-settings-close" id="edit-profile-close" aria-label="Chiudi">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- Body della finestra -->
+            <div class="cg-settings-body" style="padding: 1.5rem;">
+                <section class="cg-settings-section" style="border: none; margin: 0; padding: 0;">
+
+                    <!-- Modifica Nome Utente -->
+                    <div class="cg-settings-row-edit">
+                        <label for="edit-username" class="cg-settings-row-name mb-2 d-block">Nome Utente</label>
+                        <input type="text" id="edit-username" class="cg-input-text w-100"
+                            placeholder="Il tuo nome utente">
+                    </div>
+
+                    <!-- Modifica Biografia -->
+                    <div class="cg-settings-row-edit mt-3">
+                        <label for="edit-bio" class="cg-settings-row-name mb-2 d-block">Biografia</label>
+                        <textarea id="edit-bio" class="cg-input-text w-100" rows="3"
+                            placeholder="Scrivi qualcosa su di te..."></textarea>
+                    </div>
+
+                    <!-- Modifica Immagine Profilo -->
+                    <div class="cg-settings-row-edit mt-3">
+                        <label for="edit-avatar" class="cg-settings-row-name mb-2 d-block">Immagine Profilo</label>
+                        <input type="file" id="edit-avatar" class="cg-input-file w-100" accept="image/*">
+                    </div>
+
+                    <!-- Modifica Immagine del Banner -->
+                    <div class="cg-settings-row-edit mt-3">
+                        <label for="edit-banner" class="cg-settings-row-name mb-2 d-block">Immagine Banner</label>
+                        <input type="file" id="edit-banner" class="cg-input-file w-100" accept="image/*">
+                    </div>
+                </section>
+            </div>
+
+            <!-- Footer della pagina modale -->
+            <div id="edit-profile-status" style="display: none; margin: 0.75rem 1.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500;"></div>
+            <div class="cg-settings-footer">
+                <span class="cg-settings-version"><i class="bi bi-code-slash"></i> CodeGuessr v1.0.0</span>
+                <div class="d-flex gap-2">
+                    <button class="cg-btn-secondary" id="edit-profile-cancel">Annulla</button>
+                    <button class="cg-btn-primary" id="edit-profile-save">Salva</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="site-footer" id="site-footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <!-- LATO SINISTRO -->
+                <div class="footer-copy">
+                    <span class="footer-brand">
+                        <i class="bi bi-c-circle"></i> 2026 <strong>CodeGuessr</strong>
+                    </span>
+                    <span class="footer-sep" aria-hidden="true">&mdash;</span>
+                    <span class="footer-authors">
+                        Salvatore Iavarone &amp; Michele Pio Forlani
+                    </span>
+                    <span class="footer-sep" aria-hidden="true">&bull;</span>
+                    <a href="https://github.com/iAVAA/codeguessr/blob/main/LICENSE" target="_blank"
+                        class="footer-license">Licenza MIT</a>
+                    <span class="footer-sep" aria-hidden="true">&bull;</span>
+                    <span class="footer-version">v1.0.0</span>
+                </div>
+
+                <!-- LATO DESTRO -->
+                <div class="footer-links-inline">
+                    <a href="https://github.com/iAVAA/codeguessr" target="_blank" class="social-btn" aria-label="GitHub"
+                        title="GitHub">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/in/salvatoreiavarone" target="_blank" class="social-btn"
+                        aria-label="LinkedIn" title="LinkedIn">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=iavarone.2056502@studenti.uniroma1.it,forlani.2115153@studenti.uniroma1.it&su=Supporto%20Geoguessr"
+                        target="_blank" class="social-btn" aria-label="Contattaci" title="Contattaci">
+                        <i class="bi bi-envelope-fill"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- IMPORTANTE:
+        blocca il layout e mostra il loader fino a quando initLoader()
+        non completa il fetch dei dati
+    -->
+    <script>
+        document.body.classList.add('loader-open');
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
+        </script>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <script src="/src/js/managers/theme.js"></script>
+    <script src="/src/js/managers/sound.js"></script>
+    <script src="/src/js/managers/settings.js"></script>
+    <script type="module" src="/src/js/game_page/multiplayer_ui.js"></script>
+    <script type="module" src="/src/js/profile_page/profile_page.js"></script>
+    <script type="module" src="/src/js/profile_page/edit_profile.js"></script>
+</body>
+
+</html>

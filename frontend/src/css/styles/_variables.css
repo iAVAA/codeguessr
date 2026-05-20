@@ -1,0 +1,90 @@
+/*
+	FILE: _variables.css
+	DESCRIPTION: variabili CSS del tema dark e light mode,
+	AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   PALETTE - TEMA DARK (default)
+   Palette Darcula ispirata a JetBrains IDE.
+   I colori sono espressi come RGB per usare rgba().
+   =========================== */
+:root {
+	/* Palette Darcula */
+	--darcula-bg:      49,  51,  53;   /* Sfondo principale */
+	--darcula-current: 70,  72,  74;   /* Sfondo card / elementi in rilievo */
+	--darcula-fg:     169, 183, 198;   /* Testo principale */
+	--darcula-comment: 128, 128, 128;  /* Testo secondario / commenti */
+	--darcula-blue:    86, 156, 214;   /* Accento primario (link, bottoni) */
+	--darcula-green:   98, 151,  85;   /* Successo / XP / progresso */
+	--darcula-orange: 204, 120,  50;   /* Avvisi / parole chiave */
+	--darcula-yellow: 255, 198, 109;   /* Trofei / highlight */
+	--darcula-red:    204, 102, 102;   /* Errori / pericolo */
+
+	--transition-speed: 0.3s;
+	--border-radius-lg: 24px;
+	--border-radius-xl: 32px;
+
+	/* Palette di sintassi VS Code per il Code Block */
+	--vscode-kw:  #569cd6;  /* Keyword */
+	--vscode-cf:  #c586c0;  /* Control flow */
+	--vscode-fn:  #dcdcaa;  /* Function */
+	--vscode-str: #ce9178;  /* String */
+	--vscode-num: #b5cea8;  /* Number */
+	--vscode-ty:  #4ec9b0;  /* Type */
+	--vscode-vr:  #9cdcfe;  /* Variable */
+	--vscode-op:  #d4d4d4;  /* Operator */
+	--vscode-cm:  #6a9955;  /* Comment */
+}
+
+/* ===========================
+   PALETTE - TEMA LIGHT
+   =========================== */
+:root.light-mode {
+	/* Palette light */
+	--darcula-bg:      243, 244, 246;
+	--darcula-current: 255, 255, 255;
+	--darcula-fg:       55,  65,  81;
+	--darcula-comment: 156, 163, 175;
+	--darcula-blue:     37,  99, 235;
+	--darcula-green:    22, 163,  74;
+	--darcula-orange:  234,  88,  12;
+	--darcula-yellow:  202, 138,   4;
+	--darcula-red:     220,  38,  38;
+
+	/* Palette di sintassi VS Code per il Code Block (Light) */
+	--vscode-kw:  #0000ff;
+	--vscode-cf:  #af00db;
+	--vscode-fn:  #795e26;
+	--vscode-str: #a31515;
+	--vscode-num: #098658;
+	--vscode-ty:  #267f99;
+	--vscode-vr:  #001080;
+	--vscode-op:  #333333;
+	--vscode-cm:  #008000;
+}
+
+/* ===========================
+   CLASSI UTILITY - COLORI TEMA
+   Shortcut per applicare i colori Darcula inline o via classe.
+   Usano !important per sovrascrivere le utility di Bootstrap.
+   =========================== */
+
+/* Sfondi */
+.bg-darcula-bg { background-color: rgb(var(--darcula-bg)) !important; }
+.bg-darcula-current { background-color: rgb(var(--darcula-current)) !important; }
+.bg-darcula-green { background-color: rgb(var(--darcula-green)) !important; }
+
+/* Testi */
+.text-darcula-fg { color: rgb(var(--darcula-fg)) !important; }
+.text-darcula-comment { color: rgb(var(--darcula-comment)) !important; }
+.text-darcula-green { color: rgb(var(--darcula-green)) !important; }
+.text-darcula-orange { color: rgb(var(--darcula-orange)) !important; }
+.text-darcula-yellow { color: rgb(var(--darcula-yellow)) !important; }
+.text-darcula-red { color: rgb(var(--darcula-red)) !important; }
+.text-darcula-blue { color: rgb(var(--darcula-blue)) !important; }
+
+/* Bordi */
+.border-darcula-comment { border-color: rgba(var(--darcula-comment), 0.5) !important; }
+.border-darcula-green { border-color: rgba(var(--darcula-green), 0.5) !important; }
+.border-darcula-orange { border-color: rgba(var(--darcula-orange), 0.5) !important; }

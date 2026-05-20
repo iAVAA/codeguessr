@@ -1,0 +1,444 @@
+/*
+    FILE: friend_panel.css
+    DESCRIPTION: Stili per la lista amici e la ricerca amici modale
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   1. STILE DELLA LISTA AMICI
+   =========================== */
+
+/* Elemento amico */
+.friend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+}
+
+.friend-item:hover:not(.offline-item) {
+    border-color: rgba(var(--darcula-green), 0.5);
+    transform: translateX(4px);
+}
+
+.friend-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Avatar dell'amico */
+.friend-avatar-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.friend-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Badge amici online */
+#friends-online-badge {
+    font-size: 0.75rem;
+    background: rgba(var(--darcula-green), 0.15);
+    color: rgb(var(--darcula-green));
+    border: 1px solid rgba(var(--darcula-green), 0.3);
+}
+
+/* Pallino di stato (Online/Offline) */
+.status-dot {
+    position: absolute;
+    bottom: 0;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgb(var(--darcula-current));
+}
+
+.status-dot.online {
+    background-color: rgb(var(--darcula-green));
+}
+
+.status-dot.offline {
+    background-color: rgba(var(--darcula-comment), 0.7);
+}
+
+.friend-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.friend-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgb(var(--darcula-fg));
+}
+
+.friend-status-text {
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-top: -2px;
+}
+
+/* Bottone per sfidare l'amico */
+.btn-challenge {
+    background: rgba(var(--darcula-green), 0.1);
+    color: rgb(var(--darcula-green));
+    border: 1px solid rgba(var(--darcula-green), 0.3);
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.btn-challenge:hover {
+    background: rgb(var(--darcula-green));
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(var(--darcula-green), 0.3);
+}
+
+.btn-challenge:hover i {
+    color: #fff;
+}
+
+/* Bottone per aggiungere amici */
+.btn-add-friend,
+.btn-panel-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(var(--darcula-blue), 0.15);
+  color: rgb(var(--darcula-blue));
+  border: 1px solid rgba(var(--darcula-blue), 0.3);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-add-friend:hover,
+.btn-panel-action:hover {
+  background: rgb(var(--darcula-blue));
+  color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(var(--darcula-blue), 0.3);
+}
+
+.btn-add-friend:hover i,
+.btn-panel-action:hover i {
+  color: #fff;
+}
+
+.btn-add-friend i,
+.btn-panel-action i {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* Stato offline */
+.offline-item {
+    opacity: 0.85;
+}
+
+.offline-item:hover {
+    transform: none;
+}
+
+/* ===========================
+   2. FINESTRA MODALE DELLA LISTA AMICI
+   =========================== */
+
+/* Overlay del modale ricerca amici */
+.cg-friend-search-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 1200;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+}
+
+.cg-friend-search-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Finestra modale ricerca amici */
+.cg-friend-search-modal {
+    width: min(560px, 100%);
+    background: rgba(var(--darcula-current), 0.92);
+    border: 1px solid rgba(var(--darcula-comment), 0.25);
+    border-radius: 20px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    transform: translateY(14px) scale(0.98);
+    transition: transform 0.22s ease;
+}
+
+.cg-friend-search-overlay.open .cg-friend-search-modal {
+    transform: translateY(0) scale(1);
+}
+
+/* Header del modale ricerca */
+.cg-friend-search-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid rgba(var(--darcula-comment), 0.2);
+}
+
+.cg-friend-search-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+/* Icona del titolo modale */
+.cg-friend-search-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(var(--darcula-blue));
+    background: rgba(var(--darcula-blue), 0.14);
+    border: 1px solid rgba(var(--darcula-blue), 0.32);
+}
+
+.cg-friend-search-title {
+    margin: 0;
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: rgb(var(--darcula-fg));
+}
+
+/* Bottone di chiusura del modale */
+.cg-friend-search-close {
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(var(--darcula-comment), 0.35);
+    border-radius: 10px;
+    background: rgba(var(--darcula-bg), 0.65);
+    color: rgb(var(--darcula-fg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cg-friend-search-close:hover {
+    border-color: rgba(var(--darcula-red), 0.45);
+    color: rgb(var(--darcula-red));
+}
+
+/* Corpo del modale ricerca */
+.cg-friend-search-body {
+    padding: 1rem 1.15rem 1.15rem;
+}
+
+/* Casella di input ricerca */
+.cg-friend-search-input-wrap {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(var(--darcula-bg), 0.65);
+    border: 1px solid rgba(var(--darcula-comment), 0.3);
+    border-radius: 12px;
+    padding: 0.7rem 0.85rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cg-friend-search-input-wrap i {
+    color: rgba(var(--darcula-comment), 0.95);
+}
+
+.cg-friend-search-input-wrap:focus-within {
+    border-color: rgba(var(--darcula-blue), 0.65);
+    box-shadow: 0 0 0 3px rgba(var(--darcula-blue), 0.16);
+}
+
+.cg-friend-search-input-wrap input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: rgb(var(--darcula-fg));
+    font-size: 0.92rem;
+}
+
+.cg-friend-search-input-wrap input::placeholder {
+    color: rgba(var(--darcula-comment), 0.9);
+}
+
+.cg-friend-search-hint {
+    margin: 0.65rem 0 0.9rem;
+    font-size: 0.78rem;
+    color: rgba(var(--darcula-comment), 0.95);
+}
+
+/* Risultati della ricerca */
+.cg-friend-search-results {
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding-right: 2px;
+}
+
+.cg-friend-search-results::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cg-friend-search-results::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cg-friend-search-results::-webkit-scrollbar-thumb {
+    background: rgba(var(--darcula-comment), 0.34);
+    border-radius: 6px;
+}
+
+/* Singolo risultato della ricerca */
+.cg-search-result-item {
+    background: rgba(var(--darcula-bg), 0.55);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: 14px;
+    padding: 0.65rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.cg-search-result-user {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.cg-search-result-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(var(--darcula-comment), 0.25);
+    flex-shrink: 0;
+}
+
+.cg-search-result-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.cg-search-result-name {
+    color: rgb(var(--darcula-fg));
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cg-search-result-username {
+    color: rgba(var(--darcula-comment), 0.95);
+    font-size: 0.76rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Bottone aggiungi amico nella ricerca */
+.cg-search-add-btn {
+    border: 1px solid rgba(var(--darcula-blue), 0.35);
+    background: rgba(var(--darcula-blue), 0.12);
+    color: rgb(var(--darcula-blue));
+    border-radius: 10px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cg-search-add-btn:hover {
+    background: rgb(var(--darcula-blue));
+    color: #fff;
+}
+
+.cg-search-add-btn:hover i {
+    color: #fff;
+}
+
+.cg-waiting-btn {
+    border: 1px solid rgba(var(--darcula-yellow), 0.35);
+    background: rgba(var(--darcula-yellow), 0.12);
+    color: rgb(var(--darcula-yellow));
+    border-radius: 10px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Stato ricerca vuota */
+.cg-search-empty {
+    border: 1px dashed rgba(var(--darcula-comment), 0.35);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(var(--darcula-comment), 0.95);
+}
+
+/* Responsività del modale ricerca */
+@media (max-width: 576px) {
+    .cg-friend-search-title {
+        font-size: 1rem;
+    }
+
+    .cg-search-result-item {
+        padding: 0.55rem 0.6rem;
+    }
+
+    .cg-search-add-btn {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.72rem;
+    }
+}

@@ -1,0 +1,182 @@
+/*
+    FILE: win_lose_modal_page.css
+    DESCRIPTION: Stili per la finestra modale di fine partita (Win/Lose)
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   1. CONTENITORE PRINCIPALE DELLA FINESTRA MODALE
+   =========================== */
+
+.end-game-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.end-game-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.end-game-card {
+    width: 100%;
+    max-width: 480px;
+    background: rgb(var(--darcula-bg));
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: 24px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    transform: scale(0.88);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.end-game-overlay.visible .end-game-card {
+    transform: scale(1);
+    opacity: 1;
+}
+
+
+/* ===========================
+   2. VARIANTI RISULTATO (WIN/LOSE)
+   =========================== */
+
+/* Border accent */
+.end-result--win  { border-top: 4px solid rgb(var(--darcula-green)); }
+.end-result--lose { border-top: 4px solid rgb(var(--darcula-red)); }
+
+/* Icona di fine gioco */
+.end-game-icon {
+    font-size: 3.5rem;
+    line-height: 1;
+}
+
+.end-result--win .end-game-icon { 
+    color: rgb(var(--darcula-green)); 
+    filter: drop-shadow(0 0 18px rgba(var(--darcula-green), 0.55)); 
+}
+
+.end-result--lose .end-game-icon { 
+    color: rgb(var(--darcula-red));   
+    filter: drop-shadow(0 0 18px rgba(var(--darcula-red), 0.55)); 
+}
+
+
+/* ===========================
+   3. ELEMENTI DELLA CARD
+   =========================== */
+
+.end-game-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 800;
+    color: rgb(var(--darcula-fg));
+}
+
+.end-hp-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.end-hp-label {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    color: rgb(var(--darcula-comment));
+}
+
+.end-hp-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+/* Contenitore ricompense (EXP + Trofei allineati in fila) */
+.end-rewards-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.end-exp-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgb(var(--darcula-yellow));
+    background: rgba(var(--darcula-yellow), 0.12);
+    border: 1px solid rgba(var(--darcula-yellow), 0.3);
+    border-radius: 20px;
+    padding: 0.35rem 1.2rem;
+}
+
+/* Badge trofei: colore verde se guadagno, rosso se perdita */
+.end-trophy-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 0.35rem 1.2rem;
+}
+
+.end-trophy-badge.trophy--gain {
+    color: rgb(var(--darcula-green));
+    background: rgba(var(--darcula-green), 0.12);
+    border: 1px solid rgba(var(--darcula-green), 0.3);
+}
+
+.end-trophy-badge.trophy--loss {
+    color: rgb(var(--darcula-red));
+    background: rgba(var(--darcula-red), 0.12);
+    border: 1px solid rgba(var(--darcula-red), 0.3);
+}
+
+
+
+/* ===========================
+   4. RESPONSIVITÀ (MOBILE)
+   =========================== */
+
+@media (max-width: 480px) {
+    .end-game-card { border-radius: 18px; }
+    .end-game-title { font-size: 1.6rem; }
+    .end-game-icon { font-size: 2.8rem; }
+}
+
+
+/* ===========================
+   5. LIGHT MODE
+   =========================== */
+
+.light-mode .end-game-overlay { 
+    background: rgba(255, 255, 255, 0.75); 
+}
+
+.light-mode .end-game-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.18);
+}
+
+.light-mode .end-game-card .btn-outline-light {
+    color: rgb(var(--darcula-fg));
+    border-color: rgba(var(--darcula-comment), 0.6);
+}
+
+.light-mode .end-game-card .btn-outline-light:hover {
+    background-color: rgb(var(--darcula-fg));
+    color: #ffffff;
+    border-color: rgb(var(--darcula-fg));
+}

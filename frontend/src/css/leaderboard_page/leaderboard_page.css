@@ -1,0 +1,373 @@
+/*
+    FILE: leaderboard_page.css
+    DESCRIPTION: Stili per la pagina della classifica globale
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   1. LAYOUT & ANIMAZIONI DI PAGINA
+   =========================== */
+
+/* Contenitore principale della pagina */
+.leaderboard-wrapper {
+    flex: 1;
+    animation: cg-lb-fadeIn 0.6s ease-out;
+}
+
+/* Animazione di apparizione della pagina */
+@keyframes cg-lb-fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Animazione per lo skeleton loading */
+@keyframes cg-lb-skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+
+/* ===========================
+   2. SEZIONE PRINCIPALE DELLA PAGINA (MAIN)
+   =========================== */
+
+.leaderboard-header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+/* Icona grande della classifica */
+.leaderboard-icon-main {
+    font-size: 3.5rem;
+    color: rgb(var(--darcula-yellow));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    background: rgba(var(--darcula-yellow), 0.1);
+    border-radius: 30px;
+    border: 1px solid rgba(var(--darcula-yellow), 0.2);
+    box-shadow: 0 10px 40px rgba(var(--darcula-yellow), 0.15);
+    margin-bottom: 1.5rem;
+}
+
+/* Titolo principale */
+.leaderboard-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0.5rem;
+    color: rgb(var(--darcula-fg));
+}
+
+.leaderboard-title span {
+    color: rgb(var(--darcula-blue));
+}
+
+/* Sottotitolo */
+.leaderboard-subtitle {
+    font-size: 1.1rem;
+    max-width: 500px;
+    margin: 0 auto;
+    color: rgba(var(--darcula-fg), 0.7);
+}
+
+
+/* ===========================
+   3. LEADERBOARD CARD & CONTAINER
+   =========================== */
+
+/* Contenitore principale della tabella classifica */
+.leaderboard-card {
+    background: rgba(var(--darcula-current), 0.5);
+    border: 1px solid rgba(var(--darcula-comment), 0.15);
+    border-radius: 24px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
+}
+
+/* Header della tabella (Etichette colonne) */
+.leaderboard-table-header {
+    background: rgba(var(--darcula-comment), 0.05);
+    border-bottom: 1px solid rgba(var(--darcula-comment), 0.1);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: rgba(var(--darcula-fg), 0.6);
+    padding: 1rem 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ===========================
+   4. Lista utenti della classifica
+   =========================== */
+
+/* Singola riga della classifica */
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(var(--darcula-comment), 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.leaderboard-row:last-child {
+    border-bottom: none;
+}
+
+/* Effetto hover sulla riga */
+.leaderboard-row:hover {
+    background: rgba(var(--darcula-blue), 0.08);
+}
+
+/* Stile speciale per la riga dell'utente corrente */
+.leaderboard-row.is-me {
+    background: rgba(var(--darcula-green), 0.1);
+    border-left: 4px solid rgb(var(--darcula-green));
+}
+
+/* Badge "IO" */
+.me-badge {
+    background: rgb(var(--darcula-green));
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 8px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+
+/* ===========================
+   5. STILI DELLE COLONNE
+   =========================== */
+
+/* Colonna Posizione (Rank) */
+.rank-col {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: rgba(var(--darcula-fg), 0.8);
+    flex: 0 0 8.33%;
+    display: flex;
+    justify-content: center;
+}
+
+/* Colori speciali per il podio */
+.rank-1 .rank-col { color: #FFD700; font-size: 2rem; } /* Oro */
+.rank-2 .rank-col { color: #C0C0C0; font-size: 1.5rem; } /* Argento */
+.rank-3 .rank-col { color: #CD7F32; font-size: 1.3rem; } /* Bronzo */
+
+/* Colonna Giocatore (Avatar + Nome) */
+.player-col {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 0 0 50%;
+}
+
+.lb-avatar-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+
+.lb-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(var(--darcula-comment), 0.2);
+}
+
+/* Bordi colorati per il podio nell'avatar */
+.rank-1 .lb-avatar { border-color: #FFD700; }
+.rank-2 .lb-avatar { border-color: #C0C0C0; }
+.rank-3 .lb-avatar { border-color: #CD7F32; }
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: rgb(var(--darcula-fg));
+}
+
+.player-meta {
+    font-size: 0.75rem;
+    color: rgba(var(--darcula-fg), 0.6);
+}
+
+/* Colonna Livello */
+.level-col {
+    flex: 0 0 15%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.level-badge {
+    background: rgba(var(--darcula-blue), 0.1);
+    color: rgb(var(--darcula-blue));
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 1px solid rgba(var(--darcula-blue), 0.2);
+}
+
+/* Colonna Trofei */
+.trophy-col {
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: rgb(var(--darcula-yellow));
+    flex: 0 0 25%;
+}
+
+.trophy-col i {
+    font-size: 1rem;
+    filter: drop-shadow(0 0 5px rgba(var(--darcula-yellow), 0.3));
+}
+
+
+/* ===========================
+   6. PAGINAZIONE
+   =========================== */
+
+#leaderboard-pagination {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Bottone singolo di paginazione */
+.pagination-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--darcula-current), 0.5);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: 10px;
+    color: rgba(var(--darcula-fg), 0.7);
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.pagination-btn:hover {
+    background: rgba(var(--darcula-blue), 0.15);
+    border-color: rgba(var(--darcula-blue), 0.4);
+    color: rgb(var(--darcula-blue));
+}
+
+/* Bottone attivo (pagina corrente) */
+.pagination-btn.active {
+    background: rgb(var(--darcula-blue));
+    border-color: rgb(var(--darcula-blue));
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(var(--darcula-blue), 0.4);
+}
+
+/* Puntini di sospensione per tante pagine (...) */
+.pagination-btn.dots {
+    cursor: default;
+    border-color: transparent;
+    background: transparent;
+}
+
+/* Bottone disabilitato */
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+
+/* ===========================
+   7. UTILITY & SKELETON LOADING
+   =========================== */
+
+/* Stile per il caricamento della classifica (skeleton) */
+.skeleton {
+    background: linear-gradient(90deg, 
+        rgba(var(--darcula-comment), 0.05) 25%, 
+        rgba(var(--darcula-comment), 0.1) 50%, 
+        rgba(var(--darcula-comment), 0.05) 75%);
+    background-size: 200% 100%;
+    animation: cg-lb-skeleton 1.5s infinite;
+}
+
+
+/* ===========================
+   8. RESPONSIVITÀ
+   =========================== */
+
+@media (max-width: 768px) {
+    .leaderboard-title { 
+        font-size: 2rem; 
+    }
+    
+    .leaderboard-icon-main { 
+        width: 80px; 
+        height: 80px; 
+        font-size: 2.5rem; 
+    }
+    
+    .leaderboard-row {
+        padding: 1rem;
+    }
+    
+    /* Nasconde la colonna livello su mobile per risparmiare spazio */
+    .level-col { 
+        display: none; 
+    }
+    
+    .rank-col { 
+        flex: 0 0 8%; 
+        font-size: 1rem;
+    }
+
+    .player-col {
+        flex: 1;
+    }
+    
+    .trophy-col { 
+        flex: 0 0 25%; 
+        font-size: 1.1rem;
+    }
+}

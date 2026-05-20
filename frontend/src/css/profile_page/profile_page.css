@@ -1,0 +1,178 @@
+/*
+    FILE: profile_page.css
+    DESCRIPTION: Stili principali per la pagina profilo (Layout e Header Card)
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===========================
+   1. LAYOUT PRINCIPALE
+   =========================== */
+
+.profile-page-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ===========================
+   2. SEZIONE UTENTE (Banner e Avatar)
+   =========================== */
+
+.profile-header-card {
+    background: rgba(var(--darcula-current), 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(var(--darcula-comment), 0.2);
+    border-radius: var(--border-radius-xl);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Banner immagine */
+.profile-banner {
+    height: 200px;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    background-image: url('/src/assets/img/banner_profile.webp');
+    position: relative;
+}
+
+/* Sfumatura scura sotto al banner */
+.profile-banner::after {
+    content: '';
+    position: absolute;
+    bottom: 0; 
+    left: 0; 
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to top, rgba(var(--darcula-current), 0.2), transparent);
+}
+
+/* Contenuto Header (Avatar, Info, Bottoni) */
+.profile-header-content {
+    padding: 0 2rem 2.5rem 2rem;
+    position: relative;
+}
+
+/* Wrapper Immagine Profilo sovrapposta */
+.profile-main-avatar-wrapper {
+    margin-top: -60px;
+    position: relative;
+    z-index: 2;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: rgb(var(--darcula-bg));
+    padding: 7px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: padding 0.3s ease;
+}
+
+/* Riduciamo il padding se l'anello è nascosto (altri giocatori) */
+.profile-main-avatar-wrapper.no-xp {
+    padding: 2px;
+}
+
+.profile-main-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgb(var(--darcula-current));
+    border: 2px solid rgba(var(--darcula-comment), 0.15);
+    z-index: 1;
+}
+
+/* Anello di XP dell'avatar */
+.profile-main-avatar-wrapper .xp-ring {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.profile-main-avatar-wrapper .xp-ring-fill,
+.profile-main-avatar-wrapper .xp-ring-bg {
+    stroke-width: 1.8;
+}
+
+
+/* ===========================
+   3. TESTI E INFO PROFILO
+   =========================== */
+
+.profile-main-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: rgb(var(--darcula-fg));
+    letter-spacing: -0.02em;
+}
+
+.profile-main-bio {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgb(var(--darcula-fg));
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0;
+    font-style: italic;
+}
+
+/* Metadati utente */
+.profile-main-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+
+/* ===========================
+   4. RESPONSIVE
+   =========================== */
+
+@media (max-width: 768px) {
+    .profile-banner {
+        height: 150px;
+    }
+    
+    .profile-main-name {
+        font-size: 1.6rem;
+    }
+
+    .profile-main-avatar-wrapper {
+        margin: -50px auto 0 auto;
+        width: 115px;
+        height: 115px;
+    }
+    
+    .profile-main-info {
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+    
+    .profile-main-meta {
+        justify-content: center;
+    }
+
+    .profile-header-content {
+        padding: 0 1.5rem 2rem 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .profile-header-content {
+        padding: 0 1rem 2rem 1rem;
+    }
+    
+    .profile-main-avatar-wrapper {
+        width: 110px;
+        height: 110px;
+    }
+}

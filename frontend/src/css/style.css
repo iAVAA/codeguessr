@@ -1,0 +1,32 @@
+/*
+    FILE: style.css
+    DESCRIPTION: Foglio di stile globale di CodeGuessr.
+    AUTHORS: Salvatore Iavarone & Michele Pio Forlani
+*/
+
+/* ===== VARIABILI CSS PER COLORI ===== */
+@import url('styles/_variables.css');
+
+/* ===== BODY PRINCIPALE E RIDUTTORE DI ANIMAZIONI ===== */
+@import url('styles/_base.css');
+
+/* ===== NAVBAR E MENÙ A TENDINA ===== */
+@import url('styles/_navbar.css');
+
+/* ===== FOOTER ===== */
+@import url('styles/_footer.css');
+
+/* ===== STILI DEL LOADER ===== */
+@import url('styles/_loader.css');
+
+/* ===== STILI DELLE IMPOSTAZIONI ===== */
+@import url('styles/_settings_modal.css');
+
+/* ===== STILI DEL NOSCRIPT ===== */
+@import url('styles/_noscript.css');
+
+/* ===== 8. CLASSI RIUTILIZZABILI (BOTTONI, ETC...) ===== */
+@import url('styles/_utilities.css');
+
+/* ===== RESPONSIVITÀ GENERALE (PER OGNI PAGINA POI C'È UNA RESPONSIVITÀ PIÙ SPECIFICA ===== */
+@import url('styles/_responsive.css');
