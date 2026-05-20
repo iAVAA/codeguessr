@@ -7,154 +7,131 @@
 const { supabase, updatePlayerStats } = require('../server');
 const { evaluateAnswer, getRoundSnippet, buildFallbackSnippet } = require('./code');
 
-// Stato in memoria delle sessioni di gioco
-const matchmakingQueue = [];
-const privateRooms = new Map(); // codice -> { host, giocatori: [], unranked: false }
-const activeMatches = new Map(); // roomCode -> { players, partita_id, answers, ... }
-const pendingFriendInvites = new Map(); // inviteId -> { challengerId, friendId, timeoutId }
-const disconnectedMatches = new Map(); // roomCode -> { partita_id, disconnectTime, suspensionTimeout, disconnectedUserIds }
+const matchmakingQueue     = [];
+const privateRooms         = new Map();
+const activeMatches        = new Map();
+const pendingFriendInvites = new Map();
+
+// Tutto il file lavora su queste strutture in memoria.
+// Non c'è un database dei match in tempo reale: la partita vive qui finché esiste la connessione.
 
 let io = null;
 
-/**
- * Trova il socket attivo di un utente connesso tramite il suo UUID.
- */
+// `io` viene creato in server.js e passato qui con `initSockets(io)`.
+// Questo file non crea Socket.IO: si limita a registrare i suoi eventi.
+
+// Cerca il socket live di un utente dato il suo UUID.
+// Serve per sapere se il giocatore è ancora online e per spedire eventi mirati.
 function getSocketByUserId(userId) {
-    if (!io) return null;
     for (const s of io.sockets.sockets.values()) {
         if (s.userId === userId) return s;
     }
     return null;
 }
 
-/**
- * Inserisce una nuova partita e le relative partecipazioni nel database.
- */
+// Come sopra, ma restituisce tutti i socket attivi dello stesso utente.
+// Utile quando un player ha più connessioni aperte o sta cambiando pagina.
+function getSocketsByUserId(userId) {
+    if (!io) return [];
+    const result = [];
+    for (const s of io.sockets.sockets.values()) {
+        if (s.userId === userId) result.push(s);
+    }
+    return result;
+}
+
+// Riduce il socket ai soli dati pubblici da mostrare al frontend.
+// Evita di spargere oggetti Socket.IO interi dentro lo stato match.
+function playerInfo(s) {
+    return { id: s.userId, nickname: s.nickname, avatar_url: s.avatar_url, livello: s.livello, trophies: s.trophies };
+}
+
+// Crea la partita nel DB e inserisce le due righe di partecipazione.
+// Questa funzione viene usata sia per matchmaking sia per sfide dirette.
 async function createDbMatch(idCasa, idTrasferta, modalita = 'multiplayer') {
-    const { data: partita, error: errorPartita } = await supabase
+    const { data: partita, error } = await supabase
         .from('partita')
-        .insert([{
-            modalita,
-            stato: 'in_corso',
-            data_inizio: new Date().toISOString(),
-            id_utente_casa: idCasa,
-            id_utente_trasferta: idTrasferta
-        }])
-        .select()
-        .single();
+        .insert([{ modalita, stato: 'in_corso', data_inizio: new Date().toISOString(), id_utente_casa: idCasa, id_utente_trasferta: idTrasferta }])
+        .select().single();
+    if (error) throw error;
 
-    if (errorPartita) throw errorPartita;
-
-    const { error: errorPartecipazione } = await supabase
-        .from('partecipazione')
-        .insert([
-            { id_partita: partita.id_partita, id_giocatore: idCasa, risultato: null, exp_guadagnata: 0 },
-            { id_partita: partita.id_partita, id_giocatore: idTrasferta, risultato: null, exp_guadagnata: 0 }
-        ]);
-
-    if (errorPartecipazione) throw errorPartecipazione;
+    const { error: errParc } = await supabase.from('partecipazione').insert([
+        { id_partita: partita.id_partita, id_giocatore: idCasa,      risultato: null, exp_guadagnata: 0 },
+        { id_partita: partita.id_partita, id_giocatore: idTrasferta, risultato: null, exp_guadagnata: 0 },
+    ]);
+    if (errParc) throw errParc;
     return partita.id_partita;
 }
 
-/**
- * Carica un frammento di codice (GitHub o fallback) e avvia un nuovo round per la stanza.
- */
+// Aggiorna una partecipazione finale con risultato, EXP e trofei.
+// C'è un fallback perché lo schema del DB potrebbe non avere trofei_cambiati.
+async function updatePartecipazione(partitaId, playerId, risultato, exp, trophy) {
+    const { error } = await supabase.from('partecipazione')
+        .update({ risultato, exp_guadagnata: exp, trofei_cambiati: trophy })
+        .eq('id_partita', partitaId).eq('id_giocatore', playerId);
+    if (error) {
+        console.warn(`[Match] Fallback senza trofei_cambiati per ${playerId}:`, error.message);
+        await supabase.from('partecipazione')
+            .update({ risultato, exp_guadagnata: exp })
+            .eq('id_partita', partitaId).eq('id_giocatore', playerId);
+    }
+}
+
+// Prepara e avvia un round:
+// 1) carica lo snippet
+// 2) lo salva nel match
+// 3) lo emette a entrambi i client
+// 4) avvia il timer del round
 async function startMultiplayerRound(roomCode) {
     const match = activeMatches.get(roomCode);
     if (!match) return;
 
-    console.log(`[Match] Inizio Round ${match.currentRound} per ${roomCode}, partita_id=${match.partita_id}`);
-
-    if (!match.started) {
-        match.started = true;
-    }
-
+    console.log(`[Match] Round ${match.currentRound}/${match.maxRounds} — ${roomCode}`);
+    let snippet;
     try {
-        const snippet = await getRoundSnippet(match.lastSnippetCode || null);
-        match.currentSnippet = snippet;
-        match.lastSnippetCode = snippet.code;
-        match.answers = {};
-
-        io.to(roomCode).emit('startRound', {
-            round: match.currentRound,
-            totalRounds: match.maxRounds,
-            snippet
-        });
-
-        if (match.timer) clearTimeout(match.timer);
-        match.timer = setTimeout(() => {
-            if (activeMatches.has(roomCode)) evaluateMultiplayerRound(roomCode);
-        }, 90000);
-
+        snippet = await getRoundSnippet(match.lastSnippetCode || null);
     } catch (err) {
-        console.error(`[Match] Errore recupero snippet GitHub per ${roomCode}, applico fallback:`, err.message);
-        const snippet = buildFallbackSnippet(match.lastSnippetCode || null);
-        match.currentSnippet = snippet;
-        match.lastSnippetCode = snippet.code;
-        match.answers = {};
-
-        io.to(roomCode).emit('startRound', {
-            round: match.currentRound,
-            totalRounds: match.maxRounds,
-            snippet
-        });
-
-        if (match.timer) clearTimeout(match.timer);
-        match.timer = setTimeout(() => {
-            if (activeMatches.has(roomCode)) evaluateMultiplayerRound(roomCode);
-        }, 90000);
+        console.error(`[Match] Fallback snippet per ${roomCode}:`, err.message);
+        snippet = buildFallbackSnippet(match.lastSnippetCode || null);
     }
+
+    match.currentSnippet  = snippet;
+    match.lastSnippetCode = snippet.code;
+    match.answers         = {};
+    io.to(roomCode).emit('startRound', { round: match.currentRound, totalRounds: match.maxRounds, snippet });
+
+    if (match.timer) clearTimeout(match.timer);
+    match.timer = setTimeout(() => {
+        if (activeMatches.has(roomCode)) evaluateMultiplayerRound(roomCode);
+    }, 90000);
 }
 
-/**
- * Valuta le risposte dei giocatori in parallelo tramite AI e aggiorna i punti vita.
- */
+// Valuta le risposte dei due giocatori e applica i danni.
+// Se la partita finisce o arriviamo al numero massimo di round, chiude il match.
 async function evaluateMultiplayerRound(roomCode) {
     const match = activeMatches.get(roomCode);
     if (!match || match.evaluating) return;
-
     match.evaluating = true;
-    if (match.timer) clearTimeout(match.timer);
-    match.timer = null;
+    if (match.timer) { clearTimeout(match.timer); match.timer = null; }
 
-    const results = {};
-    const evaluationsMap = {};
-    const pIds = match.players.map(p => p.id);
-
+    const [p1, p2] = match.players;
     try {
-        const evaluations = await Promise.all(pIds.map(async (id) => {
-            const res = await evaluateAnswer(match.currentSnippet.code, match.answers[id] || "");
-            return { id, score: res.score, evaluation: res.evaluation };
-        }));
+        const [ev1, ev2] = await Promise.all([
+            evaluateAnswer(match.currentSnippet.code, match.answers[p1.id] || ''),
+            evaluateAnswer(match.currentSnippet.code, match.answers[p2.id] || ''),
+        ]);
 
-        evaluations.forEach(ev => {
-            results[ev.id] = ev.score;
-            evaluationsMap[ev.id] = ev.evaluation;
+        const diff = ev1.score - ev2.score;
+        if      (diff > 0) p2.health = Math.max(0, p2.health - Math.abs(diff));
+        else if (diff < 0) p1.health = Math.max(0, p1.health - Math.abs(diff));
+
+        io.to(roomCode).emit('roundResult', {
+            scores:      { [p1.id]: ev1.score,      [p2.id]: ev2.score      },
+            evaluations: { [p1.id]: ev1.evaluation, [p2.id]: ev2.evaluation },
+            healths:     { [p1.id]: p1.health,      [p2.id]: p2.health      },
+            damage:      Math.abs(diff),
+            winnerId:    diff > 0 ? p1.id : (diff < 0 ? p2.id : null),
         });
-
-        const p1 = match.players[0];
-        const p2 = match.players[1];
-        const diff = results[p1.id] - results[p2.id];
-        const damage = Math.abs(diff);
-
-        if (diff > 0) {
-            p2.health = Math.max(0, p2.health - damage);
-        } else if (diff < 0) {
-            p1.health = Math.max(0, p1.health - damage);
-        }
-
-        const roundResult = {
-            scores: results,
-            evaluations: evaluationsMap,
-            healths: {
-                [p1.id]: p1.health,
-                [p2.id]: p2.health
-            },
-            damage,
-            winnerId: diff > 0 ? p1.id : (diff < 0 ? p2.id : null)
-        };
-
-        io.to(roomCode).emit('roundResult', roundResult);
 
         if (p1.health <= 0 || p2.health <= 0 || match.currentRound >= match.maxRounds) {
             setTimeout(() => finishMultiplayerMatch(roomCode), 2500);
@@ -162,554 +139,279 @@ async function evaluateMultiplayerRound(roomCode) {
             match.currentRound++;
             setTimeout(() => startMultiplayerRound(roomCode), 2500);
         }
-        match.evaluating = false;
     } catch (err) {
-        console.error(`[Match] Errore valutazione round per ${roomCode}:`, err);
+        console.error(`[Match] Errore valutazione round ${roomCode}:`, err);
+    } finally {
         match.evaluating = false;
     }
 }
 
-/**
- * Conclude la partita, calcola EXP/trofei e aggiorna i record sul database.
- */
+// Conclude la partita e scrive i risultati finali nel DB.
+// Qui si decide chi ha vinto davvero in base agli HP residui.
 async function finishMultiplayerMatch(roomCode) {
     const match = activeMatches.get(roomCode);
-    if (!match) return;
+    if (!match || match.closing) return;
+    match.closing = true;
 
-    const p1 = match.players[0];
-    const p2 = match.players[1];
+    const [p1, p2] = match.players;
+    let winnerId = null, esitoP1 = 'pareggio', esitoP2 = 'pareggio';
+    if      (p1.health > p2.health) { winnerId = p1.id; esitoP1 = 'vittoria';  esitoP2 = 'sconfitta'; }
+    else if (p2.health > p1.health) { winnerId = p2.id; esitoP1 = 'sconfitta'; esitoP2 = 'vittoria';  }
 
-    console.log(`[Match] Conclusione partita ${roomCode}, partita_id: ${match.partita_id}`);
+    const rand = () => Math.floor(Math.random() * 11);
+    const expFor    = (esito, hp, oppHp) => esito === 'vittoria' ? 100 + Math.round(hp / 2) : esito === 'sconfitta' ? -10 - Math.round(oppHp / 2) : 20;
+    const trophyFor = (esito, hp, oppHp) => esito === 'vittoria' ? rand() + 30 + Math.round(hp / 2)  : esito === 'sconfitta' ? -(rand() + 20) - Math.round(oppHp / 2) : 0;
 
-    let winnerId = null;
-    let risultatoP1 = 'pareggio';
-    let risultatoP2 = 'pareggio';
-
-    if (p1.health > p2.health) {
-        winnerId = p1.id;
-        risultatoP1 = 'vittoria';
-        risultatoP2 = 'sconfitta';
-    } else if (p2.health > p1.health) {
-        winnerId = p2.id;
-        risultatoP1 = 'sconfitta';
-        risultatoP2 = 'vittoria';
-    }
-
-    let expP1 = match.unranked ? 0 : (risultatoP1 === 'vittoria' ? 100 + Math.round(p1.health / 2) : (risultatoP1 === 'sconfitta' ? -10 - Math.round(p2.health / 2) : 20));
-    let expP2 = match.unranked ? 0 : (risultatoP2 === 'vittoria' ? 100 + Math.round(p2.health / 2) : (risultatoP2 === 'sconfitta' ? -10 - Math.round(p1.health / 2) : 20));
-
-    let trophyP1 = risultatoP1 === 'vittoria'
-        ? Math.floor(Math.random() * 11) + 30 + Math.round(p1.health / 2)
-        : (risultatoP1 === 'sconfitta' ? -(Math.floor(Math.random() * 11) + 20) - Math.round(p2.health / 2) : 0);
-
-    let trophyP2 = risultatoP2 === 'vittoria'
-        ? Math.floor(Math.random() * 11) + 30 + Math.round(p2.health / 2)
-        : (risultatoP2 === 'sconfitta' ? -(Math.floor(Math.random() * 11) + 20) - Math.round(p1.health / 2) : 0);
+    const expP1    = match.unranked ? 0 : expFor(esitoP1, p1.health, p2.health);
+    const expP2    = match.unranked ? 0 : expFor(esitoP2, p2.health, p1.health);
+    const trophyP1 = match.unranked ? 0 : trophyFor(esitoP1, p1.health, p2.health);
+    const trophyP2 = match.unranked ? 0 : trophyFor(esitoP2, p2.health, p1.health);
 
     try {
         if (match.partita_id) {
-            // P1
-            const { error: errP1 } = await supabase
-                .from('partecipazione')
-                .update({ risultato: risultatoP1, exp_guadagnata: expP1, trofei_cambiati: trophyP1 })
-                .eq('id_partita', match.partita_id)
-                .eq('id_giocatore', p1.id);
-
-            if (errP1) {
-                console.warn("[Socket Match] Fallback update partecipazione P1 senza trofei_cambiati:", errP1.message);
-                await supabase
-                    .from('partecipazione')
-                    .update({ risultato: risultatoP1, exp_guadagnata: expP1 })
-                    .eq('id_partita', match.partita_id)
-                    .eq('id_giocatore', p1.id);
-            }
-
-            // P2
-            const { error: errP2 } = await supabase
-                .from('partecipazione')
-                .update({ risultato: risultatoP2, exp_guadagnata: expP2, trofei_cambiati: trophyP2 })
-                .eq('id_partita', match.partita_id)
-                .eq('id_giocatore', p2.id);
-
-            if (errP2) {
-                console.warn("[Socket Match] Fallback update partecipazione P2 senza trofei_cambiati:", errP2.message);
-                await supabase
-                    .from('partecipazione')
-                    .update({ risultato: risultatoP2, exp_guadagnata: expP2 })
-                    .eq('id_partita', match.partita_id)
-                    .eq('id_giocatore', p2.id);
-            }
-
-            await supabase
-                .from('partita')
-                .update({ stato: 'terminata', data_fine: new Date().toISOString() })
-                .eq('id_partita', match.partita_id);
-
-            if (!match.unranked) {
-                // Ranked Match: Aggiorna EXP, Livello e Trofei
-                await updatePlayerStats(p1.id, risultatoP1, expP1, trophyP1);
-                await updatePlayerStats(p2.id, risultatoP2, expP2, trophyP2);
-            } else {
-                // Friendly Match: Aggiorna EXP e Livello, ma lascia invariati i Trofei (0 variazione)
-                await updatePlayerStats(p1.id, risultatoP1, expP1, 0);
-                await updatePlayerStats(p2.id, risultatoP2, expP2, 0);
-            }
+            await Promise.all([
+                updatePartecipazione(match.partita_id, p1.id, esitoP1, expP1, trophyP1),
+                updatePartecipazione(match.partita_id, p2.id, esitoP2, expP2, trophyP2),
+            ]);
+            await supabase.from('partita').update({ stato: 'terminata', data_fine: new Date().toISOString() }).eq('id_partita', match.partita_id);
+            await Promise.all([
+                updatePlayerStats(p1.id, esitoP1, expP1, trophyP1),
+                updatePlayerStats(p2.id, esitoP2, expP2, trophyP2),
+            ]);
         }
     } catch (e) {
-        console.error(`[socket.js]: Errore salvataggio risultati su DB:`, e.message || e);
+        console.error(`[Match] Errore salvataggio DB ${roomCode}:`, e.message || e);
     }
 
     io.to(roomCode).emit('matchFinished', {
-        winner: winnerId,
-        players: match.players,
-        unranked: match.unranked,
+        winner: winnerId, players: match.players, unranked: match.unranked,
         rewards: {
-            [p1.id]: { exp: expP1, trophies: match.unranked ? 0 : trophyP1 },
-            [p2.id]: { exp: expP2, trophies: match.unranked ? 0 : trophyP2 }
-        }
+            [p1.id]: { exp: expP1, trophies: trophyP1 },
+            [p2.id]: { exp: expP2, trophies: trophyP2 },
+        },
     });
-
     activeMatches.delete(roomCode);
-    
-    const suspended = disconnectedMatches.get(roomCode);
-    if (suspended?.suspensionTimeout) clearTimeout(suspended.suspensionTimeout);
-    disconnectedMatches.delete(roomCode);
-    
-    console.log(`[socket.js] Partita ${roomCode} rimossa dalla memoria.`);
+    console.log(`[Match] Partita ${roomCode} conclusa.`);
 }
 
 module.exports = function(socketIoInstance) {
+    // Salviamo l'istanza del server Socket.IO per usarla in tutti gli handler.
     io = socketIoInstance;
 
-    // Middleware di autenticazione basato sul token JWT di Supabase
+    // Middleware Socket.IO: gira una sola volta, prima di accettare la connessione.
+    // Qui controlliamo il token e costruiamo i dati pubblici del player.
     io.use(async (socket, next) => {
         try {
             const token = socket.handshake.auth.token;
             if (!token) return next(new Error('Token mancante'));
 
-            const cleanToken = token.replace(/['"]/g, '');
-            const { data: authData, error } = await supabase.auth.getUser(cleanToken);
-
+            const { data: authData, error } = await supabase.auth.getUser(token.replace(/['\"]/g, ''));
             if (error || !authData.user) return next(new Error('Token non valido'));
 
             socket.userId = authData.user.id;
-
-            const { data: profile } = await supabase
-                .from('giocatore')
-                .select('nickname, avatar_url, livello, trophies')
-                .eq('id_giocatore', socket.userId)
-                .single();
-
-            socket.nickname = profile?.nickname || 'Sconosciuto';
-            socket.avatar_url = profile?.avatar_url || null;
-            socket.livello = profile?.livello || 1;
-            socket.trophies = profile?.trophies || 0;
+            const { data: p } = await supabase.from('giocatore').select('nickname, avatar_url, livello, trophies').eq('id_giocatore', socket.userId).single();
+            socket.nickname   = p?.nickname   || 'Sconosciuto';
+            socket.avatar_url = p?.avatar_url || null;
+            socket.livello    = p?.livello    || 1;
+            socket.trophies   = p?.trophies   || 0;
             next();
-        } catch (err) {
-            next(new Error('[socket.js]: Errore di autenticazione socket'));
+        } catch {
+            next(new Error('Errore di autenticazione socket'));
         }
     });
 
+    // Da qui in poi entriamo per ogni socket client che si connette davvero.
     io.on('connection', (socket) => {
-        console.log(`[socket.js] Connesso: ${socket.nickname} (${socket.userId})`);
+        console.log(`[socket.js] Connesso: ${socket.nickname}`);
         io.emit('statsUpdate', { onlinePlayers: io.engine.clientsCount });
 
-        // Gestione rientro automatico in partita attiva
-        for (const [roomCode, match] of activeMatches.entries()) {
-            if (match.players.some(p => p.id === socket.userId)) {
-                const suspended = disconnectedMatches.get(roomCode);
-                if (suspended) {
-                    suspended.disconnectedUserIds = suspended.disconnectedUserIds.filter(id => id !== socket.userId);
-                    if (suspended.disconnectedUserIds.length === 0) {
-                        clearTimeout(suspended.suspensionTimeout);
-                        disconnectedMatches.delete(roomCode);
-                    }
-                }
-
-                socket.join(roomCode);
-                io.to(roomCode).emit('opponentRejoined', { playerName: socket.nickname, roomCode });
-                
-                // Forza il reindirizzamento nel frontend inviando l'evento della partita attiva
-                socket.emit('activeMatchFound', { roomCode });
-                console.log(`[socket.js] Rilevata partita attiva per ${socket.nickname} in ${roomCode}. Redirect inviato.`);
-                break;
-            }
-        }
-
-        // Matchmaking casuale ranked
+        // Avvia il matchmaking casuale: se c'è già qualcuno in coda, crea subito il match.
         socket.on('startMatchmaking', async () => {
-            console.log(`[socket.js] ${socket.nickname} in coda.`);
-
             if (matchmakingQueue.find(s => s.userId === socket.userId)) return;
-
             if (matchmakingQueue.length > 0) {
                 const opponent = matchmakingQueue.shift();
                 const roomCode = `MATCH_${Math.random().toString(36).substring(2, 9)}`;
-
                 try {
-                    const idPartita = await createDbMatch(socket.userId, opponent.userId);
-
-                    socket.join(roomCode);
-                    opponent.join(roomCode);
-
-                    const matchData = {
-                        roomCode,
-                        partita_id: idPartita,
-                        players: [
-                            { id: socket.userId, nickname: socket.nickname, avatar_url: socket.avatar_url, livello: socket.livello, trophies: socket.trophies },
-                            { id: opponent.userId, nickname: opponent.nickname, avatar_url: opponent.avatar_url, livello: opponent.livello, trophies: opponent.trophies }
-                        ],
-                        unranked: false,
-                        answers: {},
-                        started: false
-                    };
-
+                    const partitaId = await createDbMatch(socket.userId, opponent.userId);
+                    const matchData = { roomCode, partita_id: partitaId, players: [playerInfo(socket), playerInfo(opponent)], unranked: false, answers: {}, started: false };
+                    socket.join(roomCode); opponent.join(roomCode);
                     activeMatches.set(roomCode, matchData);
-                    io.to(roomCode).emit('matchFound', { ...matchData, partita_id: idPartita });
-                    console.log(`[socket.js] Partita ${idPartita} avviata: ${socket.nickname} vs ${opponent.nickname}`);
+                    io.to(roomCode).emit('matchFound', matchData);
+                    console.log(`[Match] ${socket.nickname} vs ${opponent.nickname} → ${roomCode}`);
                 } catch (err) {
-                    console.error("[socket.js] Errore creazione partita:", err.message);
+                    console.error('[Match] Errore matchmaking:', err.message);
                     socket.emit('error', { message: 'Errore nella creazione della partita.' });
                     opponent.emit('error', { message: 'Errore nella creazione della partita.' });
                 }
             } else {
                 matchmakingQueue.push(socket);
+                console.log(`[Match] ${socket.nickname} in coda.`);
             }
         });
 
+        // Permette di uscire dalla coda prima che venga trovato un avversario.
         socket.on('cancelMatchmaking', () => {
             const idx = matchmakingQueue.findIndex(s => s.id === socket.id);
-            if (idx !== -1) {
-                matchmakingQueue.splice(idx, 1);
-                console.log(`[socket.js] ${socket.nickname} uscito dalla coda.`);
-            }
+            if (idx !== -1) { matchmakingQueue.splice(idx, 1); console.log(`[Match] ${socket.nickname} uscito dalla coda.`); }
         });
 
-        // Creazione stanza privata tramite codice
         socket.on('createPrivateRoom', () => {
             const code = Math.floor(10000 + Math.random() * 90000).toString();
-            privateRooms.set(code, {
-                host: { id: socket.userId, nickname: socket.nickname },
-                giocatori: [{
-                    id: socket.userId,
-                    nickname: socket.nickname,
-                    socketId: socket.id,
-                    avatar_url: socket.avatar_url,
-                    livello: socket.livello,
-                    trophies: socket.trophies
-                }],
-                unranked: true // Le stanze private con codice condiviso sono amichevoli
-            });
-
+        // Crea una stanza privata condivisibile tramite codice.
+            privateRooms.set(code, { host: { id: socket.userId, nickname: socket.nickname }, giocatori: [{ ...playerInfo(socket), socketId: socket.id }], unranked: true });
             socket.join(`ROOM_${code}`);
             socket.emit('roomCreated', { code });
-            console.log(`[socket.js] Stanza privata ${code} creata da ${socket.nickname}`);
+            console.log(`[Match] Stanza privata ${code} creata da ${socket.nickname}`);
         });
 
-        // Ingresso in stanza privata tramite codice
+        // Entra in una stanza privata già esistente e, se siamo in due, crea il match.
         socket.on('joinPrivateRoom', async (code) => {
             const room = privateRooms.get(code);
-            if (!room) return socket.emit('error', { message: 'Stanza non valida' });
-            if (room.giocatori.length >= 2) return socket.emit('error', { message: 'Stanza piena' });
+            if (!room)                    return socket.emit('error', { message: 'Stanza non valida' });
+            if (room.giocatori.length >= 2) return socket.emit('error', { message: 'Stanza piena'    });
 
-            room.giocatori.push({
-                id: socket.userId,
-                nickname: socket.nickname,
-                socketId: socket.id,
-                avatar_url: socket.avatar_url,
-                livello: socket.livello,
-                trophies: socket.trophies
-            });
+            room.giocatori.push({ ...playerInfo(socket), socketId: socket.id });
             socket.join(`ROOM_${code}`);
 
-            // Crea la partita nel DB per consentire persistenza cronologia ed EXP
-            let idPartita = null;
-            try {
-                idPartita = await createDbMatch(room.host.id, socket.userId, 'amichevole');
-            } catch (err) {
-                console.error("[socket.js] Errore creazione sessione DB per stanza privata:", err.message);
-            }
+            let partitaId = null;
+            try { partitaId = await createDbMatch(room.host.id, socket.userId, 'amichevole'); }
+            catch (err) { console.error('[Match] Errore DB stanza privata:', err.message); }
 
-            const matchData = {
-                roomCode: `ROOM_${code}`,
-                partita_id: idPartita,
-                players: room.giocatori.map(g => ({
-                    id: g.id,
-                    nickname: g.nickname,
-                    avatar_url: g.avatar_url,
-                    livello: g.livello,
-                    trophies: g.trophies
-                })),
-                unranked: room.unranked,
-                answers: {},
-                started: false
-            };
-
-            activeMatches.set(matchData.roomCode, matchData);
-            io.to(`ROOM_${code}`).emit('matchFound', { ...matchData, partita_id: idPartita });
-
+            const roomCode  = `ROOM_${code}`;
+            const matchData = { roomCode, partita_id: partitaId, players: room.giocatori.map(({ socketId: _, ...p }) => p), unranked: room.unranked, answers: {}, started: false };
+            activeMatches.set(roomCode, matchData);
+            io.to(roomCode).emit('matchFound', matchData);
             privateRooms.delete(code);
-            console.log(`[socket.js] Giocatore ${socket.nickname} entrato in stanza ${code}. Partita creata con ID ${idPartita}.`);
+            console.log(`[Match] ${socket.nickname} in stanza ${code} — ID partita ${partitaId}`);
         });
 
-        // Sincronizzazione ingresso nella schermata match
+        // Evento usato quando il frontend è pronto a mostrare la match page.
+        // Aggiorna il riferimento del socket dentro il match e, se serve, avvia la partita.
         socket.on('joinRoom', (code) => {
             const match = activeMatches.get(code);
-            if (match) {
-                socket.join(code);
+            if (!match) return socket.emit('error', { message: 'Partita non trovata o conclusa.' });
 
-                const player = match.players.find(p => p.id === socket.userId);
-                if (player) {
-                    player.socketId = socket.id;
-                    player.ready = true;
-                    if (!match.started) {
-                        player.health = 100;
-                    }
-                }
+            socket.join(code);
+            const player = match.players.find(p => p.id === socket.userId);
+            if (player) { player.socketId = socket.id; player.ready = true; if (!match.started) player.health = 100; }
 
-                // Sanitizziamo l'oggetto match per escludere riferimenti non serializzabili (come il timer del round)
-                const sanitizedMatch = {
-                    roomCode: match.roomCode,
-                    partita_id: match.partita_id,
-                    players: match.players,
-                    unranked: match.unranked,
-                    started: match.started,
-                    currentRound: match.currentRound,
-                    maxRounds: match.maxRounds
-                };
-                socket.emit('matchInfo', sanitizedMatch);
+            socket.emit('matchInfo', { roomCode: match.roomCode, partita_id: match.partita_id, players: match.players, unranked: match.unranked, started: match.started, currentRound: match.currentRound, maxRounds: match.maxRounds });
 
-                // Se la partita è già iniziata, inviamo lo snippet corrente al giocatore per farlo rientrare subito!
-                if (match.started && match.currentSnippet) {
-                    socket.emit('startRound', {
-                        round: match.currentRound,
-                        totalRounds: match.maxRounds,
-                        snippet: match.currentSnippet
-                    });
-                }
+            if (match.started && match.currentSnippet) {
+                socket.emit('startRound', { round: match.currentRound, totalRounds: match.maxRounds, snippet: match.currentSnippet });
+            }
 
-                const allReady = match.players.every(p => p.ready);
-                if (allReady && !match.started) {
-                    match.started = true;
-                    match.currentRound = 1;
-                    match.maxRounds = 5;
-                    startMultiplayerRound(code);
-                }
-            } else {
-                socket.emit('error', { message: 'Partita non trovata o conclusa.' });
+            if (match.players.every(p => p.ready) && !match.started) {
+                match.started = true; match.currentRound = 1; match.maxRounds = 5;
+                console.log(`[Match] Avvio ${code}`);
+                startMultiplayerRound(code);
             }
         });
 
-        // Invio della risposta per il round
-        socket.on('submitMultiplayerAnswer', async (data) => {
-            const { roomCode, answer } = data;
+        // Salva la risposta corrente del giocatore.
+        // Quando entrambi hanno risposto, parte la valutazione del round.
+        socket.on('submitMultiplayerAnswer', ({ roomCode, answer }) => {
             const match = activeMatches.get(roomCode);
             if (!match || !match.started || match.evaluating) return;
-
             match.answers[socket.userId] = answer;
-
-            const suspended = disconnectedMatches.get(roomCode);
-            if (suspended?.disconnectedUserIds && suspended.disconnectedUserIds.length > 0) {
-                for (const disconnectedId of suspended.disconnectedUserIds) {
-                    if (!match.answers[disconnectedId]) match.answers[disconnectedId] = "";
-                }
-            }
-
-            if (Object.keys(match.answers).length === 2) {
-                evaluateMultiplayerRound(roomCode);
-            }
+            if (Object.keys(match.answers).length === match.players.length) evaluateMultiplayerRound(roomCode);
         });
 
-        // Invito a una sfida diretta (unranked)
+        // Invio di una sfida diretta a un amico online.
         socket.on('challengeFriend', (payload) => {
             const friendId = typeof payload === 'string' ? payload : payload?.friendId;
-
-            if (!friendId || friendId === socket.userId) {
-                return socket.emit('challengeError', { message: 'ID amico non valido.' });
-            }
+            if (!friendId || friendId === socket.userId) return socket.emit('challengeError', { message: 'ID amico non valido.' });
 
             const friendSocket = getSocketByUserId(friendId);
-            if (!friendSocket) {
-                return socket.emit('challengeError', { message: 'Amico non online.' });
-            }
+            if (!friendSocket) return socket.emit('challengeError', { message: 'Amico non online.' });
 
-            const inviteId = `INV_${Math.random().toString(36).substring(2, 10)}`;
-            
+            const inviteId  = `INV_${Math.random().toString(36).substring(2, 10)}`;
             const timeoutId = setTimeout(() => {
-                const invite = pendingFriendInvites.get(inviteId);
-                if (!invite) return;
-
+                if (!pendingFriendInvites.has(inviteId)) return;
                 pendingFriendInvites.delete(inviteId);
-                const challengerSocket = getSocketByUserId(invite.challengerId);
-                const receiverSocket = getSocketByUserId(invite.friendId);
-
-                if (challengerSocket) challengerSocket.emit('challengeExpired', { inviteId });
-                if (receiverSocket) receiverSocket.emit('challengeExpired', { inviteId });
+                getSocketByUserId(friendId)?.emit('challengeExpired', { inviteId });
+                socket.emit('challengeExpired', { inviteId });
             }, 30000);
 
             pendingFriendInvites.set(inviteId, { challengerId: socket.userId, friendId, timeoutId });
-
-            friendSocket.emit('challengeInvite', {
-                inviteId,
-                challenger: {
-                    id: socket.userId,
-                    nickname: socket.nickname,
-                    avatar_url: socket.avatar_url,
-                    livello: socket.livello,
-                    trophies: socket.trophies
-                }
-            });
-
+            friendSocket.emit('challengeInvite', { inviteId, challenger: playerInfo(socket) });
             socket.emit('challengeSent', { inviteId, friendId, friendNickname: friendSocket.nickname });
         });
 
-        // Risposta all'invito di sfida amichevole
+        // Risposta alla sfida: se accetta, crea una stanza e avvia il match.
         socket.on('respondChallenge', async ({ inviteId, accepted }) => {
             const invite = pendingFriendInvites.get(inviteId);
             if (!invite) return socket.emit('challengeError', { message: 'Invito scaduto.' });
-
             if (socket.userId !== invite.friendId) return socket.emit('challengeError', { message: 'Autorizzazione negata.' });
 
             clearTimeout(invite.timeoutId);
             pendingFriendInvites.delete(inviteId);
 
-            const challengerSocket = getSocketByUserId(invite.challengerId);
-            if (!challengerSocket) return socket.emit('challengeError', { message: 'Sfidante disconnesso.' });
+            const challenger = getSocketByUserId(invite.challengerId);
+            if (!challenger) return socket.emit('challengeError', { message: 'Sfidante disconnesso.' });
 
             if (!accepted) {
-                challengerSocket.emit('challengeDeclined', { inviteId, by: { id: socket.userId, nickname: socket.nickname } });
+                challenger.emit('challengeDeclined', { inviteId, by: playerInfo(socket) });
                 socket.emit('challengeRejected', { inviteId });
                 return;
             }
 
             const roomCode = `FRIEND_${Math.random().toString(36).substring(2, 9)}`;
-
             try {
-                const idPartita = await createDbMatch(challengerSocket.userId, socket.userId, 'amichevole');
-
-                challengerSocket.join(roomCode);
-                socket.join(roomCode);
-
-                const matchData = {
-                    roomCode,
-                    partita_id: idPartita,
-                    players: [
-                        { id: challengerSocket.userId, nickname: challengerSocket.nickname, avatar_url: challengerSocket.avatar_url, livello: challengerSocket.livello, trophies: challengerSocket.trophies },
-                        { id: socket.userId, nickname: socket.nickname, avatar_url: socket.avatar_url, livello: socket.livello, trophies: socket.trophies }
-                    ],
-                    unranked: true,
-                    answers: {},
-                    started: false
-                };
-
+                const partitaId = await createDbMatch(challenger.userId, socket.userId, 'amichevole');
+                const matchData = { roomCode, partita_id: partitaId, players: [playerInfo(challenger), playerInfo(socket)], unranked: true, answers: {}, started: false };
+                challenger.join(roomCode); socket.join(roomCode);
                 activeMatches.set(roomCode, matchData);
-                io.to(roomCode).emit('matchFound', { ...matchData, partita_id: idPartita });
-                console.log(`[Challenge] Sfida ${roomCode} avviata con successo.`);
+                io.to(roomCode).emit('matchFound', matchData);
+                console.log(`[Match] Sfida ${roomCode} avviata.`);
             } catch (err) {
-                console.error("[Challenge] Errore creazione sfida:", err.message);
-                socket.emit('challengeError', { message: 'Errore nella creazione della partita.' });
-                challengerSocket.emit('challengeError', { message: 'Errore nella creazione della partita.' });
+                console.error('[Match] Errore creazione sfida:', err.message);
+                socket.emit('challengeError',   { message: 'Errore nella creazione della partita.' });
+                challenger.emit('challengeError', { message: 'Errore nella creazione della partita.' });
             }
         });
 
-        // Gestione manuale della riconnessione
-        socket.on('rejoinMatch', async ({ roomCode }) => {
-            const match = activeMatches.get(roomCode);
-            const suspended = disconnectedMatches.get(roomCode);
-
-            if (!match || !suspended) {
-                return socket.emit('rejoinFailed', { message: 'Partita scaduta o non trovata.' });
-            }
-
-            if (!suspended.disconnectedUserIds?.includes(socket.userId)) {
-                return socket.emit('rejoinFailed', { message: 'Accesso non consentito.' });
-            }
-
-            suspended.disconnectedUserIds = suspended.disconnectedUserIds.filter(id => id !== socket.userId);
-            
-            if (suspended.disconnectedUserIds.length === 0) {
-                clearTimeout(suspended.suspensionTimeout);
-                disconnectedMatches.delete(roomCode);
-            }
-
-            socket.join(roomCode);
-
-            io.to(roomCode).emit('opponentRejoined', { playerName: socket.nickname, roomCode });
-
-            socket.emit('rejoinSuccess', {
-                match: {
-                    players: match.players,
-                    currentRound: match.currentRound,
-                    currentSnippet: match.currentSnippet
-                }
-            });
-        });
-
-        // Disconnessione temporanea o definitiva
+        // Pulizia finale quando il socket si chiude.
+        // Qui distinguiamo tra disconnect reale, refresh, cambio pagina e forfeit.
         socket.on('disconnect', () => {
+            console.log(`[socket.js] Disconnesso: ${socket.nickname}`);
+
+            // Coda matchmaking
             const idx = matchmakingQueue.findIndex(s => s.id === socket.id);
             if (idx !== -1) matchmakingQueue.splice(idx, 1);
 
+            // Inviti in sospeso
             for (const [inviteId, invite] of pendingFriendInvites.entries()) {
-                if (invite.challengerId === socket.userId || invite.friendId === socket.userId) {
-                    clearTimeout(invite.timeoutId);
-                    pendingFriendInvites.delete(inviteId);
-
-                    const otherUserId = invite.challengerId === socket.userId ? invite.friendId : invite.challengerId;
-                    const otherSocket = getSocketByUserId(otherUserId);
-                    if (otherSocket) otherSocket.emit('challengeExpired', { inviteId });
-                }
+                if (invite.challengerId !== socket.userId && invite.friendId !== socket.userId) continue;
+                clearTimeout(invite.timeoutId);
+                pendingFriendInvites.delete(inviteId);
+                const otherId = invite.challengerId === socket.userId ? invite.friendId : invite.challengerId;
+                getSocketByUserId(otherId)?.emit('challengeExpired', { inviteId });
             }
 
+            // Stanze private
             for (const [code, room] of privateRooms.entries()) {
-                if (room.host.id === socket.userId) {
-                    privateRooms.delete(code);
-                }
+                if (room.host.id === socket.userId) privateRooms.delete(code);
             }
 
             io.emit('statsUpdate', { onlinePlayers: io.engine.clientsCount });
-            console.log(`[socket.js] Disconnesso: ${socket.nickname}`);
 
+            // Se esiste un altro socket attivo dello stesso utente, questo disconnect
+            // è quasi certamente un refresh o un cambio pagina: lo ignoriamo.
+            const stillActive = getSocketsByUserId(socket.userId).filter(s => s.id !== socket.id);
+            if (stillActive.length > 0) return;
+
+            // Se il player era in una partita già iniziata, il disconnect vale come forfeit.
+            // Se la partita non è ancora partita, invece, stiamo solo passando da una pagina all'altra.
             for (const [roomCode, match] of activeMatches.entries()) {
-                if (match.players.some(p => p.id === socket.userId)) {
-                    if (!match.started) continue;
-
-                    console.log(`[Match] Giocatore ${socket.nickname} offline. Avvio timer sospensione (120s).`);
-
-                    const existingSuspension = disconnectedMatches.get(roomCode);
-                    if (existingSuspension?.suspensionTimeout) {
-                        existingSuspension.disconnectedUserIds.push(socket.userId);
-                    } else {
-                        const suspensionTimeout = setTimeout(() => {
-                            console.log(`[Match] Sospensione scaduta per ${roomCode}. Vittoria per abbandono.`);
-                            const matchToAbandon = activeMatches.get(roomCode);
-                            if (matchToAbandon) {
-                                matchToAbandon.players.forEach(p => {
-                                    if (p.id === socket.userId) p.health = 0;
-                                });
-                                finishMultiplayerMatch(roomCode);
-                            }
-                            disconnectedMatches.delete(roomCode);
-                        }, 120000);
-
-                        disconnectedMatches.set(roomCode, {
-                            partita_id: match.partita_id,
-                            disconnectTime: Date.now(),
-                            suspensionTimeout,
-                            disconnectedUserIds: [socket.userId]
-                        });
-                    }
-
-                    const otherPlayerId = match.players.find(p => p.id !== socket.userId)?.id;
-                    const otherSocket = getSocketByUserId(otherPlayerId);
-                    if (otherSocket) {
-                        otherSocket.emit('opponentDisconnected', {
-                            roomCode,
-                            playerName: socket.nickname,
-                            resumeTime: 120000
-                        });
-                    }
-                }
+                const player = match.players.find(p => p.id === socket.userId);
+                if (!player) continue;
+                if (player.socketId && player.socketId !== socket.id) continue; // socket stale
+                if (!match.started) continue; // navigazione game_page → match_page
+                console.log(`[Match] Forfeit di ${socket.nickname} in ${roomCode}.`);
+                player.health = 0;
+                finishMultiplayerMatch(roomCode);
+                break;
             }
         });
     });
