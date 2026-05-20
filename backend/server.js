@@ -66,7 +66,16 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
         persistSession: false
     }
 });
-module.exports = { supabase }; // Esportato per essere usato da altri moduli (es. auth.js)
+
+// Client dedicato per operazioni admin (Storage, ecc.) che non subisce mutazioni da signInWithPassword
+const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+    }
+});
+module.exports = { supabase, supabaseAdmin }; // Esportato per essere usato da altri moduli (es. auth.js)
 
 
 // ==========================================
@@ -1373,7 +1382,7 @@ function handleImageUpload(bucket) {
                 const oldUrl = bucket === 'user_avatars' ? userProfile?.avatar_url : userProfile?.banner_url;
 
                 // 2. Carichiamo la nuova immagine su Supabase Storage
-                const { error } = await supabase.storage
+                const { error } = await supabaseAdmin.storage
                     .from(bucket)
                     .upload(filePath, req.file.buffer, {
                         contentType: req.file.mimetype,
@@ -1387,7 +1396,7 @@ function handleImageUpload(bucket) {
                     try {
                         const oldFileName = oldUrl.substring(oldUrl.lastIndexOf('/') + 1);
                         if (oldFileName && !oldFileName.includes('user_profile.webp')) {
-                            await supabase.storage.from(bucket).remove([oldFileName]);
+                            await supabaseAdmin.storage.from(bucket).remove([oldFileName]);
                         }
                     } catch (delErr) {
                         console.warn(`[Upload ${bucket}] Errore durante l'eliminazione del vecchio file:`, delErr.message);
@@ -1395,7 +1404,7 @@ function handleImageUpload(bucket) {
                 }
 
                 // 4. Recuperiamo la URL pubblica del nuovo file caricato
-                const { data } = supabase.storage
+                const { data } = supabaseAdmin.storage
                     .from(bucket)
                     .getPublicUrl(filePath);
 
