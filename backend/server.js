@@ -61,7 +61,11 @@ app.use(cors({
 // Usa la Service Role Key (accesso admin, bypass RLS)
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+        persistSession: false
+    }
+});
 module.exports = { supabase }; // Esportato per essere usato da altri moduli (es. auth.js)
 
 
