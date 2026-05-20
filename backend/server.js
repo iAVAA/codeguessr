@@ -1304,10 +1304,12 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        allowed.includes(file.mimetype)
-            ? cb(null, true)
-            : cb(new Error('Formato immagine non supportato. Usa JPEG, PNG, WEBP o GIF.'));
+        // Ammettiamo qualsiasi tipo di immagine in allineamento con la policy del bucket Supabase Storage (image/*)
+        if (file.mimetype && file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Il file caricato non è un\'immagine valida.'));
+        }
     }
 });
 
@@ -1315,7 +1317,7 @@ const upload = multer({
  * Factory che restituisce un array di middleware per gestire l'upload di un'immagine
  * su un bucket Supabase Storage specifico.
  *
- * Il file viene sempre salvato come `{userId}.{ext}` (sovrascrive il precedente, upsert=true).
+ * Il file viene salvato come `{userId}_{timestamp}.{ext}` per evitare caching aggressivo.
  * Il bucket deve essere configurato come pubblico su Supabase.
  *
  * @param {string} bucket - Nome del bucket Supabase ('user_avatars' | 'user_banners')
@@ -1323,27 +1325,72 @@ const upload = multer({
 function handleImageUpload(bucket) {
     return [
         verificaToken,
-        upload.single('immagine'),
+        (req, res, next) => {
+            upload.single('immagine')(req, res, (err) => {
+                if (err) {
+                    console.error(`[Upload ${bucket} Multer] Errore:`, err.message);
+                    let errMsg = err.message;
+                    if (err.code === 'LIMIT_FILE_SIZE') {
+                        errMsg = 'La dimensione del file supera il limite consentito di 5MB.';
+                    }
+                    return res.status(400).json({ errore: errMsg });
+                }
+                next();
+            });
+        },
         async (req, res) => {
             if (!req.file) {
                 return res.status(400).json({ errore: 'Nessun file ricevuto.' });
             }
 
             const mioId = req.utenteId;
-            const ext = req.file.mimetype.split('/')[1].replace('jpeg', 'jpg');
-            const filePath = `${mioId}.${ext}`; // es. "abc-123.jpg" — sovrascrive sempre lo stesso file
+            
+            // Estrazione robusta dell'estensione dal nome del file originale o dal mimetype
+            let ext = '';
+            if (req.file.originalname) {
+                ext = path.extname(req.file.originalname).toLowerCase().replace('.', '');
+            }
+            if (!ext && req.file.mimetype) {
+                ext = req.file.mimetype.split('/')[1] || '';
+            }
+            // Sanificazione e normalizzazione dell'estensione (es. jpeg -> jpg, svg+xml -> svg)
+            ext = ext.replace('jpeg', 'jpg').replace('svg+xml', 'svg').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'jpg';
+            
+            const filePath = `${mioId}_${Date.now()}.${ext}`; // Nome file univoco con timestamp per evitare caching
 
             try {
+                // 1. Recuperiamo il profilo corrente per trovare la vecchia immagine da eliminare
+                const { data: userProfile } = await supabase
+                    .from('giocatore')
+                    .select('avatar_url, banner_url')
+                    .eq('id_giocatore', mioId)
+                    .single();
+
+                const oldUrl = bucket === 'user_avatars' ? userProfile?.avatar_url : userProfile?.banner_url;
+
+                // 2. Carichiamo la nuova immagine su Supabase Storage
                 const { error } = await supabase.storage
                     .from(bucket)
                     .upload(filePath, req.file.buffer, {
                         contentType: req.file.mimetype,
-                        upsert: true, // sovrascrive se esiste già
+                        upsert: true,
                     });
 
                 if (error) throw error;
 
-                // Recupera la URL pubblica (il bucket deve essere pubblico)
+                // 3. Eliminiamo il vecchio file per liberare spazio (se esisteva e non era quello di default)
+                if (oldUrl) {
+                    try {
+                        const oldFileName = oldUrl.substring(oldUrl.lastIndexOf('/') + 1);
+                        if (oldFileName && !oldFileName.includes('user_profile.webp')) {
+                            await supabase.storage.from(bucket).remove([oldFileName]);
+                        }
+                    } catch (delErr) {
+                        console.warn(`[Upload ${bucket}] Errore durante l'eliminazione del vecchio file:`, delErr.message);
+                    }
+                }
+
+                // 4. Recuperiamo la URL pubblica del nuovo file caricato
                 const { data } = supabase.storage
                     .from(bucket)
                     .getPublicUrl(filePath);
