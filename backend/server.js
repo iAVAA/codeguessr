@@ -28,24 +28,31 @@ const io = socketIo(server, {
     }
 });
 
-// CORS per le chiamate REST dal frontend (solo localhost:3000 in sviluppo)
-app.use(cors({
-    origin: 'http://localhost:3000',
-    allowedHeaders: ['Authorization', 'Content-Type']
-}));
-
 // ==========================================
 // CONFIGURAZIONE AMBIENTE
 // ==========================================
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // Ascolta su tutte le interfacce di rete
+const ROOT = path.join(__dirname, '..', 'frontend'); // Cartella root dei file statici
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 // Mappa in-memory userId -> timestamp dell'ultimo heartbeat ricevuto
 const activeUsers = new Map();
 const HEARTBEAT_TIMEOUT = 10000; // ms senza heartbeat prima di segnare l'utente come offline
 
-const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0'; // Ascolta su tutte le interfacce di rete
-const ROOT = path.join(__dirname, '..', 'frontend'); // Cartella root dei file statici
-const BASE_URL = `http://localhost:${PORT}`;
+// CORS per le chiamate REST dal frontend (localhost e l'eventuale URL di deployment BASE_URL)
+const allowedOrigins = ['http://localhost:3000', `http://localhost:${PORT}`];
+if (process.env.BASE_URL) {
+    const trimmedBaseUrl = process.env.BASE_URL.replace(/\/$/, '');
+    if (!allowedOrigins.includes(trimmedBaseUrl)) {
+        allowedOrigins.push(trimmedBaseUrl);
+    }
+}
+
+app.use(cors({
+    origin: allowedOrigins,
+    allowedHeaders: ['Authorization', 'Content-Type']
+}));
 
 // ==========================================
 // INIZIALIZZAZIONE SUPABASE
