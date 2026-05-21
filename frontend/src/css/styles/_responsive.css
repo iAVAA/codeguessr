@@ -50,6 +50,17 @@
 	}
 
 	.footer-links-inline { justify-content: center; }
+
+	/*gestisce responsive match page, timer in alto*/
+	.w-100-responsive {
+		width: 100%;
+	}
+
+	.match-player-card {
+        min-width: 0 !important; /* Uccide qualsiasi min-width ereditato */
+        padding: 10px !important; /* Molto spesso il colpevole è un padding gigante! */
+        overflow: hidden; /* Impedisce a roba invisibile di allargare la carta */
+    }
 }
 
 /* ===========================
@@ -85,4 +96,13 @@
 	.footer-sep {
 		display: none;
 	}
+
+	.match-avatar {
+        width: 10px;
+        height: 10px;
+    }
+    /* Se serve, rimpicciolisci anche i testi */
+    .match-player-name {
+        font-size: 0.2rem;
+    }
 }

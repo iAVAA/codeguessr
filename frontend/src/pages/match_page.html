@@ -116,14 +116,14 @@
                 <!-- ===== SCOREBOARD ===== -->
                 <div class="row align-items-stretch mb-2 mt-2 px-2 gx-2 gx-lg-5">
                     <!-- Player 1 (Giocatore) -->
-                    <div class="col-12 col-md-4 d-flex mb-3 mb-md-0">
+                    <div class="col-6 col-md-4 d-flex mb-3 mb-md-0 order-2 order-md-1">
                         <div class="match-player-card w-100 h-100 d-flex flex-column justify-content-center">
-                            <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-1 gap-md-3">
                                 <img src="/src/assets/img/user_profile.webp" alt="Player" class="match-avatar"
                                     id="match-p1-avatar">
 
                                 <!-- Username e Statistiche del Player 1-->
-                                <div class="match-player-info">
+                                <div class="match-player-info flex-grow-1" style="min-width: 0;">
                                     <div class="match-player-name text-truncate" id="match-p1-name">
                                     </div>
                                     <div class="match-player-stats">
@@ -150,25 +150,25 @@
                     </div>
 
                     <!-- Dati della partita (Round e Timer)-->
-                    <div class="col-12 col-md-4 d-flex align-items-stretch justify-content-center mb-3 mb-md-0">
+                    <div class="col-12 col-md-4 d-flex align-items-stretch justify-content-center mb-3 mb-md-0 order-1 order-md-2 wi">
                         <div
-                            class="match-timer-container h-100 d-flex flex-column align-items-center justify-content-center">
+                            class="match-timer-container h-100 w-100-responsive d-flex flex-column align-items-center justify-content-center">
                             <div class="match-round-text mb-1" id="match-round">Round 1/5</div>
                             <div class="match-timer" id="match-timer">00:60</div>
                         </div>
                     </div>
 
                     <!-- Player 2 (Bot o avversario online) -->
-                    <div class="col-12 col-md-4 d-flex mb-3 mb-md-0">
+                    <div class="col-6 col-md-4 d-flex mb-3 mb-md-0 order-3 order-md-3">
                         <div
                             class="match-player-card match-opponent-card text-end w-100 h-100 d-flex flex-column justify-content-center">
-                            <div class="d-flex align-items-center gap-3 flex-row-reverse">
+                            <div class="d-flex align-items-center gap-1 gap-md-3 flex-row-reverse">
                                 <img src="/src/assets/img/user_profile.webp" alt="Opponent" class="match-avatar"
                                     id="match-p2-avatar">
-                                <div class="match-player-info">
+                                <div class="match-player-info flex-grow-1" style="min-width: 0;">
 
                                     <!-- Username e Statistiche del Player 2-->
-                                    <div class="match-player-name text-truncate" id="match-p2-name"></div>
+                                    <div class="match-player-name text-truncate justify-content-end" id="match-p2-name"></div>
                                     <div class="match-player-stats justify-content-end">
                                         <span class="profile-cups">
                                             <i class="bi bi-trophy-fill"></i> <span id="match-p2-cups"></span>
