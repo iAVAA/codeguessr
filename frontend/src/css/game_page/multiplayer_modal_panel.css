@@ -7,17 +7,13 @@
 /* ===========================
    1. CONTAINER MODALE PRINCIPALE
    =========================== */
-.no-scroll {
-    overflow: hidden;
-}
+
 /* Overlay a tutto schermo */
 .cg-multi-overlay {
     position: fixed;
     inset: 0;
     z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
     padding: 1.5rem;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(12px);
@@ -46,8 +42,14 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    max-height: 90dvh;
 }
-
+.cg-multi-body {
+    overflow-y: auto; /* Abilita lo scroll verticale se serve */
+    flex-grow: 1; /* Fa espandere il body per occupare lo spazio disponibile */
+    
+    /* ... i tuoi altri stili ... */
+}
 /* Animazione di entrata del modale */
 .cg-multi-overlay.open .cg-multi-modal {
     transform: translateY(0) scale(1);
@@ -118,8 +120,6 @@
 
 .cg-multi-body {
     padding: 2rem;
-    display: flex;
-    flex-direction: column;
     gap: 1.5rem;
 }
 

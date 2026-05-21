@@ -215,6 +215,8 @@ function initUI() {
 function openModal() {
     overlay?.classList.add('open');
     console.log("Modal multiplayer aperto, inizializzando connessione...");
+    
+    document.body.style.position = 'fixed';
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
     
