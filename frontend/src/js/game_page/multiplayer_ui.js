@@ -215,7 +215,7 @@ function initUI() {
 function openModal() {
     overlay?.classList.add('open');
     console.log("Modal multiplayer aperto, inizializzando connessione...");
-    
+
     document.body.style.position = 'fixed';
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
@@ -232,6 +232,8 @@ function closeModal() {
     overlay?.classList.remove('open');
     document.body.style.overflow = 'auto';
     document.documentElement.style.overflow = 'auto';
+    document.body.style.position = 'static';
+
 }
 
 
