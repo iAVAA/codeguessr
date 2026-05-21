@@ -6,6 +6,7 @@
 
 /* Istanza di Monaco Editor */
 let monacoEditorInstance = null;
+let monacoViewportObserver = null;
 
 /**
  * Recupera uno snippet casuale dal backend (che a sua volta lo prende da GitHub).
@@ -58,6 +59,37 @@ export function setEditorContent(snippet) {
     updateTitleBar(snippet);
 }
 
+function layoutMonacoToContainer() {
+    const container = document.getElementById('monaco-container');
+    if (!container) return;
+
+    const width = container.clientWidth || container.getBoundingClientRect().width;
+    const height = container.clientHeight || container.getBoundingClientRect().height;
+
+    if (monacoEditorInstance && width > 0 && height > 0) {
+        monacoEditorInstance.layout({ width, height });
+    }
+}
+
+function bindMonacoViewportListener() {
+    if (monacoViewportObserver) return;
+
+    const container = document.getElementById('monaco-container');
+    if (!container) return;
+
+    const handleViewportChange = () => {
+        layoutMonacoToContainer();
+    };
+
+    if (window.ResizeObserver) {
+        monacoViewportObserver = new ResizeObserver(handleViewportChange);
+        monacoViewportObserver.observe(container);
+    }
+
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('orientationchange', handleViewportChange);
+}
+
 /**
  * Inizializza Monaco Editor per la prima volta nel contenitore #monaco-container.
  * Riutilizza window.__monacoReady (precaricato da loader.js) se disponibile,
@@ -102,6 +134,8 @@ export async function initMonacoEditor(snippet) {
             }
         }
     );
+    layoutMonacoToContainer();
+    bindMonacoViewportListener();
     updateTitleBar(snippet);
 }
 

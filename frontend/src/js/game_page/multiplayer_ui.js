@@ -169,11 +169,24 @@ function initUI() {
     optPrivate?.addEventListener('click', () => {
         const isHidden = window.getComputedStyle(codeSection).display === 'none';
         codeSection.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden) inputCode.focus();
+
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+        
+        if (isHidden) 
+            if(isMobile) {
+                inputCode.blur();
+            }else {                
+                inputCode.focus();
+            }
     });
 
     btnCreate?.addEventListener('click', () => {
         MultiplayerManager.createPrivateRoom();
+        btnJoin.classList.add('d-none');
+        btnCreate.classList.add('d-none');
+
+
     });
 
     btnJoin?.addEventListener('click', () => {
@@ -182,6 +195,7 @@ function initUI() {
             notify("Inserisci un codice a 5 cifre", "red");
             return;
         }
+
         MultiplayerManager.joinPrivateRoom(code);
     });
 
@@ -200,6 +214,15 @@ function initUI() {
 
 function openModal() {
     overlay?.classList.add('open');
+    console.log("Modal multiplayer aperto, inizializzando connessione...");
+
+    document.body.style.position = 'fixed';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    btnJoin.classList.remove('d-none');
+    btnCreate.classList.remove('d-none');
+
     if (codeSection) codeSection.style.display = 'none';
     if (inputCode) inputCode.value = '';
     initMultiplayerConnection();
@@ -207,7 +230,12 @@ function openModal() {
 
 function closeModal() {
     overlay?.classList.remove('open');
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.position = 'static';
+
 }
+
 
 // Avvio al caricamento del DOM
 document.addEventListener('DOMContentLoaded', () => {

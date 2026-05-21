@@ -383,6 +383,9 @@
     .match-monaco-container {
         min-height: 0;
     }
+    .monaco-scrollable-element .overflow-guard{
+    width: 100% !important;
+    }
 }
 
 
