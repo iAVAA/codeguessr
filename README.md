@@ -106,7 +106,7 @@ codeguessr/
 
 For an in-depth understanding of the technical specifications and design choices of the project, refer to:
 
-* **[System Architecture (docs/ARCHITETTURA.md)](docs/ARCHITETTURA.md)**: Complete analysis of the Client-Server pattern, WebSockets, CSS/JS modularity, SQL trigger logic, and LLM prompts.
+* **[System Architecture (docs/ARCHITECTURE.md)](docs/ARCHITECTURE.md)**: Complete analysis of the Client-Server pattern, WebSockets, CSS/JS modularity, SQL trigger logic, and LLM prompts.
 * **[User Interface & Screenshot Gallery (docs/SCREENSHOTS.md)](docs/SCREENSHOTS.md)**: Detailed visual overview of the game screens with described screenshots.
 
 ---
