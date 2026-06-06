@@ -1,105 +1,134 @@
-# Interfaccia Grafica e Galleria Schermate - CodeGuessr
+# Graphical Interface and Screenshot Gallery - CodeGuessr
 
-Questo documento raccoglie e illustra l'interfaccia utente (**UI**) e l'esperienza d'uso (**UX**) di **CodeGuessr** attraverso gli screenshot delle varie schermate di gioco. Ogni sezione offre una spiegazione breve ma esaustiva della struttura tecnica e visiva implementata.
-
----
-
-## Collegamenti Rapidi alla Documentazione
-* **[Architettura Tecnica e Specifiche (ARCHITETTURA.md)](ARCHITETTURA.md)**
-* **[README Principale del Progetto (../README.md)](../README.md)**
+This document collects and illustrates the **User Interface (UI)** and **User Experience (UX)** of **CodeGuessr** through screenshots of the various game screens. Each section provides a brief yet comprehensive explanation of the implemented technical and visual structure.
 
 ---
 
-## Galleria delle Schermate
+## Quick Links to Documentation
 
-### 1. Lobby Principale (`game_page.png`)
-![Lobby Principale](screenshots/game_page.png)
-* **Descrizione:** La schermata di ingresso principale (Home/Lobby) del giocatore autenticato. 
-* **Caratteristiche Salienti:**
-  * **Progressione XP:** Visualizzazione dinamica del livello e del progresso XP tramite un anello grafico circolare personalizzato.
-  * **Lista Amici:** Pannello laterale destro sincronizzato in tempo reale (via WebSocket) per visualizzare lo stato degli amici (Online/Offline) e consentire sfide dirette.
-  * **Pannello Missioni:** Elenco delle missioni quotidiane attive con le rispettive ricompense in punti esperienza e coppe.
-  * **Matchmaking:** Pulsante principale dal design premium per avviare la ricerca automatica degli avversari o configurare sfide private.
+* **[Technical Architecture and Specifications (ARCHITECTURE.md)](ARCHITECTURE.md)**
+* **[Main Project README (../README.md)](../README.md)**
 
 ---
 
-### 2. Classifica Globale (`leaderboard_page.png`)
-![Classifica Globale](screenshots/leaderboard_page.png)
-* **Descrizione:** La schermata competitiva in cui vengono mostrati i migliori programmatori del server in base alle coppe/trofei accumulati.
-* **Caratteristiche Salienti:**
-  * **Podio Evidenziato:** I primi tre classificati sono contrassegnati con badge grafici esclusivi (Oro, Argento, Bronzo).
-  * **Raffinatezza Estetica:** Tabella con effetto vetro (Glassmorphism) e righe evidenziate al passaggio del mouse (hover micro-animations).
-  * **Informazioni Dettagliate:** Mostra nickname, livello attuale, XP e punteggio trofei per ogni sviluppatore.
+## Screenshot Gallery
+
+### 1. Main Lobby (`game_page.png`)
+
+![Main Lobby](screenshots/game_page.png)
+
+* **Description:** The main entry screen (Home/Lobby) for the authenticated player.
+* **Key Features:**
+
+  * **XP Progression:** Dynamic display of level and XP progress through a custom circular progress ring.
+  * **Friends List:** Right-side panel synchronized in real time (via WebSocket) to display friends' status (Online/Offline) and enable direct challenges.
+  * **Missions Panel:** List of active daily missions with their respective rewards in experience points and trophies.
+  * **Matchmaking:** Main premium-styled button to start automatic opponent matchmaking or configure private matches.
 
 ---
 
-### 3. Schermata di Match - Fase di Gioco (`match_page.png`)
-![Schermata di Match](screenshots/match_page.png)
-* **Descrizione:** L'arena principale del match (in modalità Single Player o Multiplayer real-time) in cui l'utente deve analizzare lo snippet.
-* **Caratteristiche Salienti:**
-  * **Monaco Editor Integrato:** Visualizzazione ad alta leggibilità dello snippet di codice (recuperato in tempo reale da GitHub o da fallback locale).
-  * **Barre della Salute (HP):** Indicatori in alto per tracciare lo stato di salute dei due contendenti (o del bot).
-  * **Campo di Input delle Spiegazioni:** Un'area di testo spaziosa in cui inserire la propria spiegazione tecnica dell'algoritmo e della complessità computazionale in linguaggio naturale.
+### 2. Global Leaderboard (`leaderboard_page.png`)
+
+![Global Leaderboard](screenshots/leaderboard_page.png)
+
+* **Description:** The competitive screen displaying the server's top programmers based on accumulated trophies/cups.
+* **Key Features:**
+
+  * **Highlighted Podium:** The top three players are marked with exclusive graphical badges (Gold, Silver, Bronze).
+  * **Aesthetic Refinement:** Glassmorphism-styled table with row highlights on hover (micro-animations).
+  * **Detailed Information:** Displays nickname, current level, XP, and trophy score for each developer.
 
 ---
 
-### 4. Valutazione Dettagliata dell'AI (`match_page_ai_evaluation.png`)
-![Valutazione Dettagliata dell'AI](screenshots/match_page_ai_evaluation.png)
-* **Descrizione:** La schermata di match durante la fase di feedback della spiegazione, in cui compare la valutazione fornita dal LLM.
-* **Caratteristiche Salienti:**
-  * **Sostituzione Responsiva:** La casella di testo per l'inserimento dell'input si contrae lasciando il posto al box di valutazione dell'AI (`.cg-ai-evaluation-box`), garantendo una responsività ottimale senza alterare le altezze del layout.
-  * **Feedback Motivato:** Mostra il punteggio numerico (0-100) e la spiegazione testuale concisa fornita dall'Intelligenza Artificiale che illustra i punti di forza o le lacune dell'analisi inviata.
+### 3. Match Screen - Gameplay Phase (`match_page.png`)
+
+![Match Screen](screenshots/match_page.png)
+
+* **Description:** The main match arena (in Single Player or real-time Multiplayer mode), where the user analyzes the code snippet.
+* **Key Features:**
+
+  * **Integrated Monaco Editor:** High-readability display of the code snippet (retrieved in real time from GitHub or from a local fallback).
+  * **Health Bars (HP):** Indicators at the top to track the health status of both players (or the bot).
+  * **Explanation Input Field:** A spacious text area where users can submit a technical explanation of the algorithm and its computational complexity in natural language.
 
 ---
 
-### 5. Schermata Dettagliata Missioni (`missions_detailed.png`)
-![Schermata Dettagliata Missioni](screenshots/missions_detailed.png)
-* **Descrizione:** Vista modale avanzata per consultare l'elenco completo degli obiettivi e dei traguardi sbloccabili all'interno del gioco.
-* **Caratteristiche Salienti:**
-  * **Card delle Missioni:** Ogni missione presenta un'icona tematica, una descrizione chiara dei requisiti e il dettaglio dei premi (XP e Trofei).
-  * **Stato di Avanzamento:** Tracciamento grafico dei progressi compiuti ed evidenziazione dei traguardi già sbloccati ed incassati.
+### 4. Detailed AI Evaluation (`match_page_ai_evaluation.png`)
+
+![Detailed AI Evaluation](screenshots/match_page_ai_evaluation.png)
+
+* **Description:** The match screen during the explanation feedback phase, where the evaluation provided by the LLM is displayed.
+* **Key Features:**
+
+  * **Responsive Replacement:** The text input box contracts to make room for the AI evaluation box (`.cg-ai-evaluation-box`), ensuring optimal responsiveness without affecting layout height.
+  * **Motivated Feedback:** Displays the numerical score (0–100) and a concise textual explanation provided by the Artificial Intelligence, highlighting strengths or weaknesses in the submitted analysis.
 
 ---
 
-### 6. Impostazioni Multiplayer e Stanza Privata (`multiplayer_settings.png`)
-![Impostazioni Multiplayer](screenshots/multiplayer_settings.png)
-* **Descrizione:** L'overlay di impostazione della modalità multigiocatore per sfidare direttamente gli amici o unirsi a stanze personalizzate.
-* **Caratteristiche Salienti:**
-  * **Codici Stanza Unici:** Generazione e condivisione di chiavi alfanumeriche per creare ed accedere a lobby private.
-  * **Selettore di Difficoltà:** Scelta del livello di sfida per la partita.
-  * **Matchmaking Libero:** Sezione dedicata all'avvio rapido di partite competitive classificate.
+### 5. Detailed Missions Screen (`missions_detailed.png`)
+
+![Detailed Missions Screen](screenshots/missions_detailed.png)
+
+* **Description:** Advanced modal view for consulting the complete list of unlockable objectives and milestones within the game.
+* **Key Features:**
+
+  * **Mission Cards:** Each mission includes a thematic icon, a clear requirement description, and reward details (XP and Trophies).
+  * **Progress Tracking:** Visual tracking of achieved progress with highlights for unlocked and already claimed milestones.
 
 ---
 
-### 7. Profilo Sviluppatore (`profile_page.png`)
-![Profilo Sviluppatore](screenshots/profile_page.png)
-* **Descrizione:** La scheda personale del programmatore, ricca di dati statistici calcolati on-the-fly tramite viste aggregate sicure.
-* **Caratteristiche Salienti:**
-  * **Statistiche Generali:** Grafico visivo e riepilogo di partite giocate, vinte, perse e percentuale complessiva di Win Rate.
-  * **Storico Partite:** Lista cronologica scorrevole dei match passati con dettagli sul risultato (vittoria/sconfitta), modalità di gioco, avversario e variazioni di XP e trofei.
-  * **Network Sociale:** Widget della lista amici per monitorare le proprie amicizie e le richieste in sospeso direttamente dal profilo.
+### 6. Multiplayer Settings and Private Room (`multiplayer_settings.png`)
+
+![Multiplayer Settings](screenshots/multiplayer_settings.png)
+
+* **Description:** Multiplayer mode configuration overlay for directly challenging friends or joining custom rooms.
+* **Key Features:**
+
+  * **Unique Room Codes:** Generation and sharing of alphanumeric keys to create and access private lobbies.
+  * **Difficulty Selector:** Choice of challenge level for the match.
+  * **Open Matchmaking:** Dedicated section for quickly launching ranked competitive matches.
 
 ---
 
-### 8. Ricerca Sviluppatori (`search_player.png`)
-![Ricerca Sviluppatori](screenshots/search_player.png)
-* **Descrizione:** Pannello modale di ricerca utenti per espandere la propria lista di amicizie all'interno del gioco.
-* **Caratteristiche Salienti:**
-  * **Ricerca Istantanea:** Input con filtro in tempo reale per nickname.
-  * **Azioni Dirette:** Pulsanti dedicati per l'invio rapido di richieste di amicizia ad altri programmatori registrati sulla piattaforma.
+### 7. Developer Profile (`profile_page.png`)
+
+![Developer Profile](screenshots/profile_page.png)
+
+* **Description:** The programmer’s personal profile page, rich with statistical data calculated on-the-fly through secure aggregated views.
+* **Key Features:**
+
+  * **General Statistics:** Visual chart and summary of matches played, won, lost, and overall win rate percentage.
+  * **Match History:** Scrollable chronological list of previous matches, including result (win/loss), game mode, opponent, and XP/trophy changes.
+  * **Social Network:** Friends list widget to manage friendships and monitor pending friend requests directly from the profile.
 
 ---
 
-### 9. Pannello Accessibilità e Preferenze (`settings_page.png`)
-![Pannello Accessibilità](screenshots/settings_page.png)
-* **Descrizione:** Il pannello di configurazione del gioco incentrato sull'accessibilità visiva ed acustica.
-* **Caratteristiche Salienti:**
-  * **Slider Volume:** Controllo fine e indipendente dei volumi per gli effetti sonori (SFX) e la musica di sottofondo (BGM).
-  * **Tema Dinamico:** Semplice interruttore per alternare istantaneamente tra tema Dark e tema Light.
-  * **Riduzione Animazioni:** Funzionalità dedicata agli utenti sensibili per azzerare gli effetti di transizione CSS.
+### 8. Developer Search (`search_player.png`)
+
+![Developer Search](screenshots/search_player.png)
+
+* **Description:** Modal user search panel for expanding the in-game friends list.
+* **Key Features:**
+
+  * **Instant Search:** Real-time nickname filtering input.
+  * **Direct Actions:** Dedicated buttons for quickly sending friend requests to other registered programmers on the platform.
 
 ---
 
-## Collegamenti Rapidi alla Documentazione
-* **[Architettura Tecnica e Specifiche (ARCHITETTURA.md)](ARCHITETTURA.md)**
-* **[README Principale del Progetto (../README.md)](../README.md)**
+### 9. Accessibility and Preferences Panel (`settings_page.png`)
+
+![Accessibility Panel](screenshots/settings_page.png)
+
+* **Description:** The game settings panel focused on visual and audio accessibility.
+* **Key Features:**
+
+  * **Volume Sliders:** Fine-grained and independent control for sound effects (SFX) and background music (BGM) volumes.
+  * **Dynamic Theme:** Simple toggle to instantly switch between Dark and Light themes.
+  * **Reduced Animations:** Dedicated functionality for users sensitive to motion, allowing CSS transition effects to be disabled.
+
+---
+
+## Quick Links to Documentation
+
+* **[Technical Architecture and Specifications (ARCHITECTURE.md)](ARCHITECTURE.md)**
+* **[Main Project README (../README.md)](../README.md)**
