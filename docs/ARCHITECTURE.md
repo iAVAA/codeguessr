@@ -1,7 +1,3 @@
-This is just a translation task, no need for file creation. Here's the translated README:
-
----
-
 # Technical Architecture and System Specifications - CodeGuessr
 
 Welcome to the architectural specification document for **CodeGuessr**. This document has been written to provide a comprehensive and rigorous technical overview of the overall system architecture, describing the database structure, frontend logic, real-time backend management, and artificial intelligence operational flows.
