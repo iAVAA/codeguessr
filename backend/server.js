@@ -914,21 +914,9 @@ async function saveMatchToDB(mioId, modalita, risultato, exp_guadagnata, id_uten
             });
         }
 
-        try {
-            // Tenta l'inserimento includendo trofei_cambiati
-            const partecipazioniWithTrophies = partecipazioni.map((p, idx) => ({
-                ...p,
-                trofei_cambiati: idx === 0 ? trophy_casa : trophy_trasferta
-            }));
-            const { error: insertErr } = await supabase.from('partecipazione').insert(partecipazioniWithTrophies);
-            if (insertErr) {
-                // Fallback a inserimento senza trofei_cambiati
-                console.warn("[server.js] Fallback a inserimento partecipazione senza trofei_cambiati:", insertErr.message);
-                await supabase.from('partecipazione').insert(partecipazioni);
-            }
-        } catch (e) {
-            console.warn("[server.js] Eccezione durante inserimento, fallback a schema base:", e.message);
-            await supabase.from('partecipazione').insert(partecipazioni);
+        const { error: insertErr } = await supabase.from('partecipazione').insert(partecipazioni);
+        if (insertErr) {
+            throw insertErr;
         }
 
         // 3. Aggiorna EXP, livello e trofei dei giocatori coinvolti

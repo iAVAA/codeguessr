@@ -1,23 +1,27 @@
-# Architettura Tecnica e Specifiche di Sistema - CodeGuessr
-
-Benvenuto nel documento di specifica architetturale di **CodeGuessr**. Questo documento è stato redatto per fornire una panoramica tecnica esaustiva e rigorosa sull'architettura complessiva del sistema, descrivendo la struttura del database, le logiche del frontend, la gestione real-time del backend ed i flussi operativi dell'intelligenza artificiale.
+This is just a translation task, no need for file creation. Here's the translated README:
 
 ---
 
-### 🔗 Collegamenti Rapidi alla Documentazione
-* 📸 **[Interfaccia Grafica e Galleria Schermate (SCREENSHOTS.md)](SCREENSHOTS.md)**
-* 💻 **[README Principale del Progetto (../README.md)](../README.md)**
+# Technical Architecture and System Specifications - CodeGuessr
+
+Welcome to the architectural specification document for **CodeGuessr**. This document has been written to provide a comprehensive and rigorous technical overview of the overall system architecture, describing the database structure, frontend logic, real-time backend management, and artificial intelligence operational flows.
 
 ---
 
-## 1. Modello Architetturale Generale
+### Quick Links to Documentation
+* **[Graphical Interface and Screenshot Gallery (SCREENSHOTS.md)](SCREENSHOTS.md)**
+* **[Main Project README (../README.md)](../README.md)**
 
-**CodeGuessr** adotta un modello architetturale **Client-Server distribuito e bi-direzionale in tempo reale**, che combina la stabilità dei servizi REST classici alla reattività delle connessioni WebSocket persistenti. 
+---
 
-Il sistema è suddiviso in tre macro-livelli fondamentali:
-1. **Frontend (Presentation Layer):** Un'applicazione web multi-pagina basata su tecnologie vanilla (HTML5, CSS3, JavaScript ES6) per massimizzare la velocità di caricamento, l'accessibilità e la compatibilità. Integra l'SDK client-side di **Supabase** per l'autenticazione diretta e **Monaco Editor** per la visualizzazione interattiva dei frammenti di codice.
-2. **Backend (Application Layer):** Un server runtime in **Node.js** con il framework **Express.js** per l'esposizione delle API REST e **Socket.io** per la gestione dello stato in memoria e la comunicazione bidirezionale in tempo reale. Agisce anche da proxy sicuro verso servizi esterni come **OpenRouter SDK** (per l'intelligenza artificiale) e le **GitHub Code Search API**.
-3. **Database (Data Layer):** Un'istanza **PostgreSQL** relazionale ospitata su **Supabase**, arricchita con tipi ENUM, viste aggregate dinamiche, vincoli di integrità referenziale complessi e trigger di sistema scritti in PL/pgSQL (per automatizzare le regole di business sensibili come i Level Up).
+## 1. General Architectural Model
+
+**CodeGuessr** adopts a **distributed, bidirectional real-time Client-Server architectural model**, combining the stability of classic REST services with the reactivity of persistent WebSocket connections.
+
+The system is divided into three fundamental macro-levels:
+1. **Frontend (Presentation Layer):** A multi-page web application based on vanilla technologies (HTML5, CSS3, JavaScript ES6) to maximize loading speed, accessibility, and compatibility. It integrates the client-side **Supabase** SDK for direct authentication and **Monaco Editor** for interactive display of code snippets.
+2. **Backend (Application Layer):** A **Node.js** runtime server with the **Express.js** framework for exposing REST APIs and **Socket.io** for managing in-memory state and bidirectional real-time communication. It also acts as a secure proxy toward external services such as the **OpenRouter SDK** (for artificial intelligence) and the **GitHub Code Search APIs**.
+3. **Database (Data Layer):** A relational **PostgreSQL** instance hosted on **Supabase**, enriched with ENUM types, dynamic aggregate views, complex referential integrity constraints, and system triggers written in PL/pgSQL (to automate sensitive business rules such as Level Ups).
 
 ```
                       +-------------------+
@@ -44,54 +48,54 @@ Il sistema è suddiviso in tre macro-livelli fondamentali:
                            |         |
       Supabase PostgreSQL  |         | HTTPS (OpenRouter API / GitHub API)
   +------------------------v---+     |
-  |  - Tabelle Relazionali     |     +-----> [ OpenAI gpt-4o-mini ]
-  |  - Vista Profilo Dinamica  |     |
+  |  - Relational Tables       |     +-----> [ OpenAI gpt-4o-mini ]
+  |  - Dynamic Profile View    |     |
   |  - Level-Up Trigger system |     +-----> [ GitHub Search Engine ]
   +----------------------------+
 ```
 
 ---
 
-## 2. Architettura del Database (Data Layer)
+## 2. Database Architecture (Data Layer)
 
-La persistenza dei dati è gestita tramite PostgreSQL. Il database implementa un forte accoppiamento referenziale e logiche automatiche sul database per prevenire incongruenze e manipolazioni dei client.
+Data persistence is managed through PostgreSQL. The database implements strong referential coupling and automatic database-level logic to prevent inconsistencies and client-side manipulation.
 
 <p align="center">
   <a href="db_scheme.svg">
-    <img src="db_scheme.svg" alt="Schema Relazionale ER del Database" />
+    <img src="db_scheme.svg" alt="ER Relational Database Schema" />
   </a>
 </p>
 
-### Tipi ENUM Personalizzati
-Per garantire il massimo rigore nei vincoli sui dati, sono stati definiti i seguenti domini ENUM:
+### Custom ENUM Types
+To ensure maximum rigor in data constraints, the following ENUM domains have been defined:
 * `stato_amicizia`: `('in_attesa', 'accettata', 'rifiutata', 'bloccato')`
 * `modalita_partita`: `('1v1', 'ranked', 'amichevole', 'single_player')`
 * `stato_partita`: `('in_corso', 'completata', 'annullata', 'waiting', 'in_progress', 'cancelled')`
 * `risultato_partecipazione`: `('vittoria', 'sconfitta', 'pareggio')`
 
-### Dettaglio Tabelle
+### Table Details
 
 #### 1. `giocatore`
-Estende la tabella nativa dell'autenticazione di Supabase (`auth.users`) tramite una chiave esterna `1:1`. Memorizza il profilo pubblico e le statistiche del giocatore.
+Extends Supabase's native authentication table (`auth.users`) via a `1:1` foreign key. Stores the player's public profile and statistics.
 * `id_giocatore` (UUID, Primary Key, Foreign Key -> `auth.users(id)` ON DELETE CASCADE)
 * `nickname` (TEXT, UNIQUE, NOT NULL)
-* `exp` (INTEGER, Default: 0) - Punti Esperienza accumulati all'interno del livello attuale.
-* `livello` (INTEGER, Default: 1) - Livello di gioco del programmatore.
-* `trophies` (INTEGER, Default: 0) - Punteggio ranked cumulativo (coppe).
+* `exp` (INTEGER, Default: 0) - Experience Points accumulated within the current level.
+* `livello` (INTEGER, Default: 1) - Player's game level.
+* `trophies` (INTEGER, Default: 0) - Cumulative ranked score (trophies).
 * `bio` (TEXT, Default: '')
-* `avatar_url`, `banner_url` (TEXT) - Link alle immagini del profilo ospitate su Storage.
+* `avatar_url`, `banner_url` (TEXT) - Links to profile images hosted on Storage.
 * `data_registrazione` (TIMESTAMPTZ, Default: `now()`)
 * `attivo` (BOOLEAN, Default: false)
 
 #### 2. `amicizia`
-Rappresenta una relazione molti-a-molti ricorsiva auto-referenziata per la gestione del network sociale dei giocatori.
+Represents a self-referencing recursive many-to-many relationship for managing the players' social network.
 * `id_utente_a` (UUID, PK, FK -> `giocatore(id_giocatore)` ON DELETE CASCADE)
 * `id_utente_b` (UUID, PK, FK -> `giocatore(id_giocatore)` ON DELETE CASCADE)
 * `stato` (stato_amicizia, Default: `'in_attesa'`)
 * `data_creazione` (TIMESTAMPTZ, Default: `CURRENT_TIMESTAMP`)
 
 #### 3. `partita`
-Memorizza le sessioni di gioco avviate.
+Stores started game sessions.
 * `id_partita` (BIGINT, Primary Key, Generated Always As Identity)
 * `modalita` (modalita_partita, NOT NULL)
 * `stato` (stato_partita, Default: `'in_corso'`)
@@ -101,7 +105,7 @@ Memorizza le sessioni di gioco avviate.
 * `id_utente_trasferta` (UUID, FK -> `giocatore(id_giocatore)` ON DELETE SET NULL)
 
 #### 4. `partecipazione`
-Tabella di giunzione molti-a-molti che traccia le performance e le ricompense individuali di ogni giocatore all'interno di una partita.
+Many-to-many junction table that tracks the individual performance and rewards of each player within a match.
 * `id_partita` (BIGINT, PK, FK -> `partita(id_partita)` ON DELETE CASCADE)
 * `id_giocatore` (UUID, PK, FK -> `giocatore(id_giocatore)` ON DELETE CASCADE)
 * `risultato` (risultato_partecipazione, Nullable)
@@ -109,9 +113,9 @@ Tabella di giunzione molti-a-molti che traccia le performance e le ricompense in
 * `trofei_cambiati` (INTEGER, Default: 0)
 
 #### 5. `achievements`
-Contiene la lista predefinita dei traguardi/missioni sbloccabili nel gioco.
+Contains the predefined list of unlockable milestones/missions in the game.
 * `id` (UUID, PK, Default: `gen_random_uuid()`)
-* `name` (TEXT, UNIQUE, NOT NULL) - es. *'Dio dei Linguaggi'*, *'Notte Bianca'*.
+* `name` (TEXT, UNIQUE, NOT NULL) - e.g. *'Dio dei Linguaggi'*, *'Notte Bianca'*.
 * `description` (TEXT, NOT NULL)
 * `exp_reward` (INTEGER, Default: 0)
 * `trophy_reward` (INTEGER, Default: 0)
@@ -119,15 +123,15 @@ Contiene la lista predefinita dei traguardi/missioni sbloccabili nel gioco.
 * `created_at` (TIMESTAMPTZ)
 
 #### 6. `user_achievements`
-Traccia quali obiettivi sono stati sbloccati dai singoli utenti ed in quale data.
+Tracks which objectives have been unlocked by individual users and on what date.
 * `user_id` (UUID, PK, FK -> `giocatore(id_giocatore)` ON DELETE CASCADE)
 * `achievement_id` (UUID, PK, FK -> `achievements(id)` ON DELETE CASCADE)
 * `unlocked_at` (TIMESTAMPTZ, Default: `now()`)
 
-### Logiche PostgreSQL in Background (Database Level)
+### Background PostgreSQL Logic (Database Level)
 
-#### Vista Dinamica del Profilo (`v_giocatore_profilo`)
-Per massimizzare l'efficienza ed eliminare anomalie di ridondanza (dati statistici disallineati), le statistiche aggregate di vittorie, sconfitte e win-rate del profilo non vengono salvate fisicamente su disco. Vengono invece calcolate on-the-fly tramite una vista SQL che unisce in LEFT JOIN la tabella `giocatore` e `partecipazione`:
+#### Dynamic Profile View (`v_giocatore_profilo`)
+To maximize efficiency and eliminate redundancy anomalies (misaligned statistical data), the aggregate win, loss, and win-rate statistics of the profile are not physically stored on disk. They are instead calculated on-the-fly via an SQL view that LEFT JOINs the `giocatore` and `partecipazione` tables:
 ```sql
 CREATE OR REPLACE VIEW public.v_giocatore_profilo AS
 SELECT 
@@ -145,8 +149,8 @@ LEFT JOIN public.partecipazione p ON g.id_giocatore = p.id_giocatore
 GROUP BY g.id_giocatore;
 ```
 
-#### Trigger Auto-Level UP (`trigger_level_up`)
-Le regole di crescita del giocatore sono protette a livello di database. Ogni volta che l'esperienza (`exp`) di un utente viene inserita o aggiornata, viene eseguita la funzione trigger `handle_giocatore_level_up()`. Se l'esperienza supera la soglia di 500 XP, il giocatore sale di livello automaticamente ed il resto dell'esperienza viene riportato al livello successivo:
+#### Auto-Level UP Trigger (`trigger_level_up`)
+Player progression rules are protected at the database level. Every time a user's experience (`exp`) is inserted or updated, the trigger function `handle_giocatore_level_up()` is executed. If the experience exceeds the 500 XP threshold, the player automatically levels up and the remaining experience is carried over to the next level:
 ```sql
 CREATE OR REPLACE FUNCTION handle_giocatore_level_up()
 RETURNS TRIGGER AS $$
@@ -166,185 +170,186 @@ FOR EACH ROW EXECUTE FUNCTION handle_giocatore_level_up();
 
 ---
 
-## 3. Architettura del Frontend (Client Layer)
+## 3. Frontend Architecture (Client Layer)
 
-Il client di CodeGuessr è strutturato per essere modulare e scalabile, mantenendo al contempo un'impostazione nativa ultra-rapida senza la zavorra di pesanti framework a runtime.
+The CodeGuessr client is structured to be modular and scalable, while maintaining an ultra-fast native setup without the overhead of heavy runtime frameworks.
 
 ```
 frontend/
-├── index.html                  # Landing Page / Schermata Iniziale
+├── index.html                  # Landing Page / Initial Screen
 └── src/
-    ├── assets/                 # Risorse statiche (Immagini, SFX, BGM)
-    ├── css/                    # Fogli di stile strutturati
-    │   ├── style.css           # Compositore principale globale
-    │   ├── styles/             # Fogli di stile atomici aggregati
+    ├── assets/                 # Static resources (Images, SFX, BGM)
+    ├── css/                    # Structured stylesheets
+    │   ├── style.css           # Main global compositor
+    │   ├── styles/             # Aggregated atomic stylesheets
     │   │   ├── _base.css, _navbar.css, _footer.css, _loader.css, _utilities.css,
-    │   │   └── _variables.css  # Definizione palette HSL, spaziature e temi (Dark/Light)
-    │   └── [pages]/            # CSS specifici per pagina (game, match, profile, etc.)
-    ├── js/                     # Moduli logici Javascript
-    │   ├── index.js            # Entry-point per la landing
+    │   │   └── _variables.css  # HSL palette, spacing, and theme (Dark/Light) definitions
+    │   └── [pages]/            # Page-specific CSS (game, match, profile, etc.)
+    ├── js/                     # Javascript logic modules
+    │   ├── index.js            # Entry-point for the landing page
     │   ├── utils/
-    │   │   └── ui_utils.js     # Componenti UI condivisi (Toasts e debounce)
-    │   ├── managers/           # Servizi globali a stato persistente (Singleton)
-    │   │   ├── auth.js         # Gestore sessione, JWT, Login e Redirect automatici
-    │   │   ├── loader.js       # Gestore delle transizioni visive e schermi di caricamento
-    │   │   ├── settings.js     # Gestore impostazioni (Accessibilità, riduttore animazioni)
-    │   │   ├── theme.js        # Gestore del tema dinamico (Sincronizzazione variabili HSL)
-    │   │   └── sound.js        # Sistema audio (Buffer audio web, BGM in loop, SFX di feedback)
-    │   └── [pages]/            # Script di controllo dedicati alle singole visualizzazioni
-    └── pages/                  # Viste HTML (reset_password, game_page, profile_page, etc.)
+    │   │   └── ui_utils.js     # Shared UI components (Toasts and debounce)
+    │   ├── managers/           # Persistent-state global services (Singletons)
+    │   │   ├── auth.js         # Session manager, JWT, Login and automatic redirects
+    │   │   ├── loader.js       # Visual transition and loading screen manager
+    │   │   ├── settings.js     # Settings manager (Accessibility, animation reducer)
+    │   │   ├── theme.js        # Dynamic theme manager (HSL variable synchronization)
+    │   │   └── sound.js        # Audio system (Web audio buffer, looping BGM, feedback SFX)
+    │   └── [pages]/            # Control scripts dedicated to individual views
+    └── pages/                  # HTML views (reset_password, game_page, profile_page, etc.)
 ```
 
-### Gestione dei CSS Dinamici
-La personalizzazione estetica ricorre alla potenza delle **CSS Variables** configurate all'interno di `_variables.css`. Questo permette di supportare nativamente la modalità Chiara/Scura tramite la classe globale `.light-theme` applicata al tag `body` e l'impostazione di accessibilità `.reduce-transitions` che azzera gli effetti di transizione per gli utenti sensibili.
+### Dynamic CSS Management
+Aesthetic customization leverages the power of **CSS Variables** configured within `_variables.css`. This natively supports Light/Dark mode via the global `.light-theme` class applied to the `body` tag, and the `.reduce-transitions` accessibility setting that zeroes out transition effects for motion-sensitive users.
 
 ---
 
-## 4. Architettura del Backend (Server Layer)
+## 4. Backend Architecture (Server Layer)
 
-Il server Node.js è strutturato secondo il pattern **Modular Controller-Service**. L'entry-point `server.js` inizializza le risorse core ed esegue il bootstrap di tre controller indipendenti.
+The Node.js server is structured according to the **Modular Controller-Service** pattern. The `server.js` entry-point initializes core resources and bootstraps three independent controllers.
 
 ### 1. `server.js` (Bootstrap & Core Services)
-* Configura l'applicazione Express (CORS, parser JSON, cartelle statiche).
-* Inizializza il client di amministrazione Supabase in modalità privilegiata (per bypassare le Row Level Security ed eseguire in sicurezza gli aggiornamenti di EXP, livelli e statistiche).
-* Avvia il server HTTP nativo agganciando l'istanza globale di `Socket.io`.
-* Esporta utility riutilizzabili come `updatePlayerStats` per centralizzare la memorizzazione dei risultati partita.
+* Configures the Express application (CORS, JSON parser, static folders).
+* Initializes the Supabase administration client in privileged mode (to bypass Row Level Security and safely execute EXP, level, and statistics updates).
+* Starts the native HTTP server by attaching the global `Socket.io` instance.
+* Exports reusable utilities such as `updatePlayerStats` to centralize match result storage.
 
 ### 2. `controllers/code.js` (GitHub Search & Fallback)
-Responsabile di fornire costantemente snippet di codice di alta qualità per alimentare il gioco.
-* **Algoritmo di Fetching GitHub:** Esegue query avanzate e casuali sulle GitHub Search API (usando query target come algoritmi classici *Dijkstra, BST, QuickSort* o framework noti *React, Express, Tkinter, Pandas*).
-* **Filtro di Pulizia:** Analizza la risposta, decodifica il Base64, pulisce il codice rimuovendo commenti iniziali di licenza, copyright o blocco vuoto (fino a un massimo di 30 righe) e taglia lo snippet a una lunghezza ottimale per la lettura del giocatore.
-* **Fallback Locale:** Nel caso in cui il token di GitHub esaurisca il rate-limit o si presentino problemi di rete, carica in memoria dei database precompilati in JSON (`db/snippets/`) garantendo che il gioco continui a funzionare offline.
+Responsible for consistently providing high-quality code snippets to fuel the game.
+* **GitHub Fetching Algorithm:** Executes advanced and randomized queries against the GitHub Search APIs (using target queries such as classic algorithms *Dijkstra, BST, QuickSort* or well-known frameworks *React, Express, Tkinter, Pandas*).
+* **Cleanup Filter:** Analyzes the response, decodes the Base64, cleans the code by removing leading license, copyright, or blank block comments (up to a maximum of 30 lines), and trims the snippet to an optimal length for player readability.
+* **Local Fallback:** In the event that the GitHub token exhausts its rate-limit or network issues arise, it loads precompiled JSON databases from memory (`db/snippets/`) ensuring the game continues to function offline.
 * **REST API:**
-  * `GET /api/random-snippet`: Restituisce uno snippet pulito escludendo l'ultimo servito.
-  * `POST /api/valuta-risposta`: Esegue la chiamata al LLM per valutare la spiegazione del giocatore.
+  * `GET /api/random-snippet`: Returns a clean snippet excluding the last one served.
+  * `POST /api/valuta-risposta`: Executes the LLM call to evaluate the player's explanation.
 
 ### 3. `controllers/missions.js` (Dynamic Achievements Engine)
-Consente una gestione liquida dei traguardi di gioco senza appesantire il database.
-* **Calcolo Progressi Dinamici:** Quando interrogato, calcola in tempo reale lo stato di completamento delle missioni di un utente unendo i dati delle amicizie, lo storico partite (es. *consecutive wins*, partite giocate di notte tra le 00 e le 05 per sbloccare *"Notte Bianca"*), il livello e le statistiche del profilo.
-* **Background Auto-Redeem:** Se rileva che una missione ha superato la soglia minima e non è ancora registrata come sbloccata nel DB, inserisce il record nella tabella `user_achievements` in background e aggiorna direttamente EXP e Trofei dell'utente (che a loro volta attivano il trigger PostgreSQL di Level Up).
+Enables fluid management of game milestones without burdening the database.
+* **Dynamic Progress Calculation:** When queried, calculates in real time the completion status of a user's missions by joining friendship data, match history (e.g. *consecutive wins*, matches played at night between 00:00 and 05:00 to unlock *"Notte Bianca"*), level, and profile statistics.
+* **Background Auto-Redeem:** If it detects that a mission has exceeded the minimum threshold and has not yet been recorded as unlocked in the DB, it inserts the record into the `user_achievements` table in the background and directly updates the user's EXP and Trophies (which in turn activate the PostgreSQL Level Up trigger).
 
 ### 4. `controllers/socket.js` (Real-Time Game State Machine)
-Il cuore operativo di CodeGuessr. Gestisce la reattività del multiplayer competitivo e privato attraverso un protocollo WebSocket strutturato.
+The operational core of CodeGuessr. Manages the reactivity of competitive and private multiplayer through a structured WebSocket protocol.
 
-* **Middleware di Handshake:** Ogni connessione WebSocket viene intercettata, pulisce il token JWT fornito dal client, ne verifica l'autenticità tramite l'autenticazione Supabase e aggancia all'istanza del socket i dati del profilo del giocatore in tempo reale.
-* **Gestione Disconnessioni Resilienti (Tolleranza 120s):** Se un utente cade a causa di instabilità di rete, il server **non** interrompe la partita immediatamente. La stanza viene messa in stato di "sospensione" per un tempo massimo di 120 secondi.
-  * Se il giocatore si riconnette entro il termine via `rejoinMatch`, la sessione viene ripristinata esattamente dal round in corso sincronizzando lo snippet attuale.
-  * Se il timeout spira senza riconnessioni, il giocatore offline viene dichiarato sconfitto per abbandono (HP azzerati) e l'altro utente vince l'incontro ricevendo i premi.
-  * Le stanze di matchmaking e le sfide dirette scambiano gli stati mostrati nel diagramma seguente.
+* **Handshake Middleware:** Every WebSocket connection is intercepted, the JWT token provided by the client is cleaned, its authenticity is verified via Supabase authentication, and the real-time player profile data is attached to the socket instance.
+* **Resilient Disconnection Handling (120s Tolerance):** If a user drops due to network instability, the server does **not** immediately interrupt the match. The room is placed in a "suspended" state for a maximum of 120 seconds.
+  * If the player reconnects within the deadline via `rejoinMatch`, the session is restored exactly from the current round by synchronizing the active snippet.
+  * If the timeout expires without reconnection, the offline player is declared defeated by abandonment (HP zeroed) and the other user wins the match receiving the rewards.
+  * Matchmaking rooms and direct challenges exchange the states shown in the following diagram.
 
 ```
             +---------------------------------+
-            |  Offline / Schermata Principale |
+            |  Offline / Main Screen          |
             +----------------+----------------+
                              |
                              | [startMatchmaking]
                              v
                     +----------------+
-                    |  In Coda Match |
+                    |  In Match Queue|
                     +--------+-------+
                              |
-                             | [matchFound] (2 utenti pronti)
+                             | [matchFound] (2 users ready)
                              v
                     +----------------+
-                    | Schermata Lobb | <-----------+ (Rejoin)
+                    | Lobby Screen   | <-----------+ (Rejoin)
                     +--------+-------+             |
                              |                     |
-                             | (Entrambi Ready)     |
+                             | (Both Ready)        |
                              v                     |
                     +----------------+             |
-                    |   Inizio Round |             |
+                    |  Round Start   |             |
                     +--------+-------+             |
                              |                     |
                              | [startRound]        |
                              v                     |
                     +----------------+             |
-                    | Timer di Gioco |             |
+                    |  Game Timer    |             |
                     |    (Max 90s)   |             |
 +-----------------> +--------+-------+             |
 |                            |                     |
 |                            | [submitAnswer]      |
 |                            v                     |
 |                   +----------------+             |
-|                   | Valutazione AI |             |
+|                   |  AI Evaluation |             |
 |                   +--------+-------+             |
 |                            |                     |
 |                            | [roundResult]       |
 |                            v                     |
 |                   +----------------+             |
-|                   |  Calcolo Danni |             |
+|                   |  Damage Calc.  |             |
 |                   +---+--------+---+             |
 |                       |        |                 |
-|      (Qualcuno a 0 HP |        | (HP > 0 &       |
-|    o Round 5 concluso)|        | Round < 5)      |
+|      (Someone at 0 HP |        | (HP > 0 &       |
+|   or Round 5 complete)|        | Round < 5)      |
 |                       |        |                 |
 |                       v        +-----------------+
 |             +---------+--------+
-|             |  Partita Conclusa|
+|             |  Match Finished  |
 |             | [matchFinished]  |
 |             +------------------+
 |
-+--- Se Disconnesso (Avvia Timer 120s) -> Se Rejoin success rientra nel flusso
++--- If Disconnected (Start 120s Timer) -> If Rejoin success re-enters the flow
 ```
 
 ---
 
-## 5. Meccanismo di Valutazione delle Risposte tramite AI
+## 5. AI-Based Answer Evaluation Mechanism
 
-Il meccanismo distintivo di CodeGuessr è la capacità di valutare la reale comprensione tecnica del codice scritta in linguaggio naturale dal giocatore.
+The distinctive mechanism of CodeGuessr is its ability to evaluate the player's genuine technical understanding of code written in natural language.
 
-### Flusso di Valutazione AI
+### AI Evaluation Flow
 
 ```
-[Client] invia risposta scritta
-   │
-   ▼
+[Client] sends written answer
+   |
+   v
 [Express Controller (POST /api/valuta-risposta)]
-   │
-   ▼
-[Lettura Prompt Template (db/llm/prompt.md)]
-   │
-   ▼
-[Sostituzione segnaposto {{snippet}} e {{risposta}}]
-   │
-   ▼
-[Chiamata a OpenRouter API (modello: gpt-4o-mini)]
-   │
-   ▼
-[Generazione output strutturato in JSON]
-   │
-   ▼
-[Server esegue il parsing del punteggio] ──(Se errore)──> [Fallback: Valutatore standard]
-   │
-   ▼
-[Restituisce il punteggio float (0-100) al modulo partita]
+   |
+   v
+[Read Prompt Template (db/llm/prompt.md)]
+   |
+   v
+[Replace {{snippet}} and {{risposta}} placeholders]
+   |
+   v
+[Call to OpenRouter API (model: gpt-4o-mini)]
+   |
+   v
+[Generate structured JSON output]
+   |
+   v
+[Server parses the score] --(On error)--> [Fallback: Standard Evaluator]
+   |
+   v
+[Returns float score (0-100) to the match module]
 ```
 
-### Il Prompt di Sistema (`db/llm/prompt.md`)
-Il prompt impone al modello linguistico un ruolo di **valutatore tecnico super-partes estremamente severo**. Il modello non deve solo verificare se la risposta menziona parole chiave, ma deve analizzare:
-1. **Comprensione dello scopo principale:** Se il giocatore ha capito realmente l'algoritmo (es. *Dijkstra* vs un generico *ricerca del cammino minimo*).
-2. **Precisione Matematica della Complessità:** Verifica l'accuratezza con cui viene determinata la notazione **Big O** (Tempo e Spazio).
-3. **Correttezza delle Strutture Dati:** Spiegazione dell'uso di code di priorità, array, alberi, etc.
+### The System Prompt (`db/llm/prompt.md`)
+The prompt assigns the language model the role of an **extremely strict, impartial technical evaluator**. The model must not simply verify whether the answer mentions keywords, but must analyze:
+1. **Understanding of the main purpose:** Whether the player genuinely understood the algorithm (e.g. *Dijkstra* vs a generic *shortest path search*).
+2. **Mathematical Precision of Complexity:** Verifies the accuracy with which **Big O** notation is determined (Time and Space).
+3. **Correctness of Data Structures:** Explanation of the use of priority queues, arrays, trees, etc.
 
-L'output viene strettamente forzato in un formato JSON strutturato contenente il punteggio (`punteggio`, numero da 0 a 100) e la motivazione dettagliata (`motivazione`):
+The output is strictly enforced in a structured JSON format containing the score (`punteggio`, a number from 0 to 100) and the detailed rationale (`valutazione`):
 ```json
 {
   "punteggio": 85
+  "valutazione": "AI answer"
 }
 ```
 
-Questo punteggio viene utilizzato in modalità multiplayer come base di calcolo dei danni: la differenza assoluta tra i punteggi dei due avversari viene inflitta direttamente come danno agli HP di chi ha fornito la spiegazione meno accurata.
+This score is used in multiplayer mode as the basis for damage calculation: the absolute difference between the two opponents' scores is directly inflicted as damage to the HP of the player who provided the less accurate explanation.
 
 ---
 
-## 6. Sicurezza e Ottimizzazioni
+## 6. Security and Optimizations
 
-1. **Protezione API Key:** Tutte le chiavi API sensibili (Supabase Service Key, GITHUB_TOKEN, OPENROUTER_API_KEY) sono conservate esclusivamente sul server backend nel file `.env` protetto, impedendone l'esposizione sul client.
-2. **Prevenzione del Cheating:** La logica dei punti vita, la selezione degli snippet, la determinazione dei punteggi e l'incremento di esperienza/trofei sono interamente gestiti dal server backend. Il client invia solo l'input testuale dell'utente e riceve aggiornamenti di stato di sola lettura.
-3. **Ottimizzazione del Traffico Socket:** Gli eventi di Socket.io scambiano oggetti JSON leggeri ed escludono tutti i riferimenti di memoria complessi (come i timer attivi o i riferimenti ai socket degli utenti) attraverso funzioni di sanitizzazione prima dell'invio.
+1. **API Key Protection:** All sensitive API keys (Supabase Service Key, GITHUB_TOKEN, OPENROUTER_API_KEY) are stored exclusively on the backend server in the protected `.env` file, preventing their exposure on the client.
+2. **Cheating Prevention:** HP logic, snippet selection, score determination, and experience/trophy increments are entirely managed by the backend server. The client only sends the user's text input and receives read-only state updates.
+3. **Socket Traffic Optimization:** Socket.io events exchange lightweight JSON objects and exclude all complex memory references (such as active timers or user socket references) through sanitization functions prior to sending.
 
 ---
 
-### 🔗 Collegamenti Rapidi alla Documentazione
-* 📸 **[Interfaccia Grafica e Galleria Schermate (SCREENSHOTS.md)](SCREENSHOTS.md)**
-* 💻 **[README Principale del Progetto (../README.md)](../README.md)**
+### Quick Links to Documentation
+* **[Graphical Interface and Screenshot Gallery (SCREENSHOTS.md)](SCREENSHOTS.md)**
+* **[Main Project README (../README.md)](../README.md)**

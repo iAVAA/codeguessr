@@ -1,149 +1,159 @@
 # CodeGuessr
 
-Benvenuto su **CodeGuessr**, il gioco in cui metti alla prova la tua reale competenza da sviluppatore: leggere, comprendere e spiegare il codice!
+Welcome to **CodeGuessr**, the game where you test your real developer skills: reading, understanding, and explaining code!
 
-## Cos'è CodeGuessr?
-A differenza dei normali giochi di programmazione, qui non devi limitarti a indovinare il linguaggio. Il tuo obiettivo è **analizzare** un frammento di codice e **spiegare** esattamente cosa fa, che algoritmo sta implementando e qual è la sua *complessità computazionale*.
+## What is CodeGuessr?
 
-## Come Giocare
+Unlike traditional programming games, here you do not simply guess the language. Your objective is to **analyze** a code snippet and **explain** exactly what it does, which algorithm it implements, and what its *computational complexity* is.
 
-1. **Osserva il Codice:** Ad ogni round ti verrà mostrato uno "snippet" all'interno dell'editor.
-2. **Analizza a Fondo:** Leggi il codice riga per riga. Capisci le strutture dati utilizzate, i cicli, e prova a dedurre la *Big O Notation* (complessità in tempo e spazio).
-3. **Spiega la tua Soluzione:** Sulla destra troverai un'ampia casella di testo. Scrivi la tua analisi dettagliata delineando lo scopo di quell'algoritmo (es. *"Si tratta della sequenza di Fibonacci calcolata tramite programmazione dinamica con complessità spaziale O(n)"*).
-4. **Punti e Vita:** Le tue risposte verranno valutate dal nostro sistema. Le risposte superficiali infliggeranno danni ai tuoi HP, mentre le analisi tecniche, dettagliate e corrette ti faranno guadagnare tantissimi XP per salire di Livello!
+## How to Play
 
-## Modalità di Gioco
+1. **Observe the Code:** In each round, a code "snippet" will be displayed in the editor.
+2. **Analyze Thoroughly:** Read the code line by line. Understand the data structures being used, loops, and try to determine the *Big O Notation* (time and space complexity).
+3. **Explain Your Solution:** On the right side, you will find a large text box. Write your detailed analysis describing the purpose of the algorithm (e.g., *"This is the Fibonacci sequence computed using dynamic programming with O(n) space complexity"*).
+4. **Points and Health:** Your answers will be evaluated by our system. Superficial responses will damage your HP, while accurate, detailed, and technical analyses will grant you lots of XP to level up!
 
-- **Single Player:** Gioca da solo e allenati contro il Bot. Scegli la difficoltà (Facile, Medio, Difficile) e metti alla prova le tue capacità di *code-reading* analizzando algoritmi noti o trappole logiche, per guadagnare punti Esperienza (XP) e Coppe.
-- **Multiplayer:** Aggiungi altri programmatori alla tua "Lista Amici" e sfidali testa a testa in tempo reale! Il giocatore con la spiegazione migliore e più accurata vincerà il Round.
+## Game Modes
+
+* **Single Player:** Play solo and train against the Bot. Choose the difficulty (Easy, Medium, Hard) and test your *code-reading* abilities by analyzing known algorithms or logical traps to earn Experience Points (XP) and Trophies.
+* **Multiplayer:** Add other programmers to your "Friends List" and challenge them in real-time head-to-head matches! The player with the most accurate and detailed explanation wins the Round.
 
 ---
 
-## Struttura del progetto
+## Project Structure
 
 ```text
 codeguessr/
-├── backend/                                  # Server Node.js & API realtime (WebSockets)
-│   ├── controllers/                          # Logica applicativa centrale
-│   │   ├── code.js                           # Gestione snippet e integrazione LLM via OpenRouter
-│   │   ├── missions.js                       # Missioni giornaliere/settimanali e obiettivi
-│   │   └── socket.js                         # Matchmaking, lobby e orchestrazione Socket.io
-│   ├── middleware/                           # Middleware sicurezza e validazione
-│   │   └── auth.js                           # Validazione JWT emessi da Supabase
-│   ├── .env.example                          # Variabili d'ambiente necessarie
-│   ├── package.json                          # Dipendenze backend (Express, Socket.io, Supabase)
-│   └── server.js                             # Entry point HTTP + WebSocket server
+├── backend/                                  # Node.js Server & realtime API (WebSockets)
+│   ├── controllers/                          # Core application logic
+│   │   ├── code.js                           # Snippet handling and LLM integration via OpenRouter
+│   │   ├── missions.js                       # Daily/weekly missions and objectives
+│   │   └── socket.js                         # Matchmaking, lobby and Socket.io orchestration
+│   ├── middleware/                           # Security and validation middleware
+│   │   └── auth.js                           # Validation of JWTs issued by Supabase
+│   ├── .env.example                          # Required environment variables
+│   ├── package.json                          # Backend dependencies (Express, Socket.io, Supabase)
+│   └── server.js                             # HTTP + WebSocket server entry point
 │
-├── db/                                       # Database e configurazioni LLM
-│   ├── llm/                                  # Prompt e istruzioni AI
-│   │   └── prompt.md                         # Regole di valutazione per GPT-4o-mini
-│   ├── snippets/                             # Snippet di codice offline (fallback JSON)
-│   │   ├── java_snippets.json                # Snippet Java
-│   │   ├── javascript_snippets.json          # Snippet JavaScript
-│   │   └── python_snippets.json              # Snippet Python
-│   └── schema.sql                            # Schema PostgreSQL (DDL, trigger, RPC, viste)
+├── db/                                       # Database and LLM configurations
+│   ├── llm/                                  # AI prompts and instructions
+│   │   └── prompt.md                         # Evaluation rules for GPT-4o-mini
+│   ├── snippets/                             # Offline code snippets (JSON fallback)
+│   │   ├── java_snippets.json                # Java snippets
+│   │   ├── javascript_snippets.json          # JavaScript snippets
+│   │   └── python_snippets.json              # Python snippets
+│   └── schema.sql                            # PostgreSQL schema (DDL, triggers, RPC, views)
 │
-├── docs/                                     # Documentazione tecnica e risorse visive
-│   ├── db_scheme.svg                         # Diagramma ER del database
-│   ├── ARCHITETTURA.md                       # Specifiche architetturali
-│   ├── SCREENSHOTS.md                        # Galleria schermate applicazione
-│   └── screenshots/                          # Screenshot dell'app
+├── docs/                                     # Technical documentation and visual resources
+│   ├── db_scheme.svg                         # Database ER diagram
+│   ├── ARCHITETTURA.md                       # Architectural specifications
+│   ├── SCREENSHOTS.md                        # Application screenshots gallery
+│   └── screenshots/                          # App screenshots
 │
 ├── frontend/                                 # Client application (HTML, CSS, JavaScript)
-│   ├── index.html                            # Landing page (login / registrazione)
+│   ├── index.html                            # Landing page (login / registration)
 │   ├── src/
-│   │   ├── assets/                           # Risorse statiche multimediali
-│   │   │   ├── icons/                        # SVG, favicon e icone UI
-│   │   │   ├── img/                          # Logo, badge, avatar e immagini
-│   │   │   └── music/                        # Musiche ed effetti sonori
+│   │   ├── assets/                           # Static multimedia resources
+│   │   │   ├── icons/                        # SVGs, favicon, and UI icons
+│   │   │   ├── img/                          # Logo, badges, avatars, and images
+│   │   │   └── music/                        # Music and sound effects
 │   │   │
-│   │   ├── css/                              # Fogli di stile modulari
-│   │   │   ├── styles/                       # Design system globale
-│   │   │   │   ├── _variables.css            # Token UI (colori, font, spacing)
-│   │   │   │   ├── _base.css                 # Reset e stili base
-│   │   │   │   ├── _navbar.css               # Barra di navigazione
-│   │   │   │   ├── _responsive.css           # Media queries responsive
-│   │   │   │   └── ...                       # Loader, modali, footer, utility
-│   │   │   ├── game_page/                    # Stili pagina allenamento
-│   │   │   ├── leaderboard_page/             # Stili classifiche globali
-│   │   │   ├── match_page/                   # Stili multiplayer e countdown
-│   │   │   ├── profile_page/                 # Stili profilo utente e statistiche
-│   │   │   └── style.css                     # Entry point CSS globale
+│   │   ├── css/                              # Modular stylesheet files
+│   │   │   ├── styles/                       # Global design system
+│   │   │   │   ├── _variables.css            # UI tokens (colors, fonts, spacing)
+│   │   │   │   ├── _base.css                 # Reset and base styles
+│   │   │   │   ├── _navbar.css               # Navigation bar
+│   │   │   │   ├── _responsive.css           # Responsive media queries
+│   │   │   │   └── ...                       # Loader, modals, footer, utilities
+│   │   │   ├── game_page/                    # Training page styles
+│   │   │   ├── leaderboard_page/             # Global leaderboard styles
+│   │   │   ├── match_page/                   # Multiplayer and countdown styles
+│   │   │   ├── profile_page/                 # User profile and statistics styles
+│   │   │   └── style.css                     # Global CSS entry point
 │   │   │
-│   │   ├── js/                               # Logica JavaScript modulare
-│   │   │   ├── managers/                     # Singleton e stato globale
-│   │   │   │   ├── auth.js                   # Sessione utente e Supabase client
-│   │   │   │   ├── multiplayer.js            # Eventi WebSocket e lobby
-│   │   │   │   ├── settings.js               # Preferenze utente
-│   │   │   │   ├── sound.js                  # Gestione audio ed effetti
-│   │   │   │   └── theme.js                  # Tema Light/Dark dinamico
-│   │   │   ├── utils/                        # Utility condivise e helper DOM
-│   │   │   ├── game_page/                    # Logica allenamento e missioni
-│   │   │   ├── leaderboard_page/             # API ranking e paginazione
-│   │   │   ├── match_page/                   # Multiplayer, timer e validazioni
-│   │   │   ├── profile_page/                 # Badge, storico e amicizie
-│   │   │   ├── 404/                          # Animazione pagina errore
-│   │   │   └── index.js                      # Script principale landing page
+│   │   ├── js/                               # Modular JavaScript logic
+│   │   │   ├── managers/                     # Singletons and global state
+│   │   │   │   ├── auth.js                   # User session and Supabase client
+│   │   │   │   ├── multiplayer.js            # WebSocket events and lobby
+│   │   │   │   ├── settings.js               # User preferences
+│   │   │   │   ├── sound.js                  # Audio and sound effects management
+│   │   │   │   └── theme.js                  # Dynamic Light/Dark theme
+│   │   │   ├── utils/                        # Shared utilities and DOM helpers
+│   │   │   ├── game_page/                    # Training and missions logic
+│   │   │   ├── leaderboard_page/             # Ranking API and pagination
+│   │   │   ├── match_page/                   # Multiplayer, timer, and validations
+│   │   │   ├── profile_page/                 # Badges, history, and friendships
+│   │   │   ├── 404/                          # Error page animation
+│   │   │   └── index.js                      # Main landing page script
 │   │   │
-│   │   └── pages/                            # Schermate HTML applicazione
-│   │       ├── game_page.html                # Modalità allenamento
-│   │       ├── match_page.html               # Multiplayer realtime
-│   │       ├── leaderboard_page.html         # Classifica globale
-│   │       ├── profile_page.html             # Profilo e statistiche utente
-│   │       ├── reset_password.html           # Richiesta reset password
-│   │       ├── reset_password_completo.html  # Cambio password finale
-│   │       └── 404.html                      # Pagina errore custom
+│   │   └── pages/                            # Application HTML screens
+│   │       ├── game_page.html                # Training mode
+│   │       ├── match_page.html               # Real-time multiplayer
+│   │       ├── leaderboard_page.html         # Global leaderboard
+│   │       ├── profile_page.html             # User profile and statistics
+│   │       ├── reset_password.html           # Password reset request
+│   │       ├── reset_password_completo.html  # Final password change
+│   │       └── 404.html                      # Custom error page
 │
-├── package.json                              # Script globali (install-all, run, build)
-├── LICENSE                                   # Licenza MIT
-└── README.md                                 # Overview e documentazione principale
+├── package.json                              # Global scripts (install-all, run, build)
+├── LICENSE                                   # MIT License
+└── README.md                                 # Main overview and documentation
 ```
 
 ---
 
-## Documentazione Tecnica
+## Technical Documentation
 
-Per una comprensione profonda delle specifiche tecniche e delle scelte di design del progetto, consulta:
-* **[Architettura di Sistema (docs/ARCHITETTURA.md)](docs/ARCHITETTURA.md)**: Analisi completa sul pattern Client-Server, WebSocket, modularità CSS/JS, logiche dei trigger SQL e prompt LLM.
-* **[Interfaccia Grafica e Galleria Schermate (docs/SCREENSHOTS.md)](docs/SCREENSHOTS.md)**: Panoramica visiva approfondita delle schermate di gioco con screenshot descritti.
+For an in-depth understanding of the technical specifications and design choices of the project, refer to:
+
+* **[System Architecture (docs/ARCHITETTURA.md)](docs/ARCHITETTURA.md)**: Complete analysis of the Client-Server pattern, WebSockets, CSS/JS modularity, SQL trigger logic, and LLM prompts.
+* **[User Interface & Screenshot Gallery (docs/SCREENSHOTS.md)](docs/SCREENSHOTS.md)**: Detailed visual overview of the game screens with described screenshots.
 
 ---
 
 <p align="center">
   <a href="docs/db_scheme.svg">
-    <img src="docs/db_scheme.svg" alt="Schema Relazionale ER del Database" />
+    <img src="docs/db_scheme.svg" alt="Database ER Relational Schema" />
   </a>
 </p>
 
 ---
 
-## Installazione (Usage)
+## Installation (Usage)
 
-Se vuoi eseguire e contribuire al progetto in locale sul tuo ambiente di sviluppo:
+If you want to run and contribute to the project locally in your development environment:
 
-1. Clona la repository:
+1. Clone the repository:
+
    ```bash
    git clone https://github.com/iAVAA/codeguessr.git
    ```
-2. Spostati nella cartella del progetto:
+
+2. Navigate into the project folder:
+
    ```bash
    cd codeguessr
    ```
-3. Installa le dipendenze:
+
+3. Install dependencies:
+
    ```bash
    npm run install-all
    ```
-4. Esegui il web server in modalità development:
+
+4. Start the web server in development mode:
+
    ```bash
    npm run dev
    ```
 
-## Autori
+## Authors
 
-Sviluppato da:
-- **Salvatore Iavarone**
-- **Michele Pio Forlani**
+Developed by:
 
-## Licenza (MIT)
+* **Salvatore Iavarone**
+* **Michele Pio Forlani**
 
-Questo progetto è distribuito sotto licenza **MIT**. Guarda il file [`LICENSE`](LICENSE) per ulteriori dettagli.
+## License (MIT)
+
+This project is distributed under the **MIT** license. See the [`LICENSE`](LICENSE) file for more details.
